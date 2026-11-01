@@ -1,0 +1,2 @@
+49e384fa414d1394d7fe377750a356008cd3e8fe8bae76efa1d443d692e132d4  cozy-solitaire-1.7.2-arm64.apk
+6d7a9eb4992603671fd81bdd6840869f011f2ceabb0a3140fbdc63de7ab750a7  cozy-solitaire-qr.png
