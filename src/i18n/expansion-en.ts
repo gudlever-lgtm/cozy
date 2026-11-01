@@ -96,6 +96,8 @@ export const expansionEn = {
   resumeMini: "Resume saved puzzle",
   miniLevelHint:
     "Try a new layout or a larger flower challenge. No waiting, no play limits.",
+  saveReset:
+    "The saved data could not be read. A copy has been kept for recovery. A new local game has started.",
   backupRecovered:
     "Recovered the previous safe save. The most recent action may need to be repeated.",
   challengeTitle: "Solitaire challenges",

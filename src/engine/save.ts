@@ -369,11 +369,12 @@ export function saveQueue(storage: Storage) {
 }
 
 export const BACKUP_KEY = SAVE_KEY + ".backup";
+export const UNREADABLE_SAVE_KEY = SAVE_KEY + ".unreadable";
 export async function loadSave(
   storage: Storage,
   id: string,
   language: Language,
-): Promise<{ save: Save; recovered: boolean }> {
+): Promise<{ save: Save; recovered: boolean; reset?: boolean }> {
   const primary = await storage.getItem(SAVE_KEY);
   if (primary !== null) {
     try {
@@ -383,12 +384,25 @@ export async function loadSave(
     }
   }
   const backup = await storage.getItem(BACKUP_KEY);
-  if (backup === null) {
-    return { save: fresh(id, language), recovered: primary !== null };
+  if (backup !== null) {
+    try {
+      return { save: migrate(backup, id, language), recovered: true };
+    } catch {
+      /* Preserve unreadable data before allowing a fresh save to replace it. */
+    }
   }
-  try {
-    return { save: migrate(backup, id, language), recovered: true };
-  } catch {
-    return { save: fresh(id, language), recovered: true };
+  if (primary === null && backup === null)
+    return { save: fresh(id, language), recovered: false };
+  const snapshot = JSON.stringify({ primary, backup });
+  for (let index = 0; ; index++) {
+    const key = UNREADABLE_SAVE_KEY + (index ? `.${index}` : "");
+    const archived = await storage.getItem(key);
+    if (archived === snapshot) break;
+    if (archived === null) {
+      // A failed archive write rejects loading, so the UI cannot overwrite the originals.
+      await storage.setItem(key, snapshot);
+      break;
+    }
   }
+  return { save: fresh(id, language), recovered: false, reset: true };
 }

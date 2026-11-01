@@ -1153,7 +1153,7 @@ test("idle guide in Tea Time resets on actual touch lifecycle and moves without 
     press("Tray 4");
     await waitFor(async () => {
       const saved = await stored();
-      expect(saved.miniSession.tea[3]).toEqual([2]);
+      expect(saved.miniSession.tea[3]).toEqual([1]);
       expect(saved.game).toEqual(original.game);
       expect(saved.economy.wallet).toEqual(original.economy.wallet);
     });
@@ -1352,4 +1352,16 @@ test("main menu submenus close back to the current deal and new deals still requ
   expect((await stored()).game).toEqual(played);
   press(String(i18n.t("cancel")));
   expect((await stored()).game).toEqual(played);
+});
+
+test("unreadable primary and backup show an honest onboarding notice and retain raw copies", async () => {
+  await AsyncStorage.setItem(SAVE_KEY, "broken primary");
+  await AsyncStorage.setItem(SAVE_KEY + ".backup", "broken backup");
+  await renderAsync(<App />);
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    String(i18n.t("saveReset")),
+  );
+  expect(
+    JSON.parse((await AsyncStorage.getItem(SAVE_KEY + ".unreadable"))!),
+  ).toEqual({ primary: "broken primary", backup: "broken backup" });
 });

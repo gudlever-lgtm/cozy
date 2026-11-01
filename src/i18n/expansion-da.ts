@@ -92,6 +92,8 @@ export const expansionDa: Record<keyof typeof expansionEn, string> = {
   resumeMini: "Fortsæt gemt minispil",
   miniLevelHint:
     "Prøv en ny opstilling eller en større blomsterudfordring. Ingen ventetid eller spillegrænser.",
+  saveReset:
+    "De gemte data kunne ikke læses. En kopi er bevaret til gendannelse. Et nyt lokalt spil er startet.",
   backupRecovered:
     "Den forrige sikre gemning er gendannet. Den seneste handling skal muligvis gentages.",
   challengeTitle: "Kabaleudfordringer",

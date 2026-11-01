@@ -9,6 +9,7 @@ import {
   loadSave,
   SAVE_KEY,
   BACKUP_KEY,
+  UNREADABLE_SAVE_KEY,
 } from "../src/engine/save";
 import { transact, claimQuest, upgrades } from "../src/engine/world";
 import {
@@ -131,14 +132,16 @@ test("version two saves migrate without changing profiles, games, wallets, legac
 });
 test("each tea level has a legal route to victory and levels have distinct layouts/targets", () => {
   assert.notDeepEqual(teaForLevel(1), teaForLevel(3));
+  const minimumMoves: number[] = [];
   for (const level of [1, 2, 3] as const) {
-    const queue = [teaForLevel(level)],
+    const queue = [{ g: teaForLevel(level), depth: 0 }],
       seen = new Set<string>();
     let won = false;
-    while (queue.length) {
-      const g = queue.shift()!;
+    for (let head = 0; head < queue.length; head++) {
+      const { g, depth } = queue[head];
       if (teaWon(g)) {
         won = true;
+        minimumMoves.push(depth);
         break;
       }
       for (let a = 0; a < 5; a++)
@@ -147,7 +150,7 @@ test("each tea level has a legal route to victory and levels have distinct layou
             key = JSON.stringify(next);
           if (!seen.has(key)) {
             seen.add(key);
-            queue.push(next);
+            queue.push({ g: next, depth: depth + 1 });
           }
         }
     }
@@ -158,6 +161,10 @@ test("each tea level has a legal route to victory and levels have distinct layou
       5,
     );
   }
+  assert.ok(
+    minimumMoves[0] < minimumMoves[1] && minimumMoves[1] < minimumMoves[2],
+    JSON.stringify(minimumMoves),
+  );
 });
 test("partial mini-game sessions survive schema restoration and reward only once", () => {
   let s = fresh("a", "en");
@@ -212,4 +219,60 @@ test("seeded Solitaire challenges conserve all cards and replay deterministic de
     );
     assert.equal(a.draw, c.draw);
   }
+});
+
+test("unreadable saves are archived without claiming backup recovery", async () => {
+  for (const backup of [null, "broken backup"]) {
+    const data = new Map<string, string>([[SAVE_KEY, "broken primary"]]);
+    if (backup !== null) data.set(BACKUP_KEY, backup);
+    const storage = {
+      getItem: async (k: string) => data.get(k) ?? null,
+      setItem: async (k: string, v: string) => {
+        data.set(k, v);
+      },
+    };
+    const result = await loadSave(storage, "new", "da");
+    assert.equal(result.reset, true);
+    assert.equal(result.recovered, false);
+    assert.equal(result.save.profile, null);
+    assert.deepEqual(JSON.parse(data.get(UNREADABLE_SAVE_KEY)!), {
+      primary: "broken primary",
+      backup,
+    });
+    await loadSave(storage, "new", "da");
+    assert.equal(data.has(UNREADABLE_SAVE_KEY + ".1"), false);
+    data.set(SAVE_KEY, "different damaged save");
+    await loadSave(storage, "new", "da");
+    assert.equal(
+      JSON.parse(data.get(UNREADABLE_SAVE_KEY)!).primary,
+      "broken primary",
+    );
+    assert.equal(
+      JSON.parse(data.get(UNREADABLE_SAVE_KEY + ".1")!).primary,
+      "different damaged save",
+    );
+  }
+});
+test("failed archive writes prevent replacing unreadable progress; first launch needs no archive", async () => {
+  const storage = {
+    getItem: async (k: string) => (k === SAVE_KEY ? "broken" : null),
+    setItem: async () => {
+      throw Error("disk full");
+    },
+  };
+  await assert.rejects(loadSave(storage, "new", "en"), /disk full/);
+  let writes = 0;
+  const first = await loadSave(
+    {
+      getItem: async () => null,
+      setItem: async () => {
+        writes++;
+      },
+    },
+    "new",
+    "en",
+  );
+  assert.equal(first.recovered, false);
+  assert.equal(first.reset, undefined);
+  assert.equal(writes, 0);
 });

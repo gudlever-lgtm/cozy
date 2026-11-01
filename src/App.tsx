@@ -260,14 +260,24 @@ export default function App() {
   }, []);
   const load = useCallback(async () => {
     try {
-      const { save: data, recovered } = await loadSave(
+      const {
+        save: data,
+        recovered,
+        reset,
+      } = await loadSave(
         AsyncStorage,
         uuid(),
         deviceLanguage(getLocales()[0]?.languageCode ?? "en"),
       );
-      if (recovered) setMessage(String(i18n.t("backupRecovered")));
       // System reduced motion is observed live; do not latch it into a permanent manual preference.
       await i18n.changeLanguage(data.preferences.language);
+      setMessage(
+        reset
+          ? String(i18n.t("saveReset"))
+          : recovered
+            ? String(i18n.t("backupRecovered"))
+            : "",
+      );
       if (data.profile) data.profile.lastPlayedAt = new Date().toISOString();
       setS(data);
       if (data.miniSession) {
@@ -1028,6 +1038,11 @@ export default function App() {
           </View>
           <View style={st.welcome}>
             {heading(tt("welcomeTitle"), tt("welcomeText"))}
+            {!!message && (
+              <Text accessibilityRole="alert" style={st.small}>
+                {message}
+              </Text>
+            )}
             <Text style={st.label}>{tt("language")}</Text>
             {chooseLanguage()}
             <Text style={st.label}>{tt("username")}</Text>
