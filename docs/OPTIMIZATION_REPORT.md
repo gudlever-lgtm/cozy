@@ -27,3 +27,11 @@ Identical serialized saves are skipped inside the serialized queue, including co
 ## Step 4 — offline solver / verified deals
 
 Added bounded DFS with transpositions and ordinary engine actions. At 150,000 nodes, original seeds 17017 and 23111 remain unknown; 98173 is solved in 5,333 nodes with a replay-verified 228-action solution. No challenge seed was changed. The original LCG is shared and full-deal hashes lock shuffle behavior. Offline generation produced 100 replay-verified seeds per draw mode, with all 200 witnesses checked by tests. Runtime imports only the seed list; a graph test excludes solver/Node/test code. New game offers the optional guaranteed-winnable choice. See SOLVER.md for reproduction, limits and results. Test baseline for this step: **72 engine tests / 162 native runs**, TypeScript and formatting.
+
+## Step 5 — random, measured Tea difficulty
+
+Offline reverse BFS (`node --import tsx scripts/analyze-tea.ts`) enumerated 2,424 solvable states modulo tray permutation; the highest minimum is **8** pours. The 55 canonical three-full-tray initial layouts also top out at 8, so the proposed 9–11 interval cannot be met with the retained three colors/five trays. Levels use exact minimum **6 / 7 / 8**, random balanced permutations, BFS acceptance and a bounded verified fallback for a constant RNG. Saved sessions retain their exact layouts. Thirty generated layouts per level are tested for variety, validity, solvability and interval; resume is tested independently.
+
+Deviation from the brief: the native Tea completion test did not in fact tolerate independent randomized factories—it solved a separately generated layout before opening the app. It now searches the actual rendered board; the idle-touch test likewise checks the actual legal pour instead of a hard-coded treat. These retain the original completion/touch/reward assertions.
+
+Step 5 checks: **74 engine tests / 162 native runs**, TypeScript and formatting pass. No colors/trays, existing session validation, reward values or saved layouts were changed.

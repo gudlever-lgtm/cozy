@@ -13,6 +13,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { pour, teaWon, hasMatchMove } from "../../src/engine/minigames";
 import { teaForLevel, type MiniLevel } from "../../src/engine/session";
 import App from "../../src/App";
+import { TeaTime } from "../../src/TeaTime";
 import { IdleFirefly, IDLE_HINT_DELAY } from "../../src/living/IdleFirefly";
 import { newGame } from "../../src/engine/solitaire";
 import { solitaireIdleHint } from "../../src/presentation/idleHints";
@@ -420,8 +421,17 @@ test("double tap promotes exposed ace and two to foundations; undo retains the o
 test.each([1, 2, 3] as MiniLevel[])(
   "Tea Time level %s completes, persists and pays only once through native controls",
   async (level) => {
+    await AsyncStorage.setItem(
+      SAVE_KEY,
+      JSON.stringify(setProfile(fresh("tea-native", "en"), "Tea Native", "p")),
+    );
+    await renderAsync(<App />);
+    await screen.findByTestId("main-tabs");
+    press("✿ Mini-games");
+    press(`Level ${level}`);
+    fireEvent.press(screen.getByTestId("mini-start-tea"));
     const queue: { cups: number[][]; path: number[][] }[] = [
-      { cups: teaForLevel(level), path: [] },
+      { cups: screen.UNSAFE_getByType(TeaTime).props.game, path: [] },
     ];
     const seen = new Set<string>();
     let path: number[][] = [];
@@ -442,15 +452,6 @@ test.each([1, 2, 3] as MiniLevel[])(
         }
     }
     expect(path.length).toBeGreaterThan(0);
-    await AsyncStorage.setItem(
-      SAVE_KEY,
-      JSON.stringify(setProfile(fresh("tea-native", "en"), "Tea Native", "p")),
-    );
-    await renderAsync(<App />);
-    await screen.findByTestId("main-tabs");
-    press("✿ Mini-games");
-    press(`Level ${level}`);
-    fireEvent.press(screen.getByTestId("mini-start-tea"));
     for (const [a, b] of path) {
       press(`Tray ${a + 1}`);
       press(`Tray ${b + 1}`);
@@ -1148,12 +1149,13 @@ test("idle guide in Tea Time resets on actual touch lifecycle and moves without 
       jest.advanceTimersByTime(IDLE_HINT_DELAY);
     });
     expect(marker()).not.toBeNull();
+    const expectedTea = pour(screen.UNSAFE_getByType(TeaTime).props.game, 0, 3);
     press("Tray 1");
     expect(marker()).toBeNull();
     press("Tray 4");
     await waitFor(async () => {
       const saved = await stored();
-      expect(saved.miniSession.tea[3]).toEqual([1]);
+      expect(saved.miniSession.tea).toEqual(expectedTea);
       expect(saved.game).toEqual(original.game);
       expect(saved.economy.wallet).toEqual(original.economy.wallet);
     });

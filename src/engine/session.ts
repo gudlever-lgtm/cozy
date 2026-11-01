@@ -1,4 +1,5 @@
-import { newMatch, newTea, type Match, type Tea, treasures } from "./minigames";
+import { randomTea } from "./teaDifficulty";
+import { newMatch, type Match, type Tea, treasures } from "./minigames";
 export type MiniKind = "match" | "hidden" | "tea";
 export type MiniLevel = 1 | 2 | 3;
 export type MiniSession = {
@@ -13,12 +14,8 @@ export function matchForLevel(level: MiniLevel) {
   const g = newMatch();
   return { ...g, target: 30 + (level - 1) * 15, turns: 18 + (level - 1) * 4 };
 }
-export function teaForLevel(level: MiniLevel): Tea {
-  return level === 1
-    ? [[0, 0, 1], [1, 1, 0], [2, 2, 2], [], []]
-    : level === 2
-      ? [[0, 0, 1], [1, 2, 0], [2, 1, 2], [], []]
-      : newTea();
+export function teaForLevel(level: MiniLevel, random = Math.random): Tea {
+  return randomTea(level, random);
 }
 export function treasuresForLevel(level: MiniLevel) {
   const positions =
