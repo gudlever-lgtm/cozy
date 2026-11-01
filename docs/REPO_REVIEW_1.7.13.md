@@ -1,10 +1,10 @@
 # Repository review — 1.7.13
 
-Review base: `a7f4d2d` (including the concurrent backup recovery and debounced storage changes on main). Android/iOS only.
+Review base: `a7f4d2d` (including the concurrent backup recovery and debounced storage changes on main). Android/iOS only. The subsequent `fbfe21f` main-branch economy-history validation fix was also merged and the full checks/builds rerun.
 
 ## Findings fixed
 
-- Tea Time difficulty did not increase: minimum legal solutions for the former levels were 7, 7 and 6 moves. New rounds use progressively harder layouts. Breadth-first search verifies strict increase and solvability; saved tray layouts are never replaced.
+- Tea Time difficulty did not increase: minimum legal solutions for the former levels were 7, 7 and 6 moves. New rounds use progressively harder layouts with minimum solutions of 3, 6 and 7 moves. Breadth-first search verifies strict increase and solvability; saved tray layouts are never replaced.
 - An unreadable primary and unreadable/missing backup started a fresh game while claiming that a safe backup had been restored. Recovery now distinguishes an actual backup from a fresh start. Before starting fresh, the exact raw primary/backup strings are archived under `cozy.save.unreadable` (numbered slots preserve earlier different snapshots). Identical snapshots are deduplicated. Archive failures reject loading and show the existing retry screen instead of allowing replacement writes. A localized onboarding notice explains a fresh start. Raw archives retain data for possible repair; they do not guarantee that damaged progress can be recovered.
 - README and implementation status contained obsolete claims about free materials, repositioning decorations, vector expansion backgrounds and the acceptance APK. Current behavior is documented while historical version notes remain labeled as history.
 
