@@ -1,4 +1,4 @@
-/** Bundled, offline-ready images for Expo/React Native and React Native Web.
+/** Bundled, offline-ready images for Expo/React Native .
  * Metro requires literal require() calls; do not build dynamic paths from JSON.
  * Images live in public/assets pending a future move to assets/.
  */

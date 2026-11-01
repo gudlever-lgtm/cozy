@@ -151,8 +151,6 @@ export default function App() {
     }
   }, []);
   useEffect(() => {
-    if (Platform.OS === "web" && "serviceWorker" in navigator)
-      void navigator.serviceWorker.register("/sw.js").catch(() => {});
     void load();
   }, [load, update]);
   useEffect(() => {
@@ -1447,9 +1445,6 @@ function Draggable({
         style,
         {
           transform: position.getTranslateTransform(),
-          ...(Platform.OS === "web"
-            ? { touchAction: "none", cursor: "pointer" }
-            : {}),
         },
       ]}
     >
@@ -1476,7 +1471,7 @@ const st = StyleSheet.create({
   },
   logo: { fontSize: 48, color: "#3f6850" },
   brand: {
-    fontFamily: Platform.OS === "web" ? "Georgia" : "serif",
+    fontFamily: Platform.OS === "ios" ? "Georgia" : "serif",
     fontSize: 32,
     lineHeight: 35,
     color: "#254b3a",
@@ -1527,14 +1522,14 @@ const st = StyleSheet.create({
     color: "#8a946e",
   },
   title: {
-    fontFamily: Platform.OS === "web" ? "Georgia" : "serif",
+    fontFamily: Platform.OS === "ios" ? "Georgia" : "serif",
     fontSize: 34,
     color: "#2c4e3b",
     lineHeight: 42,
   },
   subtitle: { fontSize: 15, lineHeight: 24, color: "#69745e" },
   sectionTitle: {
-    fontFamily: Platform.OS === "web" ? "Georgia" : "serif",
+    fontFamily: Platform.OS === "ios" ? "Georgia" : "serif",
     fontSize: 23,
     lineHeight: 30,
     color: "#34553f",

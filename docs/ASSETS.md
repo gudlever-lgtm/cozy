@@ -8,7 +8,7 @@ Assets were generated for Cozy Solitaire. The four season backgrounds are indepe
 - `backgrounds/seasons/{summer_evening,autumn_rain,winter_snow}_board.png`: alternate board scenes.
 
 ## Implementation guidance
-- Web: reference `/assets/...` paths from public.
+- Target Android/iOS only. Public path strings in the source manifest are catalog metadata; native rendering uses the static `cozyImages` imports.
 - Expo: `src/assets/images.ts` uses literal `require(...)` references into `public/assets`; Metro bundles those referenced files for native builds. Their location under `public` alone would not bundle them without these explicit references.
 - Snow/rain/firefly overlays are runtime animations, **not** existing PNGs. Implement with performant RN animated particle layers and respect reduced-motion.
 - The generated art is raster imagery, not editable vector source or a complete 52-card deck.

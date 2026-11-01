@@ -30,15 +30,6 @@
       "permissions": [],
       "blockedPermissions": ["android.permission.RECORD_AUDIO"]
     },
-    "web": {
-      "bundler": "metro",
-      "output": "single",
-      "favicon": "./assets/icon.png",
-      "name": "Cozy Solitaire",
-      "shortName": "Cozy",
-      "themeColor": "#234b3b",
-      "backgroundColor": "#f6f2e8"
-    },
     "plugins": [
       "expo-router",
       "expo-localization",
@@ -53,6 +44,7 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "platforms": ["ios", "android"]
   }
 }
