@@ -364,12 +364,17 @@ export async function loadSave(
   if (primary !== null) {
     try {
       return { save: migrate(primary, id, language), recovered: false };
-    } catch (error) {
-      const backup = await storage.getItem(BACKUP_KEY);
-      if (backup === null) throw error;
-      return { save: migrate(backup, id, language), recovered: true };
+    } catch {
+      /* fall through to backup */
     }
   }
   const backup = await storage.getItem(BACKUP_KEY);
-  return { save: migrate(backup, id, language), recovered: backup !== null };
+  if (backup === null) {
+    return { save: fresh(id, language), recovered: primary !== null };
+  }
+  try {
+    return { save: migrate(backup, id, language), recovered: true };
+  } catch {
+    return { save: fresh(id, language), recovered: true };
+  }
 }

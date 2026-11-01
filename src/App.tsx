@@ -261,10 +261,13 @@ export default function App() {
     void load();
   }, [load, update]);
   useEffect(() => {
-    if (s)
+    if (!s) return;
+    const t = setTimeout(() => {
       void write(s)
         .then(() => setWriteError(false))
         .catch(() => setWriteError(true));
+    }, 150);
+    return () => clearTimeout(t);
   }, [s]);
   useEffect(() => {
     if (s?.game.won) update((v) => reward(v, "solitaire", v.game.id));
