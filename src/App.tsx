@@ -179,6 +179,12 @@ export default function App() {
 
   const [guaranteedDeal, setGuaranteedDeal] = useState(false);
   const [tip, setTip] = useState<string | null>(null);
+  const checkBlockedAfterAction = useRef(false);
+  useEffect(() => {
+    if (!checkBlockedAfterAction.current || !s) return;
+    checkBlockedAfterAction.current = false;
+    if (isStuck(s.game)) setTip(String(i18n.t("solitaireNoMoves")));
+  }, [s?.game]);
   const [challengeOpen, setChallengeOpen] = useState(false);
   useEffect(() => {
     if (!tip) return;
@@ -616,9 +622,8 @@ export default function App() {
   ) =>
     update((v) => ({ ...v, preferences: { ...v.preferences, [key]: value } }));
   const applyGame = (fn: (g: Game) => Game) => {
-    const game = fn(s.game);
-    update((v) => ({ ...v, game }));
-    if (game !== s.game && isStuck(game)) setTip(tt("solitaireNoMoves"));
+    checkBlockedAfterAction.current = true;
+    update((v) => ({ ...v, game: fn(v.game) }));
     setSelected(null);
     setHint(null);
   };

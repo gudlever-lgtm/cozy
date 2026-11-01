@@ -71,4 +71,4 @@ TypeScript and formatting passed; 37 engine/presentation tests and 36 Android/iO
 
 ## Optimization increment — schema 4
 
-Baseline `26f9814`: clean `npm ci` on Node 24.19.0, TypeScript, 57 engine tests and 158 native component runs passed. The completed optimization suite passes 76 engine tests and 164 Android/iOS component runs, with no skips. See [optimization report](OPTIMIZATION_REPORT.md), [schema migration](SAVE_SCHEMA_4.md) and [solver results](SOLVER.md). These tests use mocked native bindings; native gestures, audio and performance remain untested on devices.
+Baseline `26f9814`: clean `npm ci` on Node 24.19.0, TypeScript, 57 engine tests and 158 native component runs passed. The completed optimization suite passes 76 engine tests and 166 Android/iOS component runs, with no skips. See [optimization report](OPTIMIZATION_REPORT.md), [schema migration](SAVE_SCHEMA_4.md) and [solver results](SOLVER.md). These tests use mocked native bindings; native gestures, audio and performance remain untested on devices.

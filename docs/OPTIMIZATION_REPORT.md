@@ -71,3 +71,7 @@ Step 7 final checks on version 1.7.14: **76 engine tests / 164 native runs**, Ty
 After steps 1–7 passed and were pushed, the unchanged stylesheet was moved into `src/App.styles.ts`. Every style value is compared byte-for-byte with the preceding commit, and native tests rerun after extraction. Screen components and closure-bound helpers were not split: their dependencies on shared game/world/menu state would require broad prop/callback plumbing. This increment stops at the safe stylesheet boundary; no gesture or screen behavior is changed.
 
 Step 8 checks: **164 native runs** pass after extraction, alongside TypeScript/formatting and the runtime import-graph check. The final full engine suite remains **76 passed**; no engine behavior changed during stylesheet extraction. Android/iOS offline JS/Hermes exports pass.
+
+## Final review — batched move regression
+
+The first blocked-game tip integration computed an action from the render's captured game before scheduling the state update. Final review identified that two batched stock taps could overwrite each other. Functional `fn(v.game)` updates are restored; the cosmetic stuck check runs in an effect after the committed game changes. A native regression checks two taps in one React act produce two moves/six waste cards in the UI and saved state. The new test fails against the previous implementation. Final native count is **166** (baseline 158), with the engine suite at **76** (baseline 57).

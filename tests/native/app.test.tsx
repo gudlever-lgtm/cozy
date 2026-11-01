@@ -1465,3 +1465,19 @@ test("Hidden Treasures uses the same seeded positions for touches, effects and r
   expect(position()).toEqual(before);
   expect(screen.queryByRole("button", { name: "Acorn" })).toBeNull();
 });
+
+test("batched stock taps each transform the latest game instead of overwriting a move", async () => {
+  const s = setProfile(fresh("batched", "en"), "Player", "player");
+  await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(s));
+  await renderAsync(<App />);
+  await screen.findByTestId("main-tabs");
+  press("♠ Play Solitaire");
+  const stock = screen.getByRole("button", { name: String(i18n.t("draw")) });
+  act(() => {
+    fireEvent.press(stock);
+    fireEvent.press(stock);
+  });
+  expect(screen.getByText("2 moves")).toBeOnTheScreen();
+  await waitFor(async () => expect((await stored()).game.moves).toBe(2));
+  expect((await stored()).game.waste).toHaveLength(6);
+});

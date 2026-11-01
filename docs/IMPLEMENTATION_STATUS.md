@@ -19,7 +19,7 @@ Baseline: `35a3e91`, Android/iOS only. The approved ambient artwork through `19a
 ## Verified checks
 
 - 76 engine/localization/asset/progression/presentation tests, no skips.
-- 164 React Native component test runs across iOS and Android Jest Expo presets, no skips.
+- 166 React Native component test runs across iOS and Android Jest Expo presets, no skips.
 - TypeScript and formatting pass.
 - Native JS/Hermes exports include all seven ambient sprites at all three densities. These are not signed native app builds.
 - Solitaire move rules are retained. Material rewards now depend on winning and difficulty; Glimmer base values remain unchanged. New Tea Time layouts require increasing minimum moves across levels.
