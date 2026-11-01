@@ -9,7 +9,7 @@ Assets were generated for Cozy Solitaire. The four season backgrounds are indepe
 
 ## Implementation guidance
 - Web: reference `/assets/...` paths from public.
-- Expo: images in `public` are not bundled by React Native's static asset loader. Relocate these to e.g. `assets/` and use literal `require(...)` or a generated manifest of static imports before native builds.
+- Expo: `src/assets/images.ts` uses literal `require(...)` references into `public/assets`; Metro bundles those referenced files for native builds. Their location under `public` alone would not bundle them without these explicit references.
 - Snow/rain/firefly overlays are runtime animations, **not** existing PNGs. Implement with performant RN animated particle layers and respect reduced-motion.
 - The generated art is raster imagery, not editable vector source or a complete 52-card deck.
 - Add source/revision/provenance metadata before release.

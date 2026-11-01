@@ -373,3 +373,31 @@ test("structurally corrupt saves reject before any storage write", async () => {
   } catch {}
   assert.equal(writes, 0);
 });
+
+test("merged artwork manifest references eleven real local assets", async () => {
+  const fs = await import("node:fs/promises");
+  const path = await import("node:path");
+  const manifest = JSON.parse(
+    await fs.readFile(path.resolve("public/assets/manifest.json"), "utf8"),
+  );
+  assert.equal(manifest.assets.length, 11);
+  for (const asset of manifest.assets) {
+    const file = path.resolve("public", asset.path.slice(1));
+    assert.ok((await fs.stat(file)).size > 1000, asset.id);
+  }
+  const { resolveSeason, resolveWeather, DEFAULT_AMBIENCE } =
+    await import("../src/seasonal/season");
+  assert.equal(resolveSeason("winter", new Date(2026, 6, 1)), "winter");
+  assert.equal(
+    resolveWeather({ ...DEFAULT_AMBIENCE, season: "winter" }),
+    "snow",
+  );
+  assert.equal(
+    resolveWeather({
+      ...DEFAULT_AMBIENCE,
+      reduceMotion: true,
+      season: "winter",
+    }),
+    "clear",
+  );
+});

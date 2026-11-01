@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from "react";
-import { Animated, View, StyleSheet } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { Animated, View, Text, AppState, StyleSheet } from "react-native";
 import type { Season } from "./engine/world";
 export function Weather({
   season,
@@ -11,9 +11,16 @@ export function Weather({
   reduced: boolean;
 }) {
   const y = useRef(new Animated.Value(0)).current;
+  const [active, setActive] = useState(AppState.currentState === "active");
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (state) =>
+      setActive(state === "active"),
+    );
+    return () => subscription.remove();
+  }, []);
   useEffect(() => {
     y.setValue(0);
-    if (reduced || intensity === 0) return;
+    if (reduced || intensity === 0 || !active) return;
     const a = Animated.loop(
       Animated.timing(y, {
         toValue: 1,
@@ -23,8 +30,8 @@ export function Weather({
     );
     a.start();
     return () => a.stop();
-  }, [season, intensity, reduced, y]);
-  if (!intensity) return null;
+  }, [season, intensity, reduced, y, active]);
+  if (!intensity || reduced || !active) return null;
   return (
     <View
       pointerEvents="none"
@@ -54,14 +61,16 @@ export function Weather({
               position: "absolute",
               left: `${(i * 37) % 100}%`,
               top: (i * 79) % 300,
-              width: season === "autumn" ? 2 : 5,
-              height: season === "autumn" ? 17 : 5,
+              width: season === "autumn" ? (i % 4 === 0 ? 9 : 2) : 5,
+              height: season === "autumn" ? (i % 4 === 0 ? 5 : 17) : 5,
               borderRadius: 8,
               backgroundColor:
                 season === "winter"
                   ? "#fff"
                   : season === "autumn"
-                    ? "#bad5d4"
+                    ? i % 4 === 0
+                      ? "#c89259"
+                      : "#bad5d4"
                     : "#fff2bc",
             }}
           />

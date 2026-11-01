@@ -1,3 +1,4 @@
+import { seasonForDate } from "../seasonal/season";
 export type Resource = "glimmers" | "wood" | "stone" | "flowers" | "seeds";
 export type Wallet = Record<Resource, number>;
 export type Economy = {
@@ -160,13 +161,4 @@ export function claimQuest(
   };
 }
 export type Season = "spring" | "summer" | "autumn" | "winter";
-export const seasonAt = (date: Date): Season => {
-  const m = date.getMonth();
-  return m >= 2 && m <= 4
-    ? "spring"
-    : m >= 5 && m <= 7
-      ? "summer"
-      : m >= 8 && m <= 10
-        ? "autumn"
-        : "winter";
-};
+export const seasonAt = (date: Date): Season => seasonForDate(date);

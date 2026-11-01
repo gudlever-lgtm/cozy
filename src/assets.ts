@@ -1,5 +1,10 @@
-// Original procedural vector artwork: src/Art.tsx. No third-party art or network assets.
+export { cozyImages } from "./assets/images";
+// Static manifest: imported seasonal art plus original local vector art, icons and audio.
 export const assets = {
+  audio: {
+    music: require("../assets/music.wav"),
+    nature: require("../assets/nature.wav"),
+  },
   icon: require("../assets/icon.png"),
   splash: require("../assets/splash.png"),
 };

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   View,
+  Image,
   Text,
   Pressable,
   ScrollView,
@@ -67,6 +68,7 @@ import { Cottage, NPC_ICON, Portrait, Forest } from "./Art";
 import { Weather } from "./Weather";
 import { Audio } from "./Audio";
 import { symbols } from "./assets";
+import { cozyImages } from "./assets/images";
 
 type Screen =
   | "garden"
@@ -310,7 +312,7 @@ export default function App() {
   }
   const cardWidth = Math.min(
     88,
-    Math.floor((Math.min(width - (wide ? 278 : 32), 900) - 36) / 7),
+    Math.floor((Math.min(width - (wide ? 302 : 32), 1036) - 24) / 7),
   );
   const cardHeight = cardWidth * 1.44;
   const isSelected = (p: Place) =>
@@ -440,8 +442,35 @@ export default function App() {
       {location === "forest" ? (
         <Forest season={season} />
       ) : (
-        <Cottage season={season} time={s.preferences.time} />
+        <Image
+          source={cozyImages.seasons[season]}
+          style={StyleSheet.absoluteFill}
+          resizeMode="cover"
+          accessibilityIgnoresInvertColors
+        />
       )}
+      <View
+        pointerEvents="none"
+        style={[
+          StyleSheet.absoluteFill,
+          {
+            backgroundColor:
+              s.preferences.time === "evening"
+                ? "#19364e"
+                : s.preferences.time === "sunset"
+                  ? "#df9b65"
+                  : s.preferences.time === "morning"
+                    ? "#ffedb2"
+                    : "transparent",
+            opacity:
+              s.preferences.time === "evening"
+                ? 0.28
+                : s.preferences.time === "sunset"
+                  ? 0.16
+                  : 0.08,
+          },
+        ]}
+      />
       <Weather
         season={season}
         intensity={s.preferences.weather}
@@ -645,7 +674,16 @@ export default function App() {
                       accessibilityRole="button"
                       onPress={() => setNpc(n)}
                     >
-                      <Portrait animal={n} />
+                      {n === "pip" ? (
+                        <Portrait animal={n} />
+                      ) : (
+                        <Image
+                          source={cozyImages.characters[n]}
+                          style={{ width: 80, height: 100 }}
+                          resizeMode="contain"
+                          accessibilityIgnoresInvertColors
+                        />
+                      )}
                       <Text style={st.label}>{tt(n)}</Text>
                       <Text style={st.small}>
                         {tt((n + "Hello") as Key, {
@@ -752,6 +790,23 @@ export default function App() {
                 </View>
                 {help && <Text style={st.rules}>{tt("solitaireRules")}</Text>}
                 <View style={st.board}>
+                  <Image
+                    source={
+                      season === "winter"
+                        ? cozyImages.boards.winterSnow
+                        : season === "autumn"
+                          ? cozyImages.boards.autumnRain
+                          : season === "summer"
+                            ? cozyImages.boards.summerEvening
+                            : cozyImages.seasons.spring
+                    }
+                    resizeMode="cover"
+                    style={[
+                      StyleSheet.absoluteFill,
+                      { opacity: 0.15, borderRadius: 16 },
+                    ]}
+                  />
+
                   <View
                     style={[
                       st.row,

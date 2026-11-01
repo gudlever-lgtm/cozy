@@ -1,6 +1,8 @@
 # Cozy Solitaire — grafikpakke V1.7
 
-Grafikpakken er fremstillet og pakket som `cozy-assets-v1.7.zip` i ChatGPT-samtalen. **Billedfilerne er endnu ikke uploadet til dette GitHub-repository.**
+**Aktuel status:** Billederne er nu importeret, bevaret og integreret i Expo-appen. Nedenstående importvejledning er historisk. Se `SEASONAL_INTEGRATION.md` for den aktuelle integration.
+
+Grafikpakken er fremstillet og pakket som `cozy-assets-v1.7.zip` i ChatGPT-samtalen. Billedfilerne blev efterfølgende uploadet til dette GitHub-repository.
 
 ## Forventet indhold
 

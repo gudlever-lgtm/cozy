@@ -1,9 +1,10 @@
+import { assets } from "./assets";
 import { useAudioPlayer } from "expo-audio";
 import { useEffect } from "react";
 import { AppState } from "react-native";
 export function Audio({ music, sound }: { music: boolean; sound: boolean }) {
-  const melody = useAudioPlayer(require("../assets/music.wav"));
-  const nature = useAudioPlayer(require("../assets/nature.wav"));
+  const melody = useAudioPlayer(assets.audio.music);
+  const nature = useAudioPlayer(assets.audio.nature);
   useEffect(() => {
     melody.loop = true;
     melody.volume = 0.35;

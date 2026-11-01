@@ -46,7 +46,7 @@ Rewards and purchases are committed alongside receipt IDs, preventing repeat cla
 
 ## Artwork and audio
 
-The initial repository had **no artwork**. `src/Art.tsx` contains original scalable cottage/forest scenes and animal portraits. `src/assets.ts` is the asset manifest; PNG icons/splash are original local raster illustrations. `scripts/audio.py` generates the two original WAV loops. Unicode symbols are used for cards, mini-game pieces and decoration icons; their rendering can differ by platform. No illustration downloads, placeholder file paths, or third-party licensed art are required.
+The initial audit found **no artwork**. While implementation was underway, new commits added the seasonal artwork pack; those commits were merged and preserved. The garden now uses its four illustrated seasonal backgrounds, Solitaire uses subtle seasonal board art, and Millie/Marmalade use their supplied transparent illustrations. `src/assets/images.ts` statically bundles every supplied image for native and web; `src/assets.ts` re-exports that manifest alongside local assets. `src/Art.tsx` supplies the forest, welcome scene and Pip portrait. PNG icons/splash are original local raster illustrations. `scripts/audio.py` generates the two original WAV loops. Unicode symbols are used for cards, mini-game pieces and decoration icons; their rendering can differ by platform. No runtime illustration downloads or placeholder file paths are required. Source sprite sheets are retained intact, without arbitrary cropping. See `docs/ASSETS.md` for the imported art’s resolution and provenance limitations.
 
 ## Android and iOS builds
 

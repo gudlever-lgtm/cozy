@@ -1,3 +1,4 @@
+import { assets } from "./assets";
 import { Asset } from "expo-asset";
 import { useEffect, useRef } from "react";
 // Browser autoplay policies require a gesture after a restored session.
@@ -5,12 +6,8 @@ export function Audio({ music, sound }: { music: boolean; sound: boolean }) {
   const tracks = useRef<HTMLAudioElement[]>([]);
   useEffect(() => {
     tracks.current = [
-      new globalThis.Audio(
-        Asset.fromModule(require("../assets/music.wav")).uri,
-      ),
-      new globalThis.Audio(
-        Asset.fromModule(require("../assets/nature.wav")).uri,
-      ),
+      new globalThis.Audio(Asset.fromModule(assets.audio.music).uri),
+      new globalThis.Audio(Asset.fromModule(assets.audio.nature).uri),
     ];
     tracks.current.forEach((t) => {
       t.loop = true;
