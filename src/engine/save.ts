@@ -255,7 +255,11 @@ export function migrate(
   if (
     !Array.isArray(s.economy.inventory) ||
     !s.economy.inventory.every((x) => typeof x === "string") ||
-    !s.economy.receipts.every((x) => typeof x === "string")
+    !s.economy.receipts.every((x) => typeof x === "string") ||
+    !Array.isArray(s.economy.gains) ||
+    !s.economy.gains.every(
+      (g) => g && typeof g.id === "string" && g.amounts && typeof g.amounts === "object",
+    )
   )
     throw Error("saveError");
   if (
