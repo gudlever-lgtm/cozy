@@ -68,3 +68,7 @@ TypeScript and formatting passed; 37 engine/presentation tests and 36 Android/iO
 ## 1.7.12 illustrated world, win-earned materials and main menu
 
 55 engine/presentation/asset checks and 156 Android/iOS component test runs pass. TypeScript, formatting, fresh Android/iOS JS exports and a clean ARM64 APK build passed. See [WINTER_MATERIALS_1.7.12.md](WINTER_MATERIALS_1.7.12.md) for actual rewards, one-time payouts, menu navigation, source-art review and explicit physical-device limits.
+
+## Optimization increment — schema 4
+
+Baseline `26f9814`: clean `npm ci` on Node 24.19.0, TypeScript, 57 engine tests and 158 native component runs passed. The completed optimization suite passes 76 engine tests and 164 Android/iOS component runs, with no skips. See [optimization report](OPTIMIZATION_REPORT.md), [schema migration](SAVE_SCHEMA_4.md) and [solver results](SOLVER.md). These tests use mocked native bindings; native gestures, audio and performance remain untested on devices.

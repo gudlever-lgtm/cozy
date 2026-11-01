@@ -1,5 +1,7 @@
 # V1.7 native-only implementation and validation
 
+Historical initial implementation record. For current schema, behavior and executed test counts, see [optimization report](docs/OPTIMIZATION_REPORT.md), [schema 4](docs/SAVE_SCHEMA_4.md) and [implementation status](docs/IMPLEMENTATION_STATUS.md).
+
 ## Repository audit
 
 The starting `main` commit was `a0b46e00a15bd16f09ec9902d4e674417e211a2b`, containing only `README.md`. There were no existing components, assets, game saves, package manifests, tests or EAS settings. This implementation therefore establishes the Expo architecture rather than extending an existing application. A final remote check discovered concurrent artwork/module commits ending at `fcec6c1`; these were merged without overwriting them, then integrated into the playable app. Later native-only design commits through `7f891e1` were preserved. The user confirmed that native-only scope supersedes the original uploaded Web/PWA brief; all browser/PWA implementation, dependencies and workflows were subsequently removed.

@@ -1,6 +1,6 @@
 # Implementation status — development toward V2.0
 
-Baseline: `35a3e91`, Android/iOS only. The approved ambient artwork through `19aa34b` was preserved and integrated. Public app version is 1.7.13; this is a development increment, not a completed V2.0 release.
+Baseline: `35a3e91`, Android/iOS only. The approved ambient artwork through `19aa34b` was preserved and integrated. The source version is recorded in `package.json`; this is a development increment, not a completed V2.0 release.
 
 | Milestone / feature | Actual status | Remaining acceptance work | Dependencies / tests | Acceptance |
 |---|---|---|---|---|
@@ -13,13 +13,13 @@ Baseline: `35a3e91`, Android/iOS only. The approved ambient artwork through `19a
 | V1.6 localization/profile | Implemented/tested including expansion narratives | Native accessibility review | Full DA/EN key/interpolation completeness, Unicode and migrations | Live switch without progression loss |
 | V1.7 mini-games/quests | Three games, three levels per game, six initial quests and interrupted-session restore implemented/tested | Native real-touch QA | Tea solvability, hidden completion, medals, duplicate rewards, resume without abandoning puzzle | Every initial chain and mini-game can complete |
 | V1.8 polish | Supplied ambient sprites at 3 densities, portrait idle, illustrated cards/themes, subtle victory glimmers/chime, touch feedback implemented | Hardware audio/visual/performance approval | Motion/mute settings; functional native component tests | Pleasant consistent presentation without compulsory effects |
-| V1.9 reliability/release prep | Schema-3 migration, last-known-good local backup, lifecycle save, DA/EN privacy/store-copy/release-note drafts implemented | SDK advisory resolution/review, real screenshots, signing, device/store QA | Recovery, migration, corruption, save ordering and progression tests | No unresolved release blockers before release claim |
+| V1.9 reliability/release prep | Schema-4 delta migration, last-known-good local backup, lifecycle save, DA/EN privacy/store-copy/release-note drafts implemented | SDK advisory resolution/review, real screenshots, signing, device/store QA | Recovery, migration, corruption, save ordering and progression tests | No unresolved release blockers before release claim |
 | V2.0 world | Four additional areas, eight buildings at 3 levels, eight extended stories, friendships, evergreen festivals, four additional achievements, themes, seeded challenges implemented/tested | Native UX/content/balance and artwork approval; production builds | Full progression completed in engine tests using earned resources; area/build/story/restart UI integration | Every area has real persistent interactions |
 
 ## Verified checks
 
-- 57 engine/localization/asset/progression/presentation tests, no skips.
-- 158 React Native component test runs across iOS and Android Jest Expo presets, no skips.
+- 76 engine/localization/asset/progression/presentation tests, no skips.
+- 164 React Native component test runs across iOS and Android Jest Expo presets, no skips.
 - TypeScript and formatting pass.
 - Native JS/Hermes exports include all seven ambient sprites at all three densities. These are not signed native app builds.
 - Solitaire move rules are retained. Material rewards now depend on winning and difficulty; Glimmer base values remain unchanged. New Tea Time layouts require increasing minimum moves across levels.
@@ -32,7 +32,7 @@ Baseline: `35a3e91`, Android/iOS only. The approved ambient artwork through `19a
 4. The SDK 54 dependency-advisory review remains a production release gate. Do not label this app release ready based on component tests.
 5. No high-quality separated foreground tree mask was supplied. Birds use safe sky bands. Existing high-quality seasonal/NPC art is retained; active backgrounds and decorations use the registered original illustrated artwork; playing cards use native vectors. All require product/device visual approval.
 
-Next acceptance step: review the 1.7.13 landscape APK on actual phones/tablets, including long card columns, foundation drop/double tap, Garden Match swipes, safe areas and system-bar resume. See `LANDSCAPE_GAMEPLAY.md` and `TEST_RESULTS.md`.
+Next acceptance step: review the latest landscape APK on actual phones/tablets, including long card columns, foundation drop/double tap, Garden Match swipes, safe areas and system-bar resume. See `LANDSCAPE_GAMEPLAY.md` and `TEST_RESULTS.md`.
 
 Latest usability acceptance: original icon/resource atlases integrated, native modal/HUD layering, board-level Garden Match swipe capture, compact inventory/high-contrast scrolling and large single-suit card faces. See `USABILITY_1.7.4.md` for executed checks and remaining physical-device review.
 
@@ -41,3 +41,5 @@ Latest usability acceptance: original icon/resource atlases integrated, native m
 1.7.6 replaces the clipped stack list with measured full-card pages, compacts the world map, gives exact unlock guidance and exposes card design/season/motion previews. System reduced motion is now live policy rather than copied into the saved manual flag. See `WORLD_CLARITY_1.7.6.md`; device verification remains required.
 
 1.7.7 defaults new free deals to draw-three, adds a sparse particle surface below cards and confirms gathering gains. Existing deals and explicit draw-one remain supported. See `PLAY_DEFAULTS_1.7.7.md`.
+
+Optimization increment: compact undo, deduplicated/interval storage, blocked-game tips, offline solver with 200 verified runtime seeds, randomized 6/7/8-pour Tea and round-seeded treasures. See `OPTIMIZATION_REPORT.md` for per-step commits, before/after counts and explicit solver unknowns.

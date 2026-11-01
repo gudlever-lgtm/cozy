@@ -1,6 +1,8 @@
-# Cozy Solitaire 1.7
+# Cozy Solitaire
 
 An offline-first Expo / React Native game for Android and iOS only: Klondike, a cottage garden, three repeatable mini-games, local player profiles, and Danish / English localization. There are no accounts, ads, payments, energy meters, or timers restricting play.
+
+The source version is recorded in [package.json](package.json); `app.json` mirrors it for native builds. Historical preview notes below describe their named versions. Current checks and commit history: [optimization report](docs/OPTIMIZATION_REPORT.md).
 
 ## Development
 
@@ -25,11 +27,11 @@ The cloud checkout is `/workspace/cozy`. `/home/lakn/games/cozy` in the product 
 
 ## Gameplay
 
-- **Klondike:** draw one or three (Settings controls the next deal), seven columns, suit foundations, tap or drag moves, exposed-card flips, undo, hints, restart/new deal, victory rewards and conservative auto-finish. Safe finish acts only when stock/waste are empty and all tableau cards are exposed. Random deals are not guaranteed winnable.
+- **Klondike:** draw one or three (Settings controls the next deal), seven columns, suit foundations, tap or drag moves, exposed-card flips, undo, hints, restart/new deal, victory rewards and conservative auto-finish. Safe finish acts only when stock/waste are empty and all tableau cards are exposed. New game offers random deals or a verified winnable deal; random deals are not guaranteed winnable.
 - **Garden:** speak to Millie, Marmalade and Pip; earn materials by winning games; unlock decorations that appear once at fixed, illustrated scene anchors; repair the bridge and unlock the forest scene. Botanical backs change the actual playing cards.
 - **Garden Match:** swap adjacent tiles, match at least three, collect 30 blooms in 18 valid moves. Invalid swaps cost no moves. Refresh flowers if stuck, preserving score and remaining moves.
 - **Hidden Treasures:** find five objects in the illustrated garden/forest scene.
-- **Tea Time:** sort three types of treats into complete trays. Only the same type or an empty tray receives a move. The initial arrangement is solvable.
+- **Tea Time:** sort three types of treats into complete trays. Only the same type or an empty tray receives a move. New rounds are randomized and BFS-verified at minimum 6/7/8 pours across the three levels.
 - **Quests:** six quests form three prerequisite chains, with objective counts, material rewards, and persistent completion. Repeat games to earn Glimmers and materials; harder levels award more materials. All upgrades are earnable.
 - **Ambience:** calendar/manual seasons, four times of day, adjustable particles, reduced motion, original local music and nature sounds. Rain/snow are cosmetic. Audio pauses when the app moves to the background.
 
@@ -47,7 +49,7 @@ The initial audit found **no artwork**. While implementation was underway, new c
 
 ## Android and iOS builds
 
-`app.json` sets version 1.7.0, tablet support, icons/splash, the `cozysolitaire` scheme and `com.gudlever.cozy` identifiers. Confirm identifier ownership before the first store release. `eas.json` defines production store distribution, Android AAB, and physical-device iOS builds. Microphone recording permissions are disabled; audio is playback-only.
+`app.json` mirrors the package version and sets tablet support, icons/splash, the `cozysolitaire` scheme and `com.gudlever.cozy` identifiers. Confirm identifier ownership before the first store release. `eas.json` defines production store distribution, Android AAB, and physical-device iOS builds. Microphone recording permissions are disabled; audio is playback-only.
 
 On an authorized release machine, authenticate to your Expo account, link the project using `npx eas init` (which records the real project ID), and configure your Android / Apple signing credentials securely with EAS. Never commit signing keys or tokens. Then:
 
@@ -63,13 +65,13 @@ See [IMPLEMENTATION.md](IMPLEMENTATION.md) for validation evidence and release l
 
 ## Living world animations
 
-The garden uses the seven approved ambient illustrations as transparent native PNG sprites at 1x/2x/3x. Settings offers Animations On/Off and Low/Medium/High quality in Danish and English. Independent Reanimated motion pauses in the background and respects reduced motion. Millie and Marmalade have whole-portrait idle translations. See [LIVING_WORLD.md](docs/LIVING_WORLD.md) for layers, source provenance, sprite regeneration and explicit device/performance limits. These decorative layers never mount over the card board or change game/economy rules.
+The garden uses the seven approved ambient illustrations as transparent native PNG sprites at 1x/2x/3x. Settings offers Animations On/Off and Low/Medium/High quality in Danish and English. Independent Reanimated motion pauses in the background and respects reduced motion. Millie and Marmalade have whole-portrait idle translations. See [LIVING_WORLD.md](docs/LIVING_WORLD.md) for layers, source provenance, sprite regeneration and explicit device/performance limits. Decorative layers never intercept board touches or change game/economy rules.
 
 ## Expanded world development increment
 
 World Map opens the Enchanted Forest, Riverside Garden, Cozy Village and Winter Wonderland through earned materials and story prerequisites. Eight buildings have three levels and visible upgrades; eight further stories develop friendships. Four seasonal festivals stay available throughout the year. Earn four more achievements and choose among four original vector card themes. Solitaire offers three seeded challenge deals (randomized deals are not guaranteed winnable). Mini-games have three level variants and retain the current puzzle when returning to the hub or restarting the app.
 
-The public version remains 1.7.0 while signed builds, hardware QA, dependency review and final visual/store approval are outstanding. See [IMPLEMENTATION_STATUS.md](docs/IMPLEMENTATION_STATUS.md), [TEST_RESULTS.md](docs/TEST_RESULTS.md), [PRIVACY.md](docs/PRIVACY.md) and [RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md).
+Production signing, hardware QA, dependency review and final visual/store approval remain outstanding; preview builds do not establish store readiness. See [IMPLEMENTATION_STATUS.md](docs/IMPLEMENTATION_STATUS.md), [TEST_RESULTS.md](docs/TEST_RESULTS.md), [PRIVACY.md](docs/PRIVACY.md) and [RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md).
 
 ## Landscape preview 1.7.1
 
@@ -98,3 +100,5 @@ Preview 1.7.11 replaces emoji decor with original painterly illustrations on fix
 Preview 1.7.12 harmonizes all active world backgrounds, replaces both winter scenes, grants craft materials through wins according to difficulty, and shows labeled balances/recent gains. Three main controls lead to grouped submenus. Existing progress is retained. See [world, materials and menu validation](docs/WINTER_MATERIALS_1.7.12.md).
 
 Preview 1.7.13 fixes Tea Time difficulty progression and preserves unreadable raw saves before an honestly labeled fresh start. See [repository review and validation](docs/REPO_REVIEW_1.7.13.md).
+
+The current engine uses compact schema-4 undo deltas, deduplicated saves with interval backups, conservative blocked-game guidance and round-seeded treasure positions. See [schema 4](docs/SAVE_SCHEMA_4.md) and [offline solver / verified deals](docs/SOLVER.md).

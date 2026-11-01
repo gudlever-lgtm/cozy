@@ -41,3 +41,27 @@ Step 5 checks: **74 engine tests / 162 native runs**, TypeScript and formatting 
 The optional seed selects and shuffles five distinct points from the 15 existing authored coordinates. Without a seed the three historical layouts are unchanged. App targets, idle firefly and butterfly departures all use the persisted round ID, and the effect component receives the same seed. Found IDs and round ID survive migration/resume. Tests cover 100 distinct repeatable seeds, pool membership, no duplicates, legacy behavior and native target/effect/resume consistency.
 
 Step 6 checks: **76 engine tests / 164 native runs**, TypeScript and formatting pass. Existing target artwork, rewards and found-item progress are preserved.
+
+## Step 7 — current version and documentation
+
+README points to package.json as the source version; app.json mirrors it for native builds. Obsolete claims of a current 1.7.0 release are removed while clearly labeled historical preview notes remain. The optimization increment is 1.7.14 (Android/iOS build 15). Schema-4 behavior, backup policy, solver reproduction/unknowns, version-appropriate counts and architecture are documented. No dependencies were added or changed.
+
+| Step | Commit | Engine / native runs |
+|---|---|---|
+| Baseline | 26f9814 | 57 / 158 |
+| 1. Delta history | 18091f3 | 62 / 158 |
+| 2. Save writes | 3439c7e | 64 / 158 |
+| 3. Blocked deals | ea65a4b | 67 / 160 |
+| 4. Solver / verified deals | cf46623 | 72 / 162 |
+| 5. Tea difficulty | 44cde7f | 74 / 162 |
+| 6. Treasure variation | 993da77 | 76 / 164 |
+
+## Backlog — not implemented
+
+Seasonal picture puzzles, date-seeded daily challenges, stone-wall grid puzzles, constellations, picking/sorting, quiet Riverside fishing, and Garden Match obstacles/special flowers remain backlog only. No new agreement was inferred for them.
+
+## Device limitations
+
+Native gestures, audio and performance have **not** been tested on a device. Jest mocks native bindings/layout/motion; JS exports and an Android build are build evidence, not actual phone/iPhone touch, audio, appearance or FPS evidence. Production signing/store release gates remain unchanged.
+
+Step 7 final checks on version 1.7.14: **76 engine tests / 164 native runs**, TypeScript and formatting pass, no skips. Existing dependencies and lockfile resolutions are unchanged.
