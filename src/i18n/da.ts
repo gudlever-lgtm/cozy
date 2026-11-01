@@ -1,6 +1,10 @@
 import { expansionDa } from "./expansion-da";
 import type { en } from "./en";
 export const da: Record<keyof typeof en, string> = {
+  showStack: "Vis {{count}} kort i stakken",
+  stackTitle: "Kort i stakken",
+  stackInstructions:
+    "Vælg et kort, og tryk derefter på en kolonne for at flytte kortet og serien under det.",
   matchTile: "Brik {{number}}",
   matchSwipeHint: "Skub en brik mod nabobrikken for at lave tre på stribe.",
   swipe_left: "Skub til venstre",

@@ -1,5 +1,9 @@
 import { expansionEn } from "./expansion-en";
 export const en = {
+  showStack: "Show {{count}} stacked cards",
+  stackTitle: "Stacked cards",
+  stackInstructions:
+    "Choose a card, then tap a column to move it and the sequence below it.",
   matchTile: "Tile {{number}}",
   matchSwipeHint: "Slide a tile towards a neighbour to match three.",
   swipe_left: "Slide left",

@@ -50,3 +50,66 @@ export function boardMetrics(width: number, height: number) {
   );
   return { rail, cardWidth, cardHeight, step };
 }
+
+/** Geometry uses the board's measured viewport, after tabs/status/controls have taken their space. */
+export function fitSolitaireBoard(
+  width: number,
+  height: number,
+  piles: readonly (readonly { up: boolean }[])[],
+) {
+  const padding = 10;
+  const gap = 8;
+  const innerWidth = Math.max(1, width - padding * 2);
+  const innerHeight = Math.max(1, height - padding * 2);
+  // Card size depends only on the viewport; a move never resizes unrelated columns.
+  const cardWidth = Math.max(
+    1,
+    Math.min(
+      88,
+      Math.floor((innerWidth - 24) / 7),
+      Math.floor((innerHeight - gap) / 4),
+    ),
+  );
+  const cardHeight = cardWidth * 1.44;
+  const tableauHeight = Math.max(cardHeight, innerHeight - cardHeight - gap);
+  const columns = piles.map((pile) => {
+    const firstOpen = pile.findIndex((c) => c.up);
+    const last = pile.length - 1;
+    const hiddenIndices = pile
+      .map((_, i) => i)
+      .filter((i) => firstOpen >= 0 && i > firstOpen && i < last);
+    const visibleIndices = pile
+      .map((_, i) => i)
+      .filter((i) => !hiddenIndices.includes(i));
+    const desired = visibleIndices
+      .slice(0, -1)
+      .map((i) =>
+        pile[i].up
+          ? Math.min(28, cardHeight * 0.32)
+          : Math.min(8, cardHeight * 0.12),
+      );
+    const total = desired.reduce((sum, n) => sum + n, 0);
+    const budget = Math.max(0, tableauHeight - cardHeight);
+    const compression = total > 0 ? Math.min(1, budget / total) : 1;
+    const offsets = pile.map(() => 0);
+    let y = 0;
+    visibleIndices.forEach((index, i) => {
+      offsets[index] = y;
+      y += (desired[i] ?? 0) * compression;
+    });
+    // Hidden cards remain in the engine and can be selected through the stack picker.
+    hiddenIndices.forEach((i) => {
+      offsets[i] = offsets[firstOpen];
+    });
+    return { offsets, visibleIndices, hiddenIndices, height: cardHeight + y };
+  });
+  return {
+    padding,
+    gap,
+    cardWidth,
+    cardHeight,
+    tableauHeight,
+    columns,
+    usedHeight: padding * 2 + cardHeight + gap + tableauHeight,
+  };
+}

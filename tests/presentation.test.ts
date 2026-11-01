@@ -1,6 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { boardMetrics, dropDestination } from "../src/presentation/board";
+import {
+  boardMetrics,
+  dropDestination,
+  fitSolitaireBoard,
+} from "../src/presentation/board";
 import { swipeNeighbour } from "../src/presentation/matchGesture";
 import { newGame } from "../src/engine/solitaire";
 test("landscape board fits phone/tablet widths and leaves stable readable overlaps", () => {
@@ -55,4 +59,64 @@ test("drop chooses one legal foundation with forgiving margin and rejects illega
     dropDestination(g, { kind: "waste" }, 120, 300, regions),
     undefined,
   );
+});
+
+const faceUp = (count: number) =>
+  Array.from({ length: count }, () => ({ up: true }));
+test("full initial and long legal columns fit measured phone board viewports without scrolling", () => {
+  for (const [width, height] of [
+    [414, 190],
+    [440, 222],
+    [600, 262],
+    [680, 292],
+    [880, 630],
+  ]) {
+    for (const piles of [
+      Array.from({ length: 7 }, (_, i) => [
+        ...Array.from({ length: i }, () => ({ up: false })),
+        { up: true },
+      ]),
+      [
+        ...Array.from({ length: 6 }, () => []),
+        [...Array.from({ length: 6 }, () => ({ up: false })), ...faceUp(13)],
+      ],
+      Array.from({ length: 7 }, () => faceUp(13)),
+    ]) {
+      const layout = fitSolitaireBoard(width, height, piles);
+      assert.ok(
+        layout.usedHeight <= height + 1e-8,
+        `board height ${layout.usedHeight} exceeds ${height}`,
+      );
+      assert.ok(layout.cardWidth * 7 + 24 + layout.padding * 2 <= width);
+      layout.columns.forEach((column, i) => {
+        assert.ok(column.height <= layout.tableauHeight + 1e-8);
+        assert.equal(column.offsets.length, piles[i].length);
+        column.visibleIndices.forEach((index, j) => {
+          const y = column.offsets[index];
+          assert.ok(y >= 0);
+          assert.ok(y + layout.cardHeight <= layout.tableauHeight + 1e-8);
+          if (j) assert.ok(y > column.offsets[column.visibleIndices[j - 1]]);
+        });
+      });
+    }
+  }
+});
+test("extending one column leaves all unrelated cards and columns stationary", () => {
+  const piles = Array.from({ length: 7 }, () => faceUp(4));
+  const a = fitSolitaireBoard(440, 222, piles);
+  const b = fitSolitaireBoard(440, 222, [faceUp(13), ...piles.slice(1)]);
+  assert.equal(a.cardWidth, b.cardWidth);
+  assert.equal(a.cardHeight, b.cardHeight);
+  assert.deepEqual(a.columns.slice(1), b.columns.slice(1));
+  assert.ok(fitSolitaireBoard(440, 300, piles).cardWidth > a.cardWidth);
+});
+
+test("collapsed runs show the first exposed card and outermost card while keeping intermediate indices", () => {
+  const pile = [{ up: false }, { up: false }, ...faceUp(8)];
+  const column = fitSolitaireBoard(440, 222, [pile]).columns[0];
+  assert.deepEqual(column.visibleIndices, [0, 1, 2, 9]);
+  assert.deepEqual(column.hiddenIndices, [3, 4, 5, 6, 7, 8]);
+  const pair = fitSolitaireBoard(440, 222, [faceUp(2)]).columns[0];
+  assert.deepEqual(pair.visibleIndices, [0, 1]);
+  assert.deepEqual(pair.hiddenIndices, []);
 });

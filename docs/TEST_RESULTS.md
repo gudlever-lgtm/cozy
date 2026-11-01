@@ -24,3 +24,7 @@ Public download branch: `android-download-1.7.1`. Binary and QR verification met
 ## 1.7.2 scroll regression
 
 TypeScript and formatting passed; 37 engine/presentation tests and 36 Android/iOS native component tests passed. See [SCROLL_FIX_1.7.2.md](SCROLL_FIX_1.7.2.md). Native tests do not perform native layout or establish physical-device scrolling behavior. The 1.7.1 APK checksum above remains historical evidence for that version; the new APK has its own BUILD_INFO.json and SHA256SUMS.txt on `android-download-1.7.2`.
+
+## 1.7.3 measured board and collapsed columns
+
+40 engine/presentation tests and 38 native component tests passed across Android/iOS presets. The board uses measured dimensions, shows only the first/last exposed cards per column and offers a picker for intermediate cards. New native coverage selects a hidden queen from a 19-card column, moves its suffix onto a king and undoes the move. Geometry covers complete initial/long columns in small measured viewports. Physical-device rendering and gesture comfort remain unverified. See [COMPACT_COLUMNS_1.7.3.md](COMPACT_COLUMNS_1.7.3.md).

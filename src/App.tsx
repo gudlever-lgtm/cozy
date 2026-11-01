@@ -20,6 +20,7 @@ import {
 } from "react-native-safe-area-context";
 import {
   boardMetrics,
+  fitSolitaireBoard,
   dropDestination,
   type DropRegion,
 } from "./presentation/board";
@@ -146,6 +147,8 @@ export default function App() {
     height - insets.top - insets.bottom - 58,
   );
   const railWidth = metrics.rail;
+  const [stackPile, setStackPile] = useState<number | null>(null);
+  const [boardSize, setBoardSize] = useState({ width: 0, height: 0 });
   const [dragging, setDragging] = useState<Place | null>(null);
 
   const [tip, setTip] = useState<string | null>(null);
@@ -443,6 +446,7 @@ export default function App() {
   const language = s.preferences.language;
   const go = (id: Screen) => {
     setMatchBusy(false);
+    setStackPile(null);
     setChallengeOpen(false);
     setScreen(id);
     setMessage("");
@@ -516,17 +520,12 @@ export default function App() {
     setSelected(null);
     setHint(null);
   }
-  const { cardWidth, cardHeight, step: cardStep } = metrics;
-  const tableauHeight =
-    cardHeight +
-    Math.max(
-      ...s.game.tableau.map((p) =>
-        p
-          .slice(0, -1)
-          .reduce((height, c) => height + (c.up ? cardStep : 10), 0),
-      ),
-      0,
-    );
+  const boardLayout = fitSolitaireBoard(
+    boardSize.width || width - insets.left - insets.right - railWidth - 24,
+    boardSize.height || height - insets.top - insets.bottom - 58 - 16 - 24,
+    s.game.tableau,
+  );
+  const { cardWidth, cardHeight, tableauHeight } = boardLayout;
   const isSelected = (p: Place) =>
     selected?.kind === p.kind &&
     (p.kind === "waste" ||
@@ -536,6 +535,7 @@ export default function App() {
   const renderCard = (c: Card, p: Place, overlap = false) => (
     <Draggable
       key={c.id}
+      testID={`playing-card-${c.id}`}
       enabled={c.up}
       onTap={() => tap(p)}
       onDrop={(x, y) => drop(p, x, y)}
@@ -547,30 +547,44 @@ export default function App() {
       }}
       tail={
         p.kind === "tableau"
-          ? s.game.tableau[p.pile].slice((p.index ?? 0) + 1).map((card, i) => (
-              <View
-                pointerEvents="none"
-                key={card.id}
-                style={[
-                  st.card,
-                  {
-                    position: "absolute",
-                    top: (i + 1) * cardStep,
-                    width: cardWidth,
-                    height: cardHeight,
-                  },
-                ]}
-              >
-                <CardArtwork card={card} theme={s.world.theme} />
-              </View>
-            ))
+          ? s.game.tableau[p.pile]
+              .map((card, index) => ({ card, index }))
+              .filter(
+                ({ index }) =>
+                  index > (p.index ?? 0) &&
+                  boardLayout.columns[p.pile].visibleIndices.includes(index),
+              )
+              .map(({ card, index }) => (
+                <View
+                  pointerEvents="none"
+                  key={card.id}
+                  style={[
+                    st.card,
+                    {
+                      position: "absolute",
+                      top:
+                        boardLayout.columns[p.pile].offsets[index] -
+                        boardLayout.columns[p.pile].offsets[p.index ?? 0],
+                      width: cardWidth,
+                      height: cardHeight,
+                    },
+                  ]}
+                >
+                  <CardArtwork card={card} theme={s.world.theme} />
+                </View>
+              ))
           : null
       }
       label={c.up ? cardName(c) : tt("faceDown")}
       style={{
         width: cardWidth,
         height: cardHeight,
-        marginBottom: overlap ? -(cardHeight - (c.up ? cardStep : 10)) : 0,
+        ...(overlap && p.kind === "tableau"
+          ? {
+              position: "absolute",
+              top: boardLayout.columns[p.pile].offsets[p.index ?? 0],
+            }
+          : {}),
         zIndex:
           dragging && JSON.stringify(dragging) === JSON.stringify(p) ? 100 : 1,
         opacity:
@@ -594,6 +608,55 @@ export default function App() {
         ]}
       >
         <CardArtwork card={c} theme={s.world.theme} />
+        {overlap &&
+          c.up &&
+          p.kind === "tableau" &&
+          (p.index ?? 0) < s.game.tableau[p.pile].length - 1 &&
+          (() => {
+            const strip =
+              boardLayout.columns[p.pile].offsets[
+                boardLayout.columns[p.pile].visibleIndices.find(
+                  (index) => index > (p.index ?? 0),
+                )!
+              ] - boardLayout.columns[p.pile].offsets[p.index ?? 0];
+            return (
+              <View
+                pointerEvents="none"
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 1,
+                  right: 1,
+                  height: strip,
+                  backgroundColor: "#fff9eb",
+                  borderTopLeftRadius: 4,
+                  borderTopRightRadius: 4,
+                }}
+              >
+                <Text
+                  allowFontScaling={false}
+                  style={{
+                    color: red(c) ? "#a35556" : "#345b49",
+                    fontWeight: "700",
+                    fontSize: Math.min(13, Math.max(5, strip - 1)),
+                    lineHeight: Math.max(5, strip),
+                    paddingLeft: 2,
+                  }}
+                >
+                  {c.rank === 1
+                    ? "A"
+                    : c.rank === 11
+                      ? "J"
+                      : c.rank === 12
+                        ? "Q"
+                        : c.rank === 13
+                          ? "K"
+                          : c.rank}
+                  {c.suit}
+                </Text>
+              </View>
+            );
+          })()}
       </View>
     </Draggable>
   );
@@ -607,7 +670,7 @@ export default function App() {
       collapsable={false}
       style={{
         width: cardWidth,
-        minHeight: cardHeight,
+        height: p.kind === "tableau" ? tableauHeight : cardHeight,
         zIndex:
           dragging?.kind === p.kind &&
           dragging?.kind !== "waste" &&
@@ -988,12 +1051,18 @@ export default function App() {
                       {number(s.economy.wallet.glimmers, language)}
                     </Text>
                   </View>
-                  <ScrollView
-                    nestedScrollEnabled
-                    style={{ flex: 1 }}
-                    contentContainerStyle={{ flexGrow: 1 }}
-                    scrollEnabled={!dragging}
-                    testID="card-board-scroll"
+                  <View
+                    style={{ flex: 1, minHeight: 0 }}
+                    testID="card-board-viewport"
+                    onLayout={(event) => {
+                      const { width, height } = event.nativeEvent.layout;
+                      if (width > 0 && height > 0)
+                        setBoardSize((previous) =>
+                          previous.width === width && previous.height === height
+                            ? previous
+                            : { width, height },
+                        );
+                    }}
                   >
                     <View style={st.board} testID="solitaire-board">
                       <View
@@ -1065,8 +1134,8 @@ export default function App() {
                         style={{
                           flexDirection: "row",
                           justifyContent: "space-between",
-                          marginTop: 12,
-                          minHeight: tableauHeight,
+                          marginTop: boardLayout.gap,
+                          height: tableauHeight,
                         }}
                       >
                         {s.game.tableau.map((p, pile) =>
@@ -1075,21 +1144,80 @@ export default function App() {
                             "t" + pile,
                             <View
                               pointerEvents="box-none"
-                              style={{ paddingBottom: cardHeight }}
+                              style={{ height: tableauHeight }}
                             >
-                              {p.map((c, index) =>
-                                renderCard(
-                                  c,
-                                  { kind: "tableau", pile, index },
-                                  true,
-                                ),
+                              {boardLayout.columns[pile].visibleIndices.map(
+                                (index) =>
+                                  renderCard(
+                                    p[index],
+                                    { kind: "tableau", pile, index },
+                                    true,
+                                  ),
+                              )}
+                              {boardLayout.columns[pile].hiddenIndices.length >
+                                0 && (
+                                <Pressable
+                                  testID={`stack-picker-${pile}`}
+                                  accessibilityRole="button"
+                                  accessibilityLabel={tt("showStack", {
+                                    count:
+                                      boardLayout.columns[pile].hiddenIndices
+                                        .length,
+                                  })}
+                                  onPress={() => setStackPile(pile)}
+                                  hitSlop={5}
+                                  style={[
+                                    {
+                                      position: "absolute",
+                                      right: 1,
+                                      top:
+                                        boardLayout.columns[pile].offsets[
+                                          p.findIndex((c) => c.up)
+                                        ] + 1,
+                                      minWidth: 18,
+                                      height: Math.min(
+                                        18,
+                                        boardLayout.columns[pile].offsets[
+                                          p.length - 1
+                                        ] -
+                                          boardLayout.columns[pile].offsets[
+                                            p.findIndex((c) => c.up)
+                                          ] -
+                                          1,
+                                      ),
+                                      borderRadius: 4,
+                                      backgroundColor: "#d9c48a",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      zIndex: 5,
+                                    },
+                                    selected?.kind === "tableau" &&
+                                      selected.pile === pile &&
+                                      st.selected,
+                                  ]}
+                                >
+                                  <Text
+                                    allowFontScaling={false}
+                                    style={{
+                                      fontSize: 8,
+                                      color: "#284d3c",
+                                      fontWeight: "700",
+                                    }}
+                                  >
+                                    +
+                                    {
+                                      boardLayout.columns[pile].hiddenIndices
+                                        .length
+                                    }
+                                  </Text>
+                                </Pressable>
                               )}
                             </View>,
                           ),
                         )}
                       </View>
                     </View>
-                  </ScrollView>
+                  </View>
                 </View>
                 <ScrollView
                   nestedScrollEnabled
@@ -1801,6 +1929,47 @@ export default function App() {
           <Text style={st.subtitle}>{tip}</Text>
         </Pressable>
       )}
+      {stackPile !== null && (
+        <View style={st.overlay}>
+          <View style={[st.modal, { maxHeight: "85%" }]}>
+            <Text style={st.sectionTitle}>{tt("stackTitle")}</Text>
+            <Text style={st.small}>{tt("stackInstructions")}</Text>
+            <ScrollView
+              nestedScrollEnabled
+              contentContainerStyle={{ gap: 8, padding: 8 }}
+            >
+              {boardLayout.columns[stackPile].hiddenIndices.map((index) => {
+                const card = s.game.tableau[stackPile][index];
+                return (
+                  <Pressable
+                    key={card.id}
+                    accessibilityRole="button"
+                    accessibilityLabel={cardName(card)}
+                    onPress={() => {
+                      setSelected({ kind: "tableau", pile: stackPile, index });
+                      setStackPile(null);
+                      setTip(cardName(card));
+                    }}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 12,
+                      minHeight: 44,
+                      padding: 6,
+                    }}
+                  >
+                    <View style={{ width: 36, height: 52 }}>
+                      <CardArtwork card={card} theme={s.world.theme} />
+                    </View>
+                    <Text style={st.subtitle}>{cardName(card)}</Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+            {button(tt("close"), () => setStackPile(null), false, true)}
+          </View>
+        </View>
+      )}
       {(help || challengeOpen) && (
         <View style={st.overlay}>
           <View style={[st.modal, { maxHeight: "85%" }]}>
@@ -1908,6 +2077,7 @@ function ScreenViewport({
 function Draggable({
   children,
   label,
+  testID,
   enabled,
   onTap,
   onDrop,
@@ -1918,6 +2088,7 @@ function Draggable({
 }: {
   children: React.ReactNode;
   label: string;
+  testID: string;
   enabled: boolean;
   onTap: () => void;
   onDrop: (x: number, y: number) => Promise<void>;
@@ -1961,6 +2132,7 @@ function Draggable({
   ).current;
   return (
     <Animated.View
+      testID={testID}
       {...pan.panHandlers}
       style={[
         style,
@@ -2273,8 +2445,9 @@ const st = StyleSheet.create({
   },
   playCenter: { flex: 1, minWidth: 0, minHeight: 0 },
   board: {
-    flexGrow: 1,
-    padding: 12,
+    flex: 1,
+    minHeight: 0,
+    padding: 8,
     borderRadius: 16,
     backgroundColor: "#284d3c99",
     borderWidth: 1,

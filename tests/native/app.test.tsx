@@ -414,12 +414,11 @@ test("game panels scroll in a bounded viewport; oversized menu screens retain th
   expectBoundedGame();
   press("♠ Play Solitaire");
   expectBoundedGame();
-  expect(screen.getByTestId("card-board-scroll").props.scrollEnabled).toBe(
-    true,
-  );
-  expect(
-    screen.getByTestId("card-board-scroll").props.nestedScrollEnabled,
-  ).toBe(true);
+  expect(screen.getByTestId("card-board-viewport")).toHaveStyle({
+    flex: 1,
+    minHeight: 0,
+  });
+  expect(screen.queryByTestId("card-board-scroll")).toBeNull();
   press("⚙ Settings");
   expect(screen.queryByTestId("game-viewport")).toBeNull();
   expect(screen.getByTestId("screen-scroll").props.scrollEnabled).not.toBe(
@@ -462,5 +461,66 @@ test("compact tabs navigate with localized accessible names and dismissible time
   await waitFor(
     () => expect(screen.queryByTestId("compact-tooltip")).toBeNull(),
     { timeout: 4000 },
+  );
+});
+
+test("Solitaire responds to the real board viewport and keeps a long column's bottom card visible", async () => {
+  const initial = setProfile(fresh("fit-native", "en"), "Compact Native", "p");
+  const deck = [
+    ...initial.game.stock,
+    ...initial.game.waste,
+    ...initial.game.tableau.flat(),
+  ];
+  const sequence = Array.from({ length: 13 }, (_, i) => {
+    const rank = 13 - i;
+    return deck.find((c) => c.rank === rank && c.suit === (i % 2 ? "♥" : "♠"))!;
+  });
+  const rest = deck.filter((c) => !sequence.some((s) => s.id === c.id));
+  const targetIndex = rest.findIndex((c) => c.rank === 13 && c.suit === "♣");
+  const [target] = rest.splice(targetIndex, 1);
+  const hidden = rest.splice(0, 6).map((c) => ({ ...c, up: false }));
+  initial.game.tableau = [
+    [{ ...target, up: true }],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [...hidden, ...sequence.map((c) => ({ ...c, up: true }))],
+  ];
+  initial.game.stock = rest;
+  initial.game.waste = [];
+  initial.game.foundations = [[], [], [], []];
+  await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(initial));
+  await renderAsync(<App />);
+  await screen.findByTestId("main-tabs");
+  press("♠ Play Solitaire");
+  fireEvent(screen.getByTestId("card-board-viewport"), "layout", {
+    nativeEvent: { layout: { x: 0, y: 0, width: 414, height: 190 } },
+  });
+  const last = screen.getByTestId(`playing-card-${sequence.at(-1)!.id}`);
+  const { StyleSheet } = require("react-native");
+  const style = StyleSheet.flatten(last.props.style);
+  expect(style.position).toBe("absolute");
+  // 190 minus board padding, top stock/foundation card, and the row gap.
+  const available = 190 - 20 - style.height - 8;
+  expect(style.top + style.height).toBeLessThanOrEqual(available + 0.001);
+  expect(screen.queryByTestId("card-board-scroll")).toBeNull();
+  await waitFor(async () =>
+    expect((await stored()).game.tableau[6]).toHaveLength(19),
+  );
+  expect(screen.queryByTestId(`playing-card-${sequence[1].id}`)).toBeNull();
+  press("Show 11 stacked cards");
+  press("Queen of hearts");
+  press("King of clubs");
+  await waitFor(async () => {
+    const game = (await stored()).game;
+    expect(game.moves).toBe(1);
+    expect(game.tableau[0]).toHaveLength(13);
+    expect(game.tableau[6]).toHaveLength(7);
+  });
+  press("Undo");
+  await waitFor(async () =>
+    expect((await stored()).game.tableau[6]).toHaveLength(19),
   );
 });
