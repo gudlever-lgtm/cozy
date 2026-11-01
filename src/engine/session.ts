@@ -1,3 +1,4 @@
+import { seededRandom, seedFromString } from "./random";
 import { randomTea } from "./teaDifficulty";
 import { newMatch, type Match, type Tea, treasures } from "./minigames";
 export type MiniKind = "match" | "hidden" | "tea";
@@ -17,7 +18,25 @@ export function matchForLevel(level: MiniLevel) {
 export function teaForLevel(level: MiniLevel, random = Math.random): Tea {
   return randomTea(level, random);
 }
-export function treasuresForLevel(level: MiniLevel) {
+export function treasuresForLevel(
+  level: MiniLevel,
+  seed?: string,
+): { id: (typeof treasures)[number]["id"]; x: number; y: number }[] {
+  if (seed !== undefined) {
+    const points = ([1, 2, 3] as MiniLevel[]).flatMap((level) =>
+      treasuresForLevel(level).map((t) => [t.x, t.y]),
+    );
+    const random = seededRandom(seedFromString(seed));
+    for (let i = points.length - 1; i > 0; i--) {
+      const j = Math.floor(random() * (i + 1));
+      [points[i], points[j]] = [points[j], points[i]];
+    }
+    return treasures.map((t, i) => ({
+      ...t,
+      x: points[i][0],
+      y: points[i][1],
+    }));
+  }
   const positions =
     level === 2
       ? [

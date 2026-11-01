@@ -1422,3 +1422,46 @@ test("New game can select a verified winnable deal without losing player progres
   expect(saved.economy.wallet.wood).toBe(12);
   expect(saved.profile.id).toBe("player");
 });
+
+test("Hidden Treasures uses the same seeded positions for touches, effects and resumed play", async () => {
+  const s = setProfile(fresh("hunt", "en"), "Player", "player");
+  s.miniSession = {
+    id: "stable-hunt",
+    kind: "hidden",
+    level: 2,
+    match: {
+      cells: Array.from({ length: 36 }, (_, i) => i % 5),
+      score: 0,
+      turns: 18,
+      target: 30,
+    },
+    tea: teaForLevel(2),
+    found: ["acorn"],
+  };
+  await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(s));
+  const open = async () => {
+    await renderAsync(<App />);
+    await screen.findByTestId("main-tabs");
+    press("✿ Mini-games");
+    press("Resume saved puzzle");
+  };
+  await open();
+  const expected = require("../../src/engine/session")
+    .treasuresForLevel(2, "stable-hunt")
+    .find((t: { id: string }) => t.id === "key");
+  const position = () =>
+    screen.getByRole("button", { name: String(i18n.t("key")) }).props.style;
+  expect(position()).toEqual(
+    expect.objectContaining({ left: `${expected.x}%`, top: `${expected.y}%` }),
+  );
+  expect(
+    screen.UNSAFE_getByType(
+      require("../../src/HiddenTreasureEffects").HiddenTreasureEffects,
+    ).props.seed,
+  ).toBe("stable-hunt");
+  const before = position();
+  await cleanupAsync();
+  await open();
+  expect(position()).toEqual(before);
+  expect(screen.queryByRole("button", { name: "Acorn" })).toBeNull();
+});

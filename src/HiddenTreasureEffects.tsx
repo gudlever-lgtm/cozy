@@ -123,6 +123,7 @@ function FallingSprite({
 export function HiddenTreasureEffects({
   found,
   level,
+  seed,
   width,
   height,
   season,
@@ -132,6 +133,7 @@ export function HiddenTreasureEffects({
 }: {
   found: string[];
   level: MiniLevel;
+  seed?: string;
   width: number;
   height: number;
   season: LivingSeason;
@@ -150,7 +152,7 @@ export function HiddenTreasureEffects({
     const justWon = found.length === 5 && previous.current.size < 5;
     previous.current = new Set(found);
     if (added.length && motion.active) {
-      const objects = treasuresForLevel(level);
+      const objects = treasuresForLevel(level, seed);
       setFlights((old) =>
         [
           ...old,
@@ -177,7 +179,7 @@ export function HiddenTreasureEffects({
       }, 4500);
       timers.current.add(timer);
     }
-  }, [found, level, motion.active]);
+  }, [found, level, seed, motion.active]);
   useEffect(() => {
     if (!motion.active) setFlights([]);
   }, [motion.active]);

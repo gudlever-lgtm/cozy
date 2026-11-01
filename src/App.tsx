@@ -960,7 +960,7 @@ export default function App() {
           }}
           revision={found}
           resolve={() => {
-            const next = treasuresForLevel(miniLevel).find(
+            const next = treasuresForLevel(miniLevel, miniId).find(
               (o) => !found.includes(o.id),
             );
             return next
@@ -979,6 +979,7 @@ export default function App() {
           key={miniId}
           found={found}
           level={miniLevel}
+          seed={miniId}
           width={sceneSize.width}
           height={sceneSize.height}
           season={worldSeason}
@@ -990,7 +991,7 @@ export default function App() {
       {!hidden && <FestivalDecorations events={s.world.events} />}
 
       {hidden
-        ? treasuresForLevel(miniLevel)
+        ? treasuresForLevel(miniLevel, miniId)
             .filter((o) => !found.includes(o.id))
             .map((o) => (
               <Pressable

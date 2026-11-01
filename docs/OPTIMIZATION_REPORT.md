@@ -35,3 +35,9 @@ Offline reverse BFS (`node --import tsx scripts/analyze-tea.ts`) enumerated 2,42
 Deviation from the brief: the native Tea completion test did not in fact tolerate independent randomized factories—it solved a separately generated layout before opening the app. It now searches the actual rendered board; the idle-touch test likewise checks the actual legal pour instead of a hard-coded treat. These retain the original completion/touch/reward assertions.
 
 Step 5 checks: **74 engine tests / 162 native runs**, TypeScript and formatting pass. No colors/trays, existing session validation, reward values or saved layouts were changed.
+
+## Step 6 — stable randomized Hidden Treasures
+
+The optional seed selects and shuffles five distinct points from the 15 existing authored coordinates. Without a seed the three historical layouts are unchanged. App targets, idle firefly and butterfly departures all use the persisted round ID, and the effect component receives the same seed. Found IDs and round ID survive migration/resume. Tests cover 100 distinct repeatable seeds, pool membership, no duplicates, legacy behavior and native target/effect/resume consistency.
+
+Step 6 checks: **76 engine tests / 164 native runs**, TypeScript and formatting pass. Existing target artwork, rewards and found-item progress are preserved.
