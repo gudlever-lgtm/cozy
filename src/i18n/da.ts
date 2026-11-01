@@ -2,6 +2,8 @@ import { expansionDa } from "./expansion-da";
 import type { en } from "./en";
 export const da: Record<keyof typeof en, string> = {
   solitaireNoMoves: "Ingen flere træk fundet. Prøv Fortryd eller Nyt spil.",
+  randomDeal: "Tilfældig kortfordeling",
+  winnableDeal: "Garanteret vindbar deal",
   areaAvailable: "Åbent",
   areaCanOpen: "Klar til at åbne",
   areaLockedShort: "Låst",

@@ -40,6 +40,7 @@ import {
 import { solitaireIdleHint } from "./presentation/idleHints";
 import { GameRewardLine } from "./GameRewardLine";
 import { ForestGuide } from "./ForestGuide";
+import { winnableGame } from "./engine/winnable";
 import { HiddenTreasureEffects } from "./HiddenTreasureEffects";
 import { GardenDecorations, DecorationArtwork } from "./GardenDecorations";
 import { TeaTime } from "./TeaTime";
@@ -175,6 +176,7 @@ export default function App() {
   const [boardSize, setBoardSize] = useState({ width: 0, height: 0 });
   const [dragging, setDragging] = useState<Place | null>(null);
 
+  const [guaranteedDeal, setGuaranteedDeal] = useState(false);
   const [tip, setTip] = useState<string | null>(null);
   const [challengeOpen, setChallengeOpen] = useState(false);
   useEffect(() => {
@@ -2439,6 +2441,22 @@ export default function App() {
                     : "confirmRestart",
                 )}
               </Text>
+              {dialog === "new" && !pendingChallenge && (
+                <View style={st.row}>
+                  {button(
+                    tt("randomDeal"),
+                    () => setGuaranteedDeal(false),
+                    false,
+                    !guaranteedDeal,
+                  )}
+                  {button(
+                    tt("winnableDeal"),
+                    () => setGuaranteedDeal(true),
+                    false,
+                    guaranteedDeal,
+                  )}
+                </View>
+              )}
               <View style={st.row}>
                 {button(tt("cancel"), () => setDialog(null), false, true)}
                 {button(tt("confirm"), () => {
@@ -2447,7 +2465,9 @@ export default function App() {
                       ...v,
                       game: pendingChallenge
                         ? challengeGame(uuid(), pendingChallenge)
-                        : newGame(uuid(), nextDraw),
+                        : guaranteedDeal
+                          ? winnableGame(uuid(), nextDraw, v.attempts - 1)
+                          : newGame(uuid(), nextDraw),
                       attempts: v.attempts + 1,
                     }));
                   else applyGame(restart);

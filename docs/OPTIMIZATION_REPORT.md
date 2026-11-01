@@ -23,3 +23,7 @@ Identical serialized saves are skipped inside the serialized queue, including co
 ## Step 3 — no-more-moves guidance
 
 `isStuck` checks the current and complete next stock/waste cycle in both draw modes, without changing the game. It returns false for wins, unknown cycles and legal foundation returns as well as ordinary hints. Actual game actions show the existing temporary tip with DA/EN Undo/New game guidance. Tests cover visible/draw-only/partial-pass moves and the rendered app notice. **67 engine tests / 160 native runs**, TypeScript and formatting pass.
+
+## Step 4 — offline solver / verified deals
+
+Added bounded DFS with transpositions and ordinary engine actions. At 150,000 nodes, original seeds 17017 and 23111 remain unknown; 98173 is solved in 5,333 nodes with a replay-verified 228-action solution. No challenge seed was changed. The original LCG is shared and full-deal hashes lock shuffle behavior. Offline generation produced 100 replay-verified seeds per draw mode, with all 200 witnesses checked by tests. Runtime imports only the seed list; a graph test excludes solver/Node/test code. New game offers the optional guaranteed-winnable choice. See SOLVER.md for reproduction, limits and results. Test baseline for this step: **72 engine tests / 162 native runs**, TypeScript and formatting.

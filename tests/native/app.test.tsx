@@ -1398,3 +1398,25 @@ test("a blocked Solitaire stock cycle offers Undo or New game", async () => {
     await screen.findByText(String(i18n.t("solitaireNoMoves"))),
   ).toBeOnTheScreen();
 });
+
+test("New game can select a verified winnable deal without losing player progress", async () => {
+  const s = setProfile(fresh("old", "en"), "Player", "player");
+  s.economy.wallet.wood = 12;
+  await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(s));
+  await renderAsync(<App />);
+  await screen.findByTestId("main-tabs");
+  press("♠ Play Solitaire");
+  press(String(i18n.t("newGame")));
+  press(String(i18n.t("winnableDeal")));
+  press(String(i18n.t("confirm")));
+  await waitFor(async () => expect((await stored()).attempts).toBe(2));
+  const saved = await stored();
+  const expected = require("../../src/engine/winnable").winnableGame(
+    "expected",
+    3,
+    0,
+  );
+  expect(saved.game.initial).toEqual(expected.initial);
+  expect(saved.economy.wallet.wood).toBe(12);
+  expect(saved.profile.id).toBe("player");
+});
