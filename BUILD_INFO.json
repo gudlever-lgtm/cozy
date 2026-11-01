@@ -1,0 +1,29 @@
+{
+  "source_commit": "660b02ba663d2880c04686e8b55f455dba2a2afc",
+  "version": "1.7.1",
+  "version_code": 2,
+  "package": "com.gudlever.cozy",
+  "orientation": "landscape",
+  "min_android": "7.0 (API 24)",
+  "architectures": [
+    "arm64-v8a"
+  ],
+  "build": "local Gradle assembleRelease; same test signing key as 1.7.0",
+  "sha256": "b1508f50ea5b40e270a38f1a12105b101cbffb2e3e2d8e5de20f6435ecff91c7",
+  "size_bytes": 56092933,
+  "signature_verified": true,
+  "zip_integrity_verified": true,
+  "alignment_16k_verified": true,
+  "standalone_bundle_verified": true,
+  "ambient_sprites_verified": 7,
+  "physical_device_tested": false,
+  "eas_cloud_build": false,
+  "engine_tests_passed": 37,
+  "native_component_tests_passed": 32,
+  "distribution": {
+    "public_sharing_approved": true,
+    "repository": "gudlever-lgtm/cozy",
+    "branch": "android-download-1.7.1",
+    "download_url": "https://raw.githubusercontent.com/gudlever-lgtm/cozy/android-download-1.7.1/cozy-solitaire-1.7.1-arm64.apk"
+  }
+}
