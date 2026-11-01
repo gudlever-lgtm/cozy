@@ -1,0 +1,17 @@
+{
+  "source_commit": "8677649",
+  "version": "1.7.3",
+  "version_code": 4,
+  "size_bytes": 56100733,
+  "sha256": "8934cc45d04cde9593db7096c9d91c41d5a425938f49857b000ac786ca5f2163",
+  "architectures": [
+    "arm64-v8a"
+  ],
+  "test_signing_same_as_previous": true,
+  "engine_tests_passed": 40,
+  "native_component_tests_passed": 38,
+  "physical_device_tested": false,
+  "publicly_published": true,
+  "download_url": "https://raw.githubusercontent.com/gudlever-lgtm/cozy/android-download/cozy-solitaire.apk",
+  "filename": "cozy-solitaire.apk"
+}
