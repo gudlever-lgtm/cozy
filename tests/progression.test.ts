@@ -35,18 +35,12 @@ import {
 import { pour, teaWon } from "../src/engine/minigames";
 import { challengeGame, challenges } from "../src/engine/challenges";
 import { snapshot } from "../src/engine/solitaire";
-test("all expanded areas, eight stories, buildings and relationships are reachable through gameplay resources", () => {
+test("all areas, stories and upgrades are reachable using only win-earned resources", () => {
   let s = fresh("world", "en");
   const originalGame = structuredClone(s.game);
   for (let i = 0; i < 20; i++)
     for (const type of ["solitaire", "match", "hidden", "tea"] as const)
       s = reward(s, type, `${type}-${i}`);
-  for (let i = 0; i < 80; i++)
-    s = {
-      ...s,
-      economy: transact(s.economy, `gather:${i}`, { wood: 1, stone: 1 }),
-      counters: { ...s.counters, gather: s.counters.gather + 1 },
-    };
   for (const id of ["millie1", "marmalade1", "pip1"])
     s = { ...s, ...claimQuest(s.economy, s.completed, id, s.counters) };
   for (const u of upgrades)

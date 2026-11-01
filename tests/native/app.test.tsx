@@ -34,10 +34,51 @@ async function stored() {
   return JSON.parse((await AsyncStorage.getItem(SAVE_KEY))!);
 }
 function press(name: string) {
-  const matches = [
+  let matches = [
     ...screen.queryAllByRole("button", { name }),
     ...screen.queryAllByRole("tab", { name }),
   ];
+  if (!matches.length) {
+    const routes = [
+      { id: "world", icon: "◇", group: "menuGarden" },
+      { id: "quests", icon: "☷", group: "menuGarden" },
+      { id: "decorations", icon: "❀", group: "menuGarden" },
+      { id: "inventory", icon: "▧", group: "materials" },
+      { id: "statistics", icon: "↗", group: "menuPlayer" },
+      { id: "settings", icon: "⚙", group: "menuPlayer" },
+      { id: "mini", icon: "✿", group: "menuGames" },
+    ];
+    const route = routes.find((r) => r.icon + " " + i18n.t(r.id) === name);
+    const extra = [
+      "help",
+      "restart",
+      "newGame",
+      "challengeTitle",
+      "gather",
+      "exploreForest",
+    ].some((key) => i18n.t(key) === name);
+    if (route || extra) {
+      fireEvent.press(
+        screen.getByRole("button", { name: String(i18n.t("mainMenu")) }),
+      );
+      fireEvent.press(
+        screen.getByRole("button", {
+          name: String(
+            i18n.t(
+              route?.group ??
+                (name === i18n.t("gather")
+                  ? "materials"
+                  : name === i18n.t("exploreForest")
+                    ? "menuGarden"
+                    : "menuGames"),
+            ),
+          ),
+        }),
+      );
+      matches = screen.queryAllByRole("button", { name });
+    }
+  }
+  if (!matches.length) throw new Error("Missing control: " + name);
   fireEvent.press(matches[0]);
 }
 
@@ -200,6 +241,7 @@ test("native partial hidden puzzle resumes at its level and cannot pay twice aft
   await renderAsync(<App />);
   await screen.findByTestId("main-tabs");
   press("✿ Mini-games");
+  press("Resume saved puzzle");
   expect(screen.queryByRole("button", { name: "Key" })).toBeNull();
   for (const name of ["Acorn", "Ribbon", "Spoon", "Button"]) press(name);
   await screen.findByText("Beautifully done! +20 Glimmers");
@@ -210,6 +252,7 @@ test("native partial hidden puzzle resumes at its level and cannot pay twice aft
   await renderAsync(<App />);
   await screen.findByTestId("main-tabs");
   press("✿ Mini-games");
+  press("Resume saved puzzle");
   await screen.findByText("Beautifully done! +20 Glimmers");
   expect((await stored()).economy.wallet.glimmers).toBe(20);
 });
@@ -420,6 +463,7 @@ test.each([1, 2, 3] as MiniLevel[])(
     await renderAsync(<App />);
     await screen.findByTestId("main-tabs");
     press("✿ Mini-games");
+    press("Resume saved puzzle");
     expect(screen.getByRole("button", { name: "Tray 1" })).toBeDisabled();
     expect((await stored()).economy.wallet.glimmers).toBe(20);
     expect((await stored()).game).toEqual(game);
@@ -468,18 +512,20 @@ test("game panels scroll in a bounded viewport; oversized menu screens retain th
   }
 });
 
-test("compact tabs navigate with localized accessible names and dismissible timed labels", async () => {
+test("three main controls navigate through localized submenus and retain timed labels", async () => {
   await AsyncStorage.setItem(
     SAVE_KEY,
     JSON.stringify(setProfile(fresh("tabs", "en"), "Tabs Native", "p")),
   );
   await renderAsync(<App />);
   await screen.findByTestId("main-tabs");
-  expect(screen.getAllByRole("tab")).toHaveLength(9);
+  expect(
+    within(screen.getByTestId("main-tabs")).getAllByRole("button"),
+  ).toHaveLength(3);
   expect(screen.queryByText("Cozy Solitaire")).toBeNull();
   press("♠ Play Solitaire");
   expect(
-    screen.getByRole("tab", { name: "♠ Play Solitaire" }).props
+    screen.getByRole("button", { name: "♠ Play Solitaire" }).props
       .accessibilityState.selected,
   ).toBe(true);
   expect(screen.getByTestId("compact-tooltip")).toHaveTextContent(
@@ -791,24 +837,18 @@ test("Solitaire runs sparse seasonal effects behind cards without intercepting t
   ).toHaveLength(0);
 });
 
-test("gathering visibly confirms wood and stone and preserves Glimmers and the deal", async () => {
-  const initial = setProfile(fresh("gather", "en"), "Gather Native", "p");
+test("Win materials opens game choices without granting free supplies or changing the deal", async () => {
+  const initial = setProfile(fresh("earn", "en"), "Earn Native", "p");
   initial.economy.wallet.glimmers = 75;
   await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(initial));
   await renderAsync(<App />);
   await screen.findByTestId("main-tabs");
-  press("Gather supplies");
-  expect(screen.getByTestId("compact-tooltip")).toHaveTextContent(
-    "Gathered: +1 wood · +1 stone",
-  );
-  await waitFor(async () => {
-    const saved = await stored();
-    expect(saved.economy.wallet.wood).toBe(1);
-    expect(saved.economy.wallet.stone).toBe(1);
-    expect(saved.economy.wallet.glimmers).toBe(75);
-    expect(saved.counters.gather).toBe(1);
-    expect(saved.game).toEqual(initial.game);
-  });
+  expect(screen.queryByRole("button", { name: "Gather supplies" })).toBeNull();
+  press("Win materials");
+  expect(screen.getByTestId("mini-start-hidden")).toBeOnTheScreen();
+  expect((await stored()).economy.wallet).toEqual(initial.economy.wallet);
+  expect((await stored()).counters.gather).toBe(0);
+  expect((await stored()).game).toEqual(initial.game);
 });
 
 test("quest journal explains objectives and exact materials, claims once and recommends the next chapter", async () => {
@@ -937,6 +977,10 @@ test.each([1, 2, 3] as MiniLevel[])(
       expect(saved.counters.hidden).toBe(1);
       expect(saved.economy.wallet.glimmers).toBe(20);
       expect(saved.world.medals).toContain(`hidden:${level}`);
+      expect(saved.economy.wallet.wood).toBe(2 * level);
+      expect(saved.economy.wallet.stone).toBe(level);
+      expect(saved.economy.wallet.flowers).toBe(level);
+      expect(saved.economy.wallet.seeds).toBe(level);
       expect(saved.game).toEqual(original.game);
     });
   },
@@ -961,6 +1005,7 @@ test("Garden Match dead board offers shuffle preserving score, turns, session an
   await renderAsync(<App />);
   await screen.findByTestId("main-tabs");
   press("✿ Mini-games");
+  press("Resume saved puzzle");
   expect(screen.getByText(String(i18n.t("matchNoMoves")))).toBeOnTheScreen();
   press(String(i18n.t("shuffle")));
   await waitFor(async () => {
@@ -1023,6 +1068,7 @@ test.each([1, 2, 3] as MiniLevel[])(
     await renderAsync(<App />);
     await screen.findByTestId("main-tabs");
     press("✿ Mini-games");
+    press("Resume saved puzzle");
     const area = screen.getByTestId("mini-play-area");
     fireEvent(area, "layout", {
       nativeEvent: { layout: { width: 500, height: 260 } },
@@ -1052,6 +1098,8 @@ test.each([1, 2, 3] as MiniLevel[])(
       expect(saved.counters.match).toBe(1);
       expect(saved.economy.wallet.glimmers).toBe(20);
       expect(saved.world.medals).toContain(`match:${level}`);
+      expect(saved.economy.wallet.wood).toBe(level);
+      expect(saved.economy.wallet.flowers).toBe(2 * level);
       expect(saved.game).toEqual(original.game);
     });
     press("Back");
@@ -1149,7 +1197,7 @@ test("Solitaire idle guide resolves actual registered card/target anchors withou
   expect((await stored()).game).toEqual(original.game);
 });
 
-test("forest illustration explains its next objective and gathering/claim lead to the next chapter and building", async () => {
+test("forest material objectives advance only after a won game, then claim and building routes work", async () => {
   const original = setProfile(
     fresh("forest-guide", "en"),
     "Forest Native",
@@ -1159,28 +1207,28 @@ test("forest illustration explains its next objective and gathering/claim lead t
   original.world.areas.push("forest");
   original.world.area = "forest";
   original.counters.hidden = 2;
+  original.counters.gather = 3;
   original.preferences.season = "autumn";
   await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(original));
   await renderAsync(<App />);
   await screen.findByTestId("main-tabs");
   expect(screen.getByTestId("forest-guide")).toHaveTextContent(
-    "Gather supplies: 0/4",
+    "Material rewards: 3/4",
     { exact: false },
   );
   expect(screen.getByTestId("forest-art-autumn")).toBeOnTheScreen();
-  expect(screen.queryByRole("button", { name: "Marmalade" })).toBeNull();
-  for (let i = 0; i < 4; i++)
-    fireEvent.press(screen.getByTestId("forest-next-action"));
-  expect(screen.getByTestId("forest-guide")).toHaveTextContent(
-    "Gather supplies: 4/4",
-    { exact: false },
-  );
+  fireEvent.press(screen.getByTestId("forest-next-action"));
+  expect((await stored()).counters.gather).toBe(3);
+  fireEvent.press(screen.getByTestId("mini-start-hidden"));
+  for (const name of ["Key", "Acorn", "Ribbon", "Spoon", "Button"]) press(name);
+  await waitFor(async () => expect((await stored()).counters.gather).toBe(4));
+  press("Explore the forest");
   fireEvent.press(screen.getByTestId("forest-next-action"));
   await waitFor(async () => {
     const saved = await stored();
     expect(saved.world.stories).toContain("forest1");
-    expect(saved.economy.wallet.glimmers).toBe(35);
-    expect(saved.economy.wallet.wood).toBe(7);
+    expect(saved.economy.wallet.glimmers).toBe(55);
+    expect(saved.economy.wallet.wood).toBe(5);
     expect(saved.game).toEqual(original.game);
   });
   expect(screen.getByTestId("forest-guide")).toHaveTextContent(
@@ -1224,4 +1272,84 @@ test("repeat hunts give useful resources for each new round, retain unique unloc
   expect(
     screen.getByRole("button", { name: "Unlocked: Flower garden" }),
   ).toBeDisabled();
+});
+
+test("garden material counters open labeled totals and persistent recent gains without altering the deal", async () => {
+  const original = setProfile(
+    fresh("materials-ui", "en"),
+    "Materials Native",
+    "p",
+  );
+  original.economy.inventory = ["flowers"];
+  await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(original));
+  await renderAsync(<App />);
+  await screen.findByTestId("main-tabs");
+  expect(
+    within(screen.getByTestId("materials-ribbon")).getAllByRole("button"),
+  ).toHaveLength(1);
+  press("Win materials");
+  press("Level 2");
+  fireEvent.press(screen.getByTestId("mini-start-hidden"));
+  for (const name of ["Key", "Acorn", "Ribbon", "Spoon", "Button"]) press(name);
+  await waitFor(async () =>
+    expect((await stored()).economy.wallet.wood).toBe(4),
+  );
+  press("⌂ My Garden");
+  fireEvent.press(
+    within(screen.getByTestId("materials-ribbon")).getAllByRole("button")[0],
+  );
+  expect(screen.getByRole("button", { name: "Wood: 4" })).toBeOnTheScreen();
+  expect(
+    within(screen.getByTestId("compact-inventory")).getByText("Wood"),
+  ).toBeOnTheScreen();
+  expect(screen.getByTestId("material-gain-row").props.accessibilityLabel).toBe(
+    "Hidden Treasures: +20 Glimmers · +4 Wood · +2 Stone · +2 Flowers · +2 Seeds",
+  );
+  expect(screen.queryByTestId("screen-scroll")).toBeNull();
+  fireEvent.press(screen.getByRole("tab", { name: "Unlocked" }));
+  expect(
+    screen.getByRole("button", { name: "Flower garden" }),
+  ).toBeOnTheScreen();
+  fireEvent.press(screen.getByRole("tab", { name: "Materials" }));
+  expect(screen.getByTestId("material-history")).toBeOnTheScreen();
+  await cleanupAsync();
+  await renderAsync(<App />);
+  await screen.findByTestId("main-tabs");
+  press("▧ Inventory");
+  expect(screen.getByTestId("material-gain-row").props.accessibilityLabel).toBe(
+    "Hidden Treasures: +20 Glimmers · +4 Wood · +2 Stone · +2 Flowers · +2 Seeds",
+  );
+  expect((await stored()).game).toEqual(original.game);
+  expect((await stored()).economy.inventory).toEqual(["flowers"]);
+});
+
+test("main menu submenus close back to the current deal and new deals still require confirmation", async () => {
+  const original = setProfile(fresh("menu-deal", "en"), "Menu Native", "p");
+  await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(original));
+  await renderAsync(<App />);
+  await screen.findByTestId("main-tabs");
+  press("♠ Play Solitaire");
+  press("Draw cards");
+  await waitFor(async () => expect((await stored()).game.moves).toBe(1));
+  const played = (await stored()).game;
+  expect(
+    within(screen.getByTestId("main-tabs")).getAllByRole("button"),
+  ).toHaveLength(3);
+  press("Main menu");
+  press("Garden and quests");
+  expect(
+    screen.getByRole("button", { name: "☷ Quest Journal" }),
+  ).toBeOnTheScreen();
+  press("Back");
+  press("Close");
+  expect(screen.getByTestId("solitaire-board")).toBeOnTheScreen();
+  expect((await stored()).game).toEqual(played);
+  press("Main menu");
+  press("Games");
+  fireEvent.press(
+    screen.getByRole("button", { name: String(i18n.t("newGame")) }),
+  );
+  expect((await stored()).game).toEqual(played);
+  press(String(i18n.t("cancel")));
+  expect((await stored()).game).toEqual(played);
 });

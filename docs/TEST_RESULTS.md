@@ -64,3 +64,7 @@ TypeScript and formatting passed; 37 engine/presentation tests and 36 Android/iO
 ## 1.7.11 natural world and treasure celebrations
 
 51 engine/presentation/asset checks and 142 Android/iOS component test runs pass, plus TypeScript, formatting, native JS exports and local ARM64 APK compilation. See [NATURAL_WORLD_1.7.11.md](NATURAL_WORLD_1.7.11.md) for the exact graphics, one-time unlock, forest, animation and repeat-reward coverage and physical-device limits.
+
+## 1.7.12 illustrated world, win-earned materials and main menu
+
+55 engine/presentation/asset checks and 156 Android/iOS component test runs pass. TypeScript, formatting, fresh Android/iOS JS exports and a clean ARM64 APK build passed. See [WINTER_MATERIALS_1.7.12.md](WINTER_MATERIALS_1.7.12.md) for actual rewards, one-time payouts, menu navigation, source-art review and explicit physical-device limits.

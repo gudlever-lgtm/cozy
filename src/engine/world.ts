@@ -1,10 +1,42 @@
 import { seasonForDate } from "../seasonal/season";
 export type Resource = "glimmers" | "wood" | "stone" | "flowers" | "seeds";
 export type Wallet = Record<Resource, number>;
+export type ResourceGain = { id: string; amounts: Partial<Wallet> };
+export function resourceGains(raw: unknown): ResourceGain[] {
+  if (!Array.isArray(raw)) return [];
+  const seen = new Set<string>();
+  return raw
+    .filter((entry) => {
+      if (
+        !entry ||
+        typeof entry.id !== "string" ||
+        seen.has(entry.id) ||
+        !entry.amounts ||
+        typeof entry.amounts !== "object" ||
+        Array.isArray(entry.amounts)
+      )
+        return false;
+      const values = Object.entries(entry.amounts);
+      if (
+        !values.length ||
+        !values.every(
+          ([key, value]) =>
+            ["glimmers", "wood", "stone", "flowers", "seeds"].includes(key) &&
+            Number.isSafeInteger(value) &&
+            Number(value) > 0,
+        )
+      )
+        return false;
+      seen.add(entry.id);
+      return true;
+    })
+    .slice(0, 12);
+}
 export type Economy = {
   wallet: Wallet;
   receipts: string[];
   inventory: string[];
+  gains?: ResourceGain[];
 };
 export const REWARDS = {
   solitaire: 60,
@@ -17,13 +49,19 @@ export const REWARDS = {
 } as const;
 export type GameRewardKind = "solitaire" | "match" | "hidden" | "tea";
 /** Repeatable round rewards contain useful resources, never duplicate unique unlocks. */
-export function gameReward(type: GameRewardKind): Partial<Wallet> {
+export function gameReward(
+  type: GameRewardKind,
+  level: 1 | 2 | 3 = 1,
+): Partial<Wallet> {
   return {
     glimmers: REWARDS[type],
-    ...(type === "hidden" ? { wood: 2, stone: 1 } : {}),
-    ...(type === "match" ? { flowers: 2, seeds: 1 } : {}),
+    wood: (type === "hidden" || type === "solitaire" ? 2 : 1) * level,
+    stone: level,
+    flowers: (type === "match" ? 2 : 1) * level,
+    seeds: level,
   };
 }
+
 export function transact(
   e: Economy,
   id: string,
@@ -39,10 +77,17 @@ export function transact(
     if (!Number.isSafeInteger(wallet[r]) || wallet[r] < 0)
       throw Error("insufficient");
   }
+  const earned = Object.fromEntries(
+    Object.entries(delta).filter(([, n]) => Number(n) > 0),
+  ) as Partial<Wallet>;
+  const gains = resourceGains(e.gains);
   return {
     wallet,
     receipts: [...e.receipts, id],
     inventory: item ? [...new Set([...e.inventory, item])] : e.inventory,
+    gains: Object.keys(earned).length
+      ? [{ id, amounts: earned }, ...gains].slice(0, 12)
+      : gains,
   };
 }
 export const upgrades = [

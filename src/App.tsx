@@ -25,6 +25,8 @@ import {
 } from "./presentation/board";
 import { StackCardPicker } from "./StackCardPicker";
 import { JourneyRibbon } from "./JourneyRibbon";
+import { MainMenu, type MenuDestination } from "./MainMenu";
+import { MaterialRibbon } from "./MaterialRibbon";
 import { InventoryPanel } from "./InventoryPanel";
 import { MiniGameHub } from "./MiniGameHub";
 import { QuestJournal } from "./QuestJournal";
@@ -103,7 +105,7 @@ import { FestivalDecorations } from "./FestivalDecorations";
 import { WorldNavigator } from "./WorldNavigator";
 import { WorldArt } from "./WorldArt";
 import { CardArtwork } from "./CardArtwork";
-import { enterArea, type AreaId } from "./engine/progression";
+import { enterArea, areaOwned, type AreaId } from "./engine/progression";
 import {
   matchForLevel,
   teaForLevel,
@@ -126,17 +128,6 @@ type Screen =
   | "decorations"
   | "statistics"
   | "settings";
-const nav: { id: Screen; icon: string }[] = [
-  { id: "garden", icon: "⌂" },
-  { id: "world", icon: "◇" },
-  { id: "play", icon: "♠" },
-  { id: "mini", icon: "✿" },
-  { id: "quests", icon: "☷" },
-  { id: "inventory", icon: "▧" },
-  { id: "decorations", icon: "❀" },
-  { id: "statistics", icon: "↗" },
-  { id: "settings", icon: "⚙" },
-];
 const write = saveQueue(AsyncStorage);
 const uuid = () => randomUUID();
 const suitKeys = {
@@ -162,6 +153,7 @@ export default function App() {
     height - insets.top - insets.bottom - 58,
   );
   const railWidth = metrics.rail;
+  const [menuOpen, setMenuOpen] = useState(false);
   const [settingsTab, setSettingsTab] = useState<
     "profile" | "appearance" | "audio" | "rules"
   >("profile");
@@ -313,8 +305,8 @@ export default function App() {
           ? hiddenWon(found)
           : false;
   useEffect(() => {
-    if (mini && miniDone) update((v) => reward(v, mini, miniId));
-  }, [mini, miniDone, miniId, update]);
+    if (mini && miniDone) update((v) => reward(v, mini, miniId, miniLevel));
+  }, [mini, miniDone, miniId, miniLevel, update]);
   useEffect(() => {
     if (!s) return;
     const miniSession = mini
@@ -482,6 +474,7 @@ export default function App() {
     s.preferences.season === "auto"
       ? seasonAt(new Date())
       : s.preferences.season;
+  const worldSeason = location === "winterland" ? "winter" : season;
   const language = s.preferences.language;
   const go = (id: Screen) => {
     if (id !== "quests") setQuestFocus(null);
@@ -491,6 +484,8 @@ export default function App() {
     }
     if (id !== "mini") setMiniTarget(null);
     setMiniHelp(false);
+    setMenuOpen(false);
+    setTouching(false);
     if (id !== "decorations") setDecorationFocus(undefined);
     setMatchBusy(false);
     setStackPile(null);
@@ -507,6 +502,7 @@ export default function App() {
     reducedMotion: s.preferences.reducedMotion,
     activity: idleActivity,
     paused:
+      menuOpen ||
       touching ||
       !!dragging ||
       !!dialog ||
@@ -563,13 +559,39 @@ export default function App() {
       { x: destination.x + destination.width - 3, y: destination.y + toY },
     ];
   };
-  const gatherResources = () => {
-    act((v) => ({
-      ...v,
-      counters: { ...v.counters, gather: v.counters.gather + 1 },
-      economy: transact(v.economy, "gather:" + uuid(), { wood: 1, stone: 1 }),
-    }));
-    setTip(tt("gatheredMaterials"));
+  const earnMaterials = () => {
+    setMiniTarget(null);
+    setMiniHub(true);
+    go("mini");
+  };
+  const navigateMenu = (id: MenuDestination) => {
+    if (
+      id === "newDeal" ||
+      id === "restartDeal" ||
+      id === "rules" ||
+      id === "challenge"
+    ) {
+      go("play");
+      if (id === "newDeal") {
+        setPendingChallenge(null);
+        setDialog("new");
+      } else if (id === "restartDeal") setDialog("restart");
+      else if (id === "rules") setHelp(true);
+      else setChallengeOpen(true);
+      return;
+    }
+
+    if (id === "earn") {
+      earnMaterials();
+      return;
+    }
+    if (id === "forest") {
+      setLocation("forest");
+      go("garden");
+      return;
+    }
+    if (id === "mini") setMiniHub(true);
+    go(id);
   };
   const pref = <K extends keyof Save["preferences"]>(
     key: K,
@@ -857,7 +879,11 @@ export default function App() {
       onLayout={(e) => setSceneSize(e.nativeEvent.layout)}
     >
       {location !== "cottage" ? (
-        <WorldArt season={season} area={location} levels={s.world.buildings} />
+        <WorldArt
+          season={worldSeason}
+          area={location}
+          levels={s.world.buildings}
+        />
       ) : (
         <Image
           source={cozyImages.seasons[season]}
@@ -898,7 +924,7 @@ export default function App() {
         ]}
       />
       <LivingWorldAnimationEngine
-        season={season}
+        season={worldSeason}
         enabled={s.preferences.animations}
         quality={s.preferences.animationQuality}
         reducedMotion={s.preferences.reducedMotion}
@@ -937,7 +963,7 @@ export default function App() {
           level={miniLevel}
           width={sceneSize.width}
           height={sceneSize.height}
-          season={season}
+          season={worldSeason}
           quality={s.preferences.animationQuality}
           enabled={s.preferences.animations}
           reducedMotion={s.preferences.reducedMotion}
@@ -978,7 +1004,7 @@ export default function App() {
       {!hidden && (
         <View style={st.sceneLabel}>
           <Text style={st.sceneLabelText}>
-            {tt(season)} · {tt(s.preferences.time)}
+            {tt(worldSeason)} · {tt(s.preferences.time)}
           </Text>
         </View>
       )}
@@ -1185,11 +1211,15 @@ export default function App() {
                       </Text>
                     </View>
                   </View>
+                  <MaterialRibbon
+                    wallet={s.economy.wallet}
+                    onOpen={() => go("inventory")}
+                  />
                   {location === "forest" && (
                     <ForestGuide
                       save={s}
                       onUpdate={act}
-                      onGather={gatherResources}
+                      onGather={earnMaterials}
                       onGame={(kind) => {
                         setMiniTarget(kind);
                         setMiniHub(true);
@@ -1221,56 +1251,6 @@ export default function App() {
                     </Pressable>
                   )}
                 </View>
-                <ScrollView
-                  nestedScrollEnabled
-                  style={[st.playRail, { width: 56 }]}
-                  contentContainerStyle={st.railContent}
-                >
-                  {s.economy.inventory.includes("forest") && (
-                    <View style={st.row}>
-                      {button(
-                        tt("cottage"),
-                        () => setLocation("cottage"),
-                        false,
-                        location !== "cottage",
-                      )}
-                      {button(
-                        tt("exploreForest"),
-                        () => setLocation("forest"),
-                        false,
-                        location !== "forest",
-                      )}
-                    </View>
-                  )}
-                  {button(tt("pip"), () => setNpc("pip"), false, true)}
-                  <View style={{ gap: 8 }}>
-                    <View style={{ gap: 8 }}>
-                      {button(tt("gather"), gatherResources, false, true)}
-                      {button(
-                        tt(
-                          s.economy.receipts.includes(
-                            "daily:" + new Date().toLocaleDateString("en-CA"),
-                          )
-                            ? "dailyDone"
-                            : "daily",
-                        ),
-                        () =>
-                          act((v) => ({
-                            ...v,
-                            economy: transact(
-                              v.economy,
-                              "daily:" + new Date().toLocaleDateString("en-CA"),
-                              { glimmers: 10 },
-                            ),
-                          })),
-                        s.economy.receipts.includes(
-                          "daily:" + new Date().toLocaleDateString("en-CA"),
-                        ),
-                        true,
-                      )}
-                    </View>
-                  </View>
-                </ScrollView>
               </View>
             )}
             {screen === "play" && (
@@ -1286,6 +1266,23 @@ export default function App() {
                       {number(s.economy.wallet.glimmers, language)}
                     </Text>
                   </View>
+                  {s.game.won && (
+                    <View
+                      testID="solitaire-win-summary"
+                      style={[st.panel, { padding: 8 }]}
+                    >
+                      <Text style={st.sectionTitle}>{tt("victory")}</Text>
+                      <Text style={st.subtitle}>{tt("victoryText")}</Text>
+                      <GameRewardLine
+                        kind="solitaire"
+                        level={s.game.draw === 3 ? 2 : 1}
+                      />
+                      <VictorySparkles
+                        enabled={s.preferences.animations}
+                        reducedMotion={s.preferences.reducedMotion}
+                      />
+                    </View>
+                  )}
                   <View
                     style={{ flex: 1, minHeight: 0 }}
                     testID="card-board-viewport"
@@ -1553,18 +1550,7 @@ export default function App() {
                       false,
                       true,
                     )}
-                    {button(tt("help"), () => setHelp(!help), false, true)}
                   </>
-                  {s.game.won && (
-                    <View style={st.panel}>
-                      <Text style={st.sectionTitle}>{tt("victory")}</Text>
-                      <Text style={st.subtitle}>{tt("victoryText")}</Text>
-                      <VictorySparkles
-                        enabled={s.preferences.animations}
-                        reducedMotion={s.preferences.reducedMotion}
-                      />
-                    </View>
-                  )}
                   <>
                     {button(
                       tt("auto"),
@@ -1572,31 +1558,7 @@ export default function App() {
                       false,
                       true,
                     )}
-                    {button(
-                      tt("restart"),
-                      () => setDialog("restart"),
-                      false,
-                      true,
-                    )}
-                    {button(
-                      tt("newGame"),
-                      () => {
-                        setPendingChallenge(null);
-                        setDialog("new");
-                      },
-                      false,
-                      true,
-                    )}
-                    {button(
-                      tt("saveContinue"),
-                      () => go("garden"),
-                      false,
-                      true,
-                    )}
                   </>
-                  {iconButton("challenge", tt("challengeTitle"), () =>
-                    setChallengeOpen(true),
-                  )}
                 </ScrollView>
               </View>
             )}
@@ -1651,8 +1613,6 @@ export default function App() {
                         setMatchBusy(false);
                         setMiniHub(true);
                       })}
-                      {iconButton("play", tt("play"), () => go("play"))}
-                      {iconButton("garden", tt("garden"), () => go("garden"))}
                     </ScrollView>
                     <View
                       style={{ flex: 1, minWidth: 0, minHeight: 0, gap: 4 }}
@@ -1697,11 +1657,11 @@ export default function App() {
                                 : tt("teaGoal")}
                         </Text>
                       </View>
-                      {miniDone && (
+                      {
                         <View style={{ paddingHorizontal: 10 }}>
-                          <GameRewardLine kind={activeMini} />
+                          <GameRewardLine kind={activeMini} level={miniLevel} />
                         </View>
-                      )}
+                      }
                       <MiniPlayArea
                         onLayout={(event) => {
                           const { width, height } = event.nativeEvent.layout;
@@ -1807,7 +1767,7 @@ export default function App() {
                     go("decorations");
                     setTip(tt("questUnlockItem", { item: tt(objective.item) }));
                   } else if (objective.type === "gather") {
-                    go("garden");
+                    earnMaterials();
                     setTip(tt("gatherHint"));
                   } else {
                     setMiniTarget(objective.type);
@@ -2270,27 +2230,63 @@ export default function App() {
           </ScreenViewport>
         </View>
       </View>
-      <View testID="main-tabs" accessibilityRole="tablist" style={st.tabDock}>
-        {nav.map((n) => (
+      <View
+        testID="main-tabs"
+        style={[
+          st.tabDock,
+          { maxWidth: 420, width: "90%", alignSelf: "center" },
+        ]}
+      >
+        {(
+          [
+            { id: "garden", label: "⌂ " + tt("garden"), icon: "garden" },
+            { id: "play", label: "♠ " + tt("play"), icon: "play" },
+            { id: "menu", label: tt("mainMenu"), icon: "menu" },
+          ] as const
+        ).map((item) => (
           <Pressable
-            key={n.id}
-            accessibilityRole="tab"
-            accessibilityLabel={n.icon + " " + tt(n.id)}
-            accessibilityState={{ selected: screen === n.id }}
+            key={item.id}
+            accessibilityRole="button"
+            accessibilityLabel={item.label}
+            accessibilityState={{ selected: item.id === screen }}
             onPress={() => {
-              go(n.id);
-              setTip(tt(n.id));
+              if (item.id === "menu") setMenuOpen(true);
+              else {
+                if (item.id === "garden") setLocation("cottage");
+                go(item.id);
+                setTip(tt(item.id));
+              }
             }}
-            onLongPress={() => setTip(tt(n.id))}
-            style={[st.tabButton, screen === n.id && st.navActive]}
+            style={[
+              st.tabButton,
+              { width: "30%", maxWidth: 120 },
+              item.id === screen && st.navActive,
+            ]}
           >
-            <GameIcon
-              name={n.id}
-              color={screen === n.id ? "#fff9eb" : "#345b49"}
-            />
+            <GameIcon name={item.icon} size={26} />
+            <Text
+              style={{
+                fontSize: 10,
+                color: item.id === screen ? "#fff8e9" : "#345b49",
+                fontWeight: "600",
+              }}
+            >
+              {item.id === "menu" ? tt("mainMenu") : tt(item.id)}
+            </Text>
           </Pressable>
         ))}
       </View>
+      {menuOpen && (
+        <MainMenu
+          visible={menuOpen}
+          onClose={() => {
+            setMenuOpen(false);
+            setTouching(false);
+          }}
+          onNavigate={navigateMenu}
+          forestUnlocked={areaOwned(s, "forest")}
+        />
+      )}
       <View
         testID="game-overlay-layer"
         pointerEvents="box-none"

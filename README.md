@@ -94,3 +94,5 @@ Preview 1.7.9 makes Tea Time selections, legal destinations and invalid moves ex
 Preview 1.7.10 adds a quiet illustrated firefly guide after 12 seconds of inactivity in Solitaire and all three mini-games. It demonstrates a legal source/destination once per pause, clears on input and respects animation/reduced-motion/background settings. See [idle guidance validation](docs/IDLE_FIREFLY_1.7.10.md).
 
 Preview 1.7.11 replaces emoji decor with original painterly illustrations on fixed automatic ground anchors, adds four seasonal forest scenes with actionable story objectives, and animates found treasures into butterflies followed by a seasonal celebration. Unique unlocks cannot be reapplied; repeat mini-game round rewards are shown explicitly. See [natural-world validation](docs/NATURAL_WORLD_1.7.11.md).
+
+Preview 1.7.12 harmonizes all active world backgrounds, replaces both winter scenes, grants craft materials through wins according to difficulty, and shows labeled balances/recent gains. Three main controls lead to grouped submenus. Existing progress is retained. See [world, materials and menu validation](docs/WINTER_MATERIALS_1.7.12.md).

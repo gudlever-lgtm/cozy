@@ -46,6 +46,7 @@ export function GameIcon({
       </View>
     );
   const paths: Record<string, string> = {
+    menu: "M4 6h16M4 12h16M4 18h16",
     wood: "M5 5h14v14H5zM8 5v14M13 5v14M17 5v14",
     stone: "M3 16l4-11 11-2 4 13-7 5-12-5",
     seeds: "M12 21V8M12 12Q1 10 5 3q9 0 7 9M12 16Q23 14 19 7q-9 0-7 9",

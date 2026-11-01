@@ -9,6 +9,7 @@ import {
   transact,
   REWARDS,
   gameReward,
+  resourceGains,
   upgrades,
 } from "./world";
 export type Language = "da" | "en";
@@ -79,6 +80,7 @@ export function fresh(id: string, language: Language): Save {
       wallet: { glimmers: 0, wood: 0, stone: 0, flowers: 0, seeds: 0 },
       receipts: [],
       inventory: [],
+      gains: [],
     },
     counters: { solitaire: 0, match: 0, hidden: 0, tea: 0, gather: 0 },
     completed: [],
@@ -180,6 +182,7 @@ export function migrate(
       ...base.economy,
       ...old.economy,
       wallet: { ...base.economy.wallet, ...old.economy?.wallet },
+      gains: resourceGains(old.economy?.gains),
     },
   } as Save;
   if (
@@ -287,11 +290,25 @@ export function reward(
   s: Save,
   type: "solitaire" | "match" | "hidden" | "tea",
   id: string,
+  level?: 1 | 2 | 3,
 ): Save {
   const receipt = `${type}:${id}`;
   if (s.economy.receipts.includes(receipt)) return s;
-  let economy = transact(s.economy, receipt, gameReward(type));
-  const counters = { ...s.counters, [type]: s.counters[type] + 1 };
+  const difficulty =
+    type === "solitaire"
+      ? s.game.draw === 3
+        ? 2
+        : 1
+      : (level ??
+        (s.miniSession?.id === id && s.miniSession.kind === type
+          ? s.miniSession.level
+          : 1));
+  let economy = transact(s.economy, receipt, gameReward(type, difficulty));
+  const counters = {
+    ...s.counters,
+    [type]: s.counters[type] + 1,
+    gather: s.counters.gather + 1,
+  };
   if (
     Object.values(counters)
       .slice(0, 4)

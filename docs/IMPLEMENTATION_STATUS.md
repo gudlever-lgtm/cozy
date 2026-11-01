@@ -1,6 +1,6 @@
 # Implementation status — development toward V2.0
 
-Baseline: `35a3e91`, Android/iOS only. The approved ambient artwork through `19aa34b` was preserved and integrated. Public app version is 1.7.11; this is a development increment, not a completed V2.0 release.
+Baseline: `35a3e91`, Android/iOS only. The approved ambient artwork through `19aa34b` was preserved and integrated. Public app version is 1.7.12; this is a development increment, not a completed V2.0 release.
 
 | Milestone / feature | Actual status | Remaining acceptance work | Dependencies / tests | Acceptance |
 |---|---|---|---|---|
@@ -18,8 +18,8 @@ Baseline: `35a3e91`, Android/iOS only. The approved ambient artwork through `19a
 
 ## Verified checks
 
-- 51 engine/localization/asset/progression/presentation tests, no skips.
-- 142 React Native component test runs across iOS and Android Jest Expo presets, no skips.
+- 55 engine/localization/asset/progression/presentation tests, no skips.
+- 156 React Native component test runs across iOS and Android Jest Expo presets, no skips.
 - TypeScript and formatting pass.
 - Native JS/Hermes exports include all seven ambient sprites at all three densities. These are not signed native app builds.
 - Existing Solitaire move rules and reward values remain unchanged; only optional challenge metadata was added to the game type.

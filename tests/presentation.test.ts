@@ -412,7 +412,7 @@ test("new decoration and forest artwork is bundled PNG with verified provenance 
   const provenance = JSON.parse(
     await readFile("assets/illustration-provenance.json", "utf8"),
   );
-  assert.equal(provenance.assets.length, 11);
+  assert.equal(provenance.assets.length, 17);
   for (const asset of provenance.assets) {
     const data = await readFile(asset.native_path);
     assert.equal(data.subarray(1, 4).toString(), "PNG");
@@ -431,9 +431,93 @@ test("new decoration and forest artwork is bundled PNG with verified provenance 
     const catalog = await readFile(
       asset.kind === "decoration"
         ? "src/assets/decorations.ts"
-        : "src/assets/forest.ts",
+        : asset.kind === "cottage_background"
+          ? "src/assets/images.ts"
+          : asset.kind === "area_background"
+            ? "src/assets/areas.ts"
+            : "src/assets/forest.ts",
       "utf8",
     );
     assert.ok(catalog.includes(`require("../../${asset.native_path}")`));
   }
+});
+
+import { transact, resourceGains } from "../src/engine/world";
+import { fresh, migrate } from "../src/engine/save";
+test("resource discoveries record only actual positive gains once, preserve spending and cap history", () => {
+  let economy = fresh("resource-history", "en").economy;
+  economy = transact(economy, "gather:first", { wood: 2, stone: 1 });
+  assert.deepEqual(economy.gains, [
+    { id: "gather:first", amounts: { wood: 2, stone: 1 } },
+  ]);
+  assert.equal(
+    transact(economy, "gather:first", { wood: 2, stone: 1 }),
+    economy,
+  );
+  economy = transact(economy, "spend", { wood: -1 });
+  assert.equal(economy.gains!.length, 1);
+  assert.equal(economy.wallet.wood, 1);
+  for (let i = 0; i < 20; i++)
+    economy = transact(economy, "new:" + i, { seeds: 1 });
+  assert.equal(economy.gains!.length, 12);
+  assert.equal(economy.gains![0].id, "new:19");
+  assert.equal(economy.wallet.seeds, 20);
+});
+test("legacy and malformed optional discovery metadata cannot erase balances or invent historical gains", () => {
+  const save = fresh("old-materials", "en");
+  save.economy.wallet.wood = 9;
+  delete save.economy.gains;
+  const restored = migrate(JSON.stringify(save), "restore", "en");
+  assert.deepEqual(restored.economy.gains, []);
+  assert.equal(restored.economy.wallet.wood, 9);
+  const invalid = {
+    ...save,
+    economy: {
+      ...save.economy,
+      gains: [
+        { id: "bad", amounts: { wood: -3 } },
+        { id: "unsafe", amounts: { stone: 1.2 } },
+      ],
+    },
+  };
+  const recovered = migrate(JSON.stringify(invalid), "restore", "en");
+  assert.deepEqual(recovered.economy.gains, []);
+  assert.deepEqual(recovered.game, save.game);
+  assert.equal(recovered.economy.wallet.wood, 9);
+  assert.deepEqual(
+    resourceGains([
+      { id: "one", amounts: { wood: 1 } },
+      { id: "one", amounts: { wood: 2 } },
+    ]),
+    [{ id: "one", amounts: { wood: 1 } }],
+  );
+});
+
+import { gameReward } from "../src/engine/world";
+import { reward as grantWin } from "../src/engine/save";
+test("won mini-games scale every material by actual difficulty, retain currency and pay only once", () => {
+  for (const kind of ["hidden", "match", "tea"] as const) {
+    const base = gameReward(kind, 1);
+    for (const level of [1, 2, 3] as const) {
+      const save = fresh("scaled-" + kind, "en"),
+        paid = grantWin(save, kind, "round", level);
+      for (const resource of ["wood", "stone", "flowers", "seeds"] as const)
+        assert.equal(paid.economy.wallet[resource], base[resource]! * level);
+      assert.equal(paid.economy.wallet.glimmers, 20);
+      assert.equal(paid.counters.gather, save.counters.gather + 1);
+      assert.equal(grantWin(paid, kind, "round", level), paid);
+    }
+  }
+});
+test("Solitaire materials use the saved deal's draw mode, not a future selection or caller override", () => {
+  const easy = fresh("one", "en");
+  easy.game.draw = 1;
+  const hard = fresh("three", "en");
+  hard.game.draw = 3;
+  const a = grantWin(easy, "solitaire", "one", 3),
+    b = grantWin(hard, "solitaire", "three", 1);
+  assert.equal(a.economy.wallet.wood, 2);
+  assert.equal(b.economy.wallet.wood, 4);
+  assert.equal(a.economy.wallet.glimmers, 60);
+  assert.equal(b.economy.wallet.glimmers, 60);
 });

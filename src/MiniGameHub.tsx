@@ -83,7 +83,7 @@ export function MiniGameHub({
               {String(t("level", { number: level }))} ·{" "}
               {medals.filter((id) => id.startsWith(kind + ":")).length}/3
             </Text>
-            <GameRewardLine kind={kind} />
+            <GameRewardLine kind={kind} level={level} compact />
           </View>
           <Pressable
             testID={`mini-start-${kind}`}

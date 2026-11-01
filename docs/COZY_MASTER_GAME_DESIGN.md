@@ -40,6 +40,8 @@ Each is repeatable, touch-friendly, testable, completeable and awards controlled
 - Central atomic transaction ledger, unique event IDs, nonnegative balances, persisted state, migrations and recovery. No progression deadlocks or permanent seasonal lockouts.
 - Illustrative balance only (not final): Solitaire 50; Garden Match 20; Hidden Treasures 25; Tea Time 20; quests 75–150.
 
+Current user direction (1.7.12): remove instant resource gathering. New game wins grant all four craft materials; mini-game difficulty scales their quantities x1/x2/x3, while Solitaire draw-one/draw-three uses x1/x2. Existing quest/story rewards and saved collection progress remain valid. No UI action may grant free craft materials merely by tapping Collect. Exact reward values and receipt protection are defined in the engine.
+
 ## 8. Four seasons and ambient weather
 - Spring: blossoms, butterflies, mild daylight.
 - Summer: warm twilight and fireflies.
@@ -58,6 +60,8 @@ Source artwork already exists in `public/assets/`: four seasonal scenes, three e
 
 ## 10. Screens and experience
 Onboarding; Cottage Garden; Klondike; mini-game hub plus 3 mini-games; quest journal; inventory/Lysglimt; garden customization; statistics; Settings. Smooth, pastel, low-clutter UI with rounded cards, original NPC illustration, soft sound and optional music. Native safe areas, landscape phones and tablets, full-screen game presentation (updated user direction for 1.7.1), accessible typography/touch.
+
+Current navigation direction: only Garden, Solitaire and Main menu remain in the persistent dock. Group other destinations and less-used game actions in submenus. Keep active deals, puzzles and progression intact when opening/closing menus.
 
 ## 11. Native technical architecture
 **Only Expo + React Native + TypeScript, Expo Router as appropriate, native offline local storage with migrations, EAS Build.** Shared testable pure TS modules: Solitaire / rewards / quests / mini-games / garden / seasonal ambience / persistence / localization. Android AAB and iOS IPA production builds through Expo EAS; Android debug/preview APK as useful. No web target, PWA, Vite, React Native Web or Capacitor. Avoid unnecessary permissions and do not commit signing credentials. Server checkout: `/home/lakn/games/cozy`; repo: `gudlever-lgtm/cozy`.

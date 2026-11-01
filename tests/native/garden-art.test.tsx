@@ -183,3 +183,30 @@ test.each([
     ).toHaveLength(6);
   },
 );
+
+test.each([
+  ["river", "spring", "river"],
+  ["river", "winter", "riverWinter"],
+  ["village", "autumn", "village"],
+  ["village", "winter", "villageWinter"],
+  ["winterland", "summer", "winterland"],
+] as const)(
+  "%s uses illustrated %s background without flat vector scenery",
+  async (area, season, key) => {
+    await renderAsync(
+      <WorldArt
+        area={area}
+        season={season}
+        levels={{
+          pier: 1,
+          pond: 2,
+          teahouse: 1,
+          gazebo: 2,
+          winterlights: 1,
+          conservatory: 3,
+        }}
+      />,
+    );
+    expect(screen.getByTestId(`area-art-${key}`)).toBeOnTheScreen();
+  },
+);

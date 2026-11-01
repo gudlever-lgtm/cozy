@@ -3,9 +3,17 @@ import { View, Text } from "react-native";
 import { useTranslation } from "react-i18next";
 import { gameReward, type GameRewardKind } from "./engine/world";
 import { GameIcon } from "./GameIcon";
-export function GameRewardLine({ kind }: { kind: GameRewardKind }) {
+export function GameRewardLine({
+  kind,
+  level = 1,
+  compact = false,
+}: {
+  kind: GameRewardKind;
+  level?: 1 | 2 | 3;
+  compact?: boolean;
+}) {
   const { t } = useTranslation();
-  const entries = Object.entries(gameReward(kind));
+  const entries = Object.entries(gameReward(kind, level));
   const label = entries
     .map(([r, n]) => `+${n} ${t(r === "flowers" ? "flowersResource" : r)}`)
     .join(" · ");
@@ -14,7 +22,12 @@ export function GameRewardLine({ kind }: { kind: GameRewardKind }) {
       testID={`repeat-rewards-${kind}`}
       accessible
       accessibilityLabel={String(t("repeatRewards")) + ": " + label}
-      style={{ flexDirection: "row", gap: 8, alignItems: "center" }}
+      style={{
+        flexDirection: "row",
+        gap: compact ? 4 : 8,
+        flexWrap: "wrap",
+        alignItems: "center",
+      }}
     >
       {entries.map(([r, n]) => (
         <View
@@ -25,9 +38,15 @@ export function GameRewardLine({ kind }: { kind: GameRewardKind }) {
             name={
               r === "glimmers" ? "glimmer" : r === "flowers" ? "decorations" : r
             }
-            size={18}
+            size={compact ? 14 : 18}
           />
-          <Text style={{ color: "#345b49", fontSize: 11, fontWeight: "600" }}>
+          <Text
+            style={{
+              color: "#345b49",
+              fontSize: compact ? 10 : 11,
+              fontWeight: "600",
+            }}
+          >
             +{n}
           </Text>
         </View>

@@ -7,12 +7,7 @@ export const cozyImages = {
     spring: require("../../public/assets/backgrounds/seasons/spring_cottage_garden.webp"),
     summer: require("../../public/assets/backgrounds/seasons/summer_cottage_garden.webp"),
     autumn: require("../../public/assets/backgrounds/seasons/autumn_cottage_garden.webp"),
-    winter: require("../../public/assets/backgrounds/seasons/winter_cottage_garden.webp"),
-  },
-  boards: {
-    summerEvening: require("../../public/assets/backgrounds/seasons/summer_evening_board.png"),
-    autumnRain: require("../../public/assets/backgrounds/seasons/autumn_rain_board.png"),
-    winterSnow: require("../../public/assets/backgrounds/seasons/winter_snow_board.png"),
+    winter: require("../../assets/world/cottage/winter.png"),
   },
   characters: {
     millie: require("../../public/assets/characters/millie_rabbit.png"),

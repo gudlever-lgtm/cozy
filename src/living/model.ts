@@ -240,9 +240,8 @@ export const LIGHT_ANCHORS: Record<LivingSeason, Point[]> = {
     { x: 0.81, y: 0.38 },
   ],
   winter: [
-    { x: 0.11, y: 0.65 },
-    { x: 0.69, y: 0.38 },
-    { x: 0.81, y: 0.38 },
-    { x: 0.95, y: 0.4 },
+    { x: 0.69, y: 0.46 },
+    { x: 0.83, y: 0.19 },
+    { x: 0.8, y: 0.39 },
   ],
 };

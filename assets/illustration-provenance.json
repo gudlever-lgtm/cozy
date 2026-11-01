@@ -87,9 +87,52 @@
     {
       "id": "winter",
       "native_path": "assets/world/forest/winter.png",
-      "sha256": "42925ed57571966a042033a12fc09bef192de8c240a53cb78ba7b4b3e5ac7d38",
+      "sha256": "ee1c1b735827587f73661830760417025b1ed417e35bebef2bf9039f85f37311",
       "dimensions": [1672, 941],
       "kind": "forest_background"
+    },
+    {
+      "id": "winter",
+      "native_path": "assets/world/cottage/winter.png",
+      "sha256": "ae9677fdc73c7cea2e31687b342d55244f8b57c2b89c9b75e9136e26a35f92f9",
+      "dimensions": [1672, 941],
+      "kind": "cottage_background"
+    },
+    {
+      "id": "river_garden",
+      "native_path": "assets/world/river/garden.png",
+      "sha256": "e5c5687d16efeaf2321cc73c8e81a5f06e0b63db3ac4ee8488653155df1cd9e4",
+      "dimensions": [1672, 941],
+      "kind": "area_background"
+    },
+    {
+      "id": "river_winter",
+      "native_path": "assets/world/river/winter.png",
+      "sha256": "3d65663c7e8f33a241cf0f41bcbc0d46410009d7a888de6fc3a77199dd622cd0",
+      "dimensions": [1672, 941],
+      "kind": "area_background"
+    },
+    {
+      "id": "village_square",
+      "native_path": "assets/world/village/square.png",
+      "sha256": "5b8c0efa2f3ed98e45c1c00ed2961df598fa4daee9461fea96db8486e3200abd",
+      "dimensions": [1672, 941],
+      "kind": "area_background"
+    },
+    {
+      "id": "village_winter",
+      "native_path": "assets/world/village/winter.png",
+      "sha256": "ddfa2b3b7cddd1886e93c7b0733b0427425c8cb6d5f559f71e0e9124d7c7e688",
+      "dimensions": [1672, 941],
+      "kind": "area_background"
+    },
+    {
+      "id": "winterland_garden",
+      "native_path": "assets/world/winterland/garden.png",
+      "sha256": "6ac2ff8d2b66d8bbc19668edd320f85c9c89af20ef58b865f302428b9a407ba2",
+      "dimensions": [1672, 941],
+      "kind": "area_background"
     }
-  ]
+  ],
+  "revision": "1.7.12"
 }
