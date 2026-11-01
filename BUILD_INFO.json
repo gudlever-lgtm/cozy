@@ -1,21 +1,21 @@
 {
-  "source_commit": "9e57c172084b182c2f2b1a1cb1891fd921b14890",
-  "version": "1.7.5",
-  "version_code": 6,
+  "source_commit": "25ba85c65f2d9fdb7781f3b7b1e55bf92173dda7",
+  "version": "1.7.6",
+  "version_code": 7,
   "package": "com.gudlever.cozy",
   "architectures": [
     "arm64-v8a"
   ],
   "minimum_android": "7.0",
-  "sha256": "249a0cb3f359e2f4acdb20edb30632f242852c2d9c5fc6a527e926c39a9ccab7",
-  "size_bytes": 56115401,
+  "sha256": "09e000f3044ad664e7e116f583f38e04e4a77b0a1d77b5977c6c725c41c40a20",
+  "size_bytes": 56132853,
   "signature_verified": true,
   "same_test_certificate_as_previous": true,
   "zip_integrity_verified": true,
   "alignment_16k_verified": true,
   "standalone_bundle_verified": true,
-  "engine_tests_passed": 44,
-  "native_component_tests_passed": 62,
+  "engine_tests_passed": 45,
+  "native_component_tests_passed": 68,
   "native_js_exports": [
     "android",
     "ios"
