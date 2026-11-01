@@ -64,7 +64,8 @@ const DriftingObject = memo(function DriftingObject({
           : object.kind === "rain"
             ? 0.28
             : 0.75) *
-        object.depth,
+        object.depth *
+        object.opacity,
       transform: [
         { translateX: p.x * width },
         { translateY: p.y * height },

@@ -98,3 +98,21 @@ test("all seven approved illustrations have native transparent PNGs at three den
     }
   }
 });
+
+test("weather intensity changes actual particle density and ambient opacity rather than only its setting label", () => {
+  for (const season of ["winter", "autumn"] as const)
+    assert.ok(
+      createAmbientObjects(season, "high", 0.4).length <
+        createAmbientObjects(season, "high", 1).length,
+    );
+  assert.ok(
+    createAmbientObjects("summer", "medium", 0.4)[0].opacity <
+      createAmbientObjects("summer", "medium", 1)[0].opacity,
+  );
+});
+
+test("default autumn intensity retains both sparse rain and leaves", () => {
+  const objects = createAmbientObjects("autumn", "medium", 0.4);
+  assert.ok(objects.some((o) => o.kind === "rain"));
+  assert.ok(objects.some((o) => o.kind === "leaf"));
+});

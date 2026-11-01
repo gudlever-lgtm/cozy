@@ -5,7 +5,7 @@ Baseline gameplay is preserved. The living-world change adds the approved seven-
 | Check | Result | Evidence / limit |
 |---|---|---|
 | TypeScript | Passed | Full application and test sources |
-| Engine/localization/assets | 32 passed, 0 skipped | Gameplay regressions, source/density/motion policy, full area/story progression through earned resources, festivals, themes, seeded challenges, puzzle solvability, schema migration and backup recovery |
+| Engine/localization/assets | 34 passed, 0 skipped | Gameplay regressions, source/density/motion policy, full area/story progression through earned resources, festivals, themes, seeded challenges, puzzle solvability, schema migration and backup recovery |
 | React Native integration | 20 passed, 0 skipped | iOS and Android Jest Expo presets: game/profile flows, settings persistence, layer order/no input capture, background/resume, reduced motion, partial puzzle restore, world area/build/story purchases and victory idempotency |
 | Native JS/Hermes exports | Passed for Android and iOS | Includes the seven ambient sprites at all three native densities; no browser bundle |
 | Sprite generation | Passed | CairoSVG 2.8.2/Pillow 13.0.0, supersampling; RGBA transparency checked during generation; source SHA-256 recorded |

@@ -18,7 +18,7 @@ Baseline: `35a3e91`, Android/iOS only. The approved ambient artwork through `19a
 
 ## Verified checks
 
-- 32 engine/localization/asset/progression tests, no skips.
+- 34 engine/localization/asset/progression tests, no skips.
 - 20 React Native component test runs across iOS and Android Jest Expo presets, no skips.
 - TypeScript and formatting pass.
 - Native JS/Hermes exports include all seven ambient sprites at all three densities. These are not signed native app builds.

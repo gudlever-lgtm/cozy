@@ -14,6 +14,7 @@ export type AmbientObject = {
   delay: number;
   size: number;
   depth: number;
+  opacity: number;
   rotation: number;
 };
 export const ACTIVE_LIMITS: Record<AnimationQuality, number> = {
@@ -114,7 +115,24 @@ export function createAmbientObjects(
       high: Array<SpriteKind>(20).fill("snowflake"),
     },
   };
-  const plan = count === 0 ? [] : plans[season][quality];
+  const sourcePlan = plans[season][quality];
+  const weatherKinds: SpriteKind[] = ["rain", "snowflake", "leaf", "blossom"];
+  const limits = Object.fromEntries(
+    weatherKinds.map((kind) => [
+      kind,
+      Math.ceil(sourcePlan.filter((value) => value === kind).length * count),
+    ]),
+  );
+  const seen: Partial<Record<SpriteKind, number>> = {};
+  const plan =
+    count === 0
+      ? []
+      : sourcePlan.filter((kind) => {
+          if (!weatherKinds.includes(kind)) return true;
+          seen[kind] = (seen[kind] ?? 0) + 1;
+          return seen[kind]! <= limits[kind];
+        });
+
   return plan.map((kind, i) => {
     const depth = 0.35 + random() * 0.65,
       x = random(),
@@ -186,6 +204,7 @@ export function createAmbientObjects(
                     ? 12
                     : 8,
       depth,
+      opacity: 0.4 + count * 0.6,
       rotation: (random() - 0.5) * 30,
     };
   });
