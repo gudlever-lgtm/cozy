@@ -275,3 +275,38 @@ export function autoComplete(g: Game): Game {
   }
   return next;
 }
+
+/** Check a complete stock cycle. Unknown/malformed cycles are never called stuck. */
+export function isStuck(g: Game): boolean {
+  if (g.won || victory(g)) return false;
+  const seen = new Set<string>();
+  let current = g;
+  for (let n = 0; n < 110; n++) {
+    if (hints(current).length) return false;
+    // Moving a foundation card back can expose a route not represented by hints().
+    for (let from = 0; from < 4; from++)
+      for (let to = 0; to < 7; to++)
+        if (
+          canMove(
+            current,
+            { kind: "foundations", pile: from },
+            { kind: "tableau", pile: to },
+          )
+        )
+          return false;
+    const key =
+      current.stock.map((c) => c.id).join(",") +
+      "|" +
+      current.waste.map((c) => c.id).join(",");
+    if (seen.has(key)) return true;
+    seen.add(key);
+    const next = drawCards({ ...current, history: [] });
+    if (
+      next.stock.length === current.stock.length &&
+      next.waste.length === current.waste.length
+    )
+      return true;
+    current = next;
+  }
+  return false;
+}

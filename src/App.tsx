@@ -53,6 +53,7 @@ import i18n, { type Key, number, date } from "./i18n";
 import {
   canMove,
   newGame,
+  isStuck,
   drawCards,
   move,
   undo,
@@ -612,7 +613,9 @@ export default function App() {
   ) =>
     update((v) => ({ ...v, preferences: { ...v.preferences, [key]: value } }));
   const applyGame = (fn: (g: Game) => Game) => {
-    update((v) => ({ ...v, game: fn(v.game) }));
+    const game = fn(s.game);
+    update((v) => ({ ...v, game }));
+    if (game !== s.game && isStuck(game)) setTip(tt("solitaireNoMoves"));
     setSelected(null);
     setHint(null);
   };

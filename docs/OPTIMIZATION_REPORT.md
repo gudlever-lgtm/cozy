@@ -19,3 +19,7 @@ Step 1 checks: TypeScript/formatting pass; **62 engine tests / 158 native runs**
 ## Step 2 — fewer storage writes
 
 Identical serialized saves are skipped inside the serialized queue, including concurrently queued duplicates. Backups default to a 30-second interval, with injectable interval/clock for deterministic tests; the first write establishes/preserves a safe copy. Failed primary writes remain retryable, and a corrupt primary cannot overwrite an existing recovery copy. The existing 150 ms UI debounce and immediate background save remain. **64 engine tests / 158 native runs**, TypeScript and formatting pass.
+
+## Step 3 — no-more-moves guidance
+
+`isStuck` checks the current and complete next stock/waste cycle in both draw modes, without changing the game. It returns false for wins, unknown cycles and legal foundation returns as well as ordinary hints. Actual game actions show the existing temporary tip with DA/EN Undo/New game guidance. Tests cover visible/draw-only/partial-pass moves and the rendered app notice. **67 engine tests / 160 native runs**, TypeScript and formatting pass.

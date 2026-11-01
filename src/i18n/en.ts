@@ -1,5 +1,6 @@
 import { expansionEn } from "./expansion-en";
 export const en = {
+  solitaireNoMoves: "No more moves found. Try Undo or New game.",
   areaAvailable: "Open",
   areaCanOpen: "Ready to open",
   areaLockedShort: "Locked",

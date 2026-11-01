@@ -1365,3 +1365,36 @@ test("unreadable primary and backup show an honest onboarding notice and retain 
     JSON.parse((await AsyncStorage.getItem(SAVE_KEY + ".unreadable"))!),
   ).toEqual({ primary: "broken primary", backup: "broken backup" });
 });
+
+test("a blocked Solitaire stock cycle offers Undo or New game", async () => {
+  const s = setProfile(fresh("blocked", "en"), "Player", "player");
+  const all = [...s.game.stock, ...s.game.tableau.flat()];
+  const waste = all.find((c) => c.id === "♠9")!;
+  const top = all.find((c) => c.id === "♠7")!;
+  s.game.stock = [];
+  s.game.waste = [{ ...waste, up: true }];
+  s.game.tableau = [
+    [
+      ...all
+        .filter((c) => c !== waste && c !== top)
+        .map((c) => ({ ...c, up: false })),
+      { ...top, up: true },
+    ],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+  ];
+  s.game.initial = require("../../src/engine/solitaire").snapshot(s.game);
+  await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(s));
+  await renderAsync(<App />);
+  press("♠ " + i18n.t("play"));
+  fireEvent.press(
+    await screen.findByRole("button", { name: String(i18n.t("recycle")) }),
+  );
+  expect(
+    await screen.findByText(String(i18n.t("solitaireNoMoves"))),
+  ).toBeOnTheScreen();
+});
