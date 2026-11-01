@@ -74,3 +74,5 @@ The public version remains 1.7.0 while signed builds, hardware QA, dependency re
 ## Landscape preview 1.7.1
 
 Full-screen landscape with the seasonal scene throughout, a central Solitaire board and side controls. Double tap a card for a legal foundation move. Garden Match uses swipe-to-swap with paced motion and input locking. See [layout and gesture changes](docs/LANDSCAPE_GAMEPLAY.md) and [executed validation](docs/TEST_RESULTS.md). Real-device visual and gesture approval remains outstanding.
+
+Preview 1.7.2 adds a compact native icon tab dock, timed/tap-dismissable labels, icon actions around the game, and fixes overflow scrolling by bounding each landscape panel. See [scroll validation](docs/SCROLL_FIX_1.7.2.md).

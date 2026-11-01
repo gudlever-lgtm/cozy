@@ -24,3 +24,9 @@ Active mini-games use a landscape play area and a separate information/control r
 ## Verification limits
 
 See TEST_RESULTS.md for executed checks. Component tests exercise native responder callbacks with a timed animation-driver substitute; they are not physical touchscreen tests. Real-device appearance, comfort, gesture feel, orientation/resume/system-bar behavior, performance and safe areas still require device review. No iOS IPA, store release or 60 FPS claim is made.
+
+## 1.7.2 scroll correction
+
+The initial landscape layout incorrectly put the game row inside a disabled outer ScrollView. Its content height could grow beyond the viewport, leaving inner panels without a bounded height and therefore without usable overflow scrolling. The focused game row now sits in a normal flex View with `minHeight: 0`. Each rail, card-board area and mini-game area owns its ScrollView. Menu screens retain one explicitly bounded scrolling container. Android nested scrolling is enabled, and rail content includes bottom padding so the last action is reachable. Card-board scrolling is disabled only while actually dragging a card.
+
+Regression coverage exercises garden, Solitaire, Settings and an active mini-game: focused scroll areas must not have a ScrollView ancestor, menu scrolling remains enabled, and card-board scrolling/nested scrolling remain available when idle. Jest does not calculate actual native overflow, so physical-device scroll behavior still requires confirmation.

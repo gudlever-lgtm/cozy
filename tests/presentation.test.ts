@@ -12,7 +12,7 @@ test("landscape board fits phone/tablet widths and leaves stable readable overla
     [1366, 1024],
   ]) {
     const m = boardMetrics(w, h);
-    assert.ok(m.cardWidth * 7 + 48 <= w - m.rail * 2 - 16);
+    assert.ok(m.cardWidth * 7 + 48 <= w - m.rail - 16);
     assert.ok(m.step >= 18);
     assert.ok(m.cardWidth >= 30);
   }

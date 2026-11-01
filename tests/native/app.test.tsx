@@ -30,7 +30,11 @@ async function stored() {
   return JSON.parse((await AsyncStorage.getItem(SAVE_KEY))!);
 }
 function press(name: string) {
-  fireEvent.press(screen.getAllByRole("button", { name })[0]);
+  const matches = [
+    ...screen.queryAllByRole("button", { name }),
+    ...screen.queryAllByRole("tab", { name }),
+  ];
+  fireEvent.press(matches[0]);
 }
 
 test("native first launch requires a valid local username and preserves its language", async () => {
@@ -41,7 +45,7 @@ test("native first launch requires a valid local username and preserves its lang
   ).toBeDisabled();
   fireEvent.changeText(screen.getByLabelText("Player name"), "Åse Native");
   press("Confirm player name");
-  await screen.findByText("Welcome to Cozy Solitaire, Åse Native!");
+  await screen.findByTestId("main-tabs");
   await waitFor(async () =>
     expect((await stored()).profile.username).toBe("Åse Native"),
   );
@@ -55,7 +59,7 @@ test("native draw/undo, live localization and profile editing retain the active 
   );
   await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(initial));
   await renderAsync(<App />);
-  await screen.findByText("Welcome to Cozy Solitaire, Åse Native!");
+  await screen.findByTestId("main-tabs");
   press("♠ Play Solitaire");
   press("Draw cards");
   await screen.findByText("1 move");
@@ -80,7 +84,7 @@ test("native draw/undo, live localization and profile editing retain the active 
   });
   await cleanupAsync();
   await renderAsync(<App />);
-  await screen.findByText("Velkommen til Cozy Solitaire, Øster Native!");
+  await screen.findByTestId("main-tabs");
   press("♠ Spil kabale");
   await screen.findByText("1 træk");
 });
@@ -91,7 +95,7 @@ test("native hidden-object completion grants its reward once and survives restar
     JSON.stringify(setProfile(fresh("native", "en"), "Pip Native", "p")),
   );
   await renderAsync(<App />);
-  await screen.findByText("Welcome to Cozy Solitaire, Pip Native!");
+  await screen.findByTestId("main-tabs");
   press("✿ Mini-games");
   fireEvent.press(screen.getAllByRole("button", { name: "Continue" })[1]);
   for (const name of ["Key", "Acorn", "Ribbon", "Spoon", "Button"]) press(name);
@@ -101,8 +105,8 @@ test("native hidden-object completion grants its reward once and survives restar
   );
   await cleanupAsync();
   await renderAsync(<App />);
-  await screen.findByText("Welcome to Cozy Solitaire, Pip Native!");
-  expect(screen.getByText("✦ 20 Glimmers")).toBeOnTheScreen();
+  await screen.findByTestId("main-tabs");
+  expect(screen.getByLabelText("✦ 20 Glimmers")).toBeOnTheScreen();
   expect((await stored()).counters.hidden).toBe(1);
 });
 
@@ -114,7 +118,7 @@ test("native save without a profile migrates through onboarding without losing r
   await screen.findByText("Føl dig hjemme");
   fireEvent.changeText(screen.getByLabelText("Spillernavn"), "Ægir Have");
   press("Bekræft spillernavn");
-  await screen.findByText("Velkommen til Cozy Solitaire, Ægir Have!");
+  await screen.findByTestId("main-tabs");
   await waitFor(async () => {
     const save = await stored();
     expect(save.economy.wallet.glimmers).toBe(75);
@@ -132,7 +136,7 @@ test("native ambience settings persist independently of game, balances and profi
   initial.economy.wallet.glimmers = 81;
   await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(initial));
   await renderAsync(<App />);
-  await screen.findByText("Welcome to Cozy Solitaire, Living Garden!");
+  await screen.findByTestId("main-tabs");
   press("⚙ Settings");
   press("Animation quality: Low");
   press("Animations: On");
@@ -146,7 +150,7 @@ test("native ambience settings persist independently of game, balances and profi
   });
   await cleanupAsync();
   await renderAsync(<App />);
-  await screen.findByText("Welcome to Cozy Solitaire, Living Garden!");
+  await screen.findByTestId("main-tabs");
   press("⚙ Settings");
   expect(
     screen.getByRole("button", { name: "Animations: Off" }),
@@ -164,7 +168,7 @@ test("native partial hidden puzzle resumes at its level and cannot pay twice aft
     ),
   );
   await renderAsync(<App />);
-  await screen.findByText("Welcome to Cozy Solitaire, Puzzle Gardener!");
+  await screen.findByTestId("main-tabs");
   press("✿ Mini-games");
   press("Level 3");
   fireEvent.press(screen.getAllByRole("button", { name: "Continue" })[1]);
@@ -181,7 +185,7 @@ test("native partial hidden puzzle resumes at its level and cannot pay twice aft
   await waitFor(async () => expect((await stored()).miniSession.level).toBe(3));
   await cleanupAsync();
   await renderAsync(<App />);
-  await screen.findByText("Welcome to Cozy Solitaire, Puzzle Gardener!");
+  await screen.findByTestId("main-tabs");
   press("✿ Mini-games");
   expect(screen.queryByRole("button", { name: "Key" })).toBeNull();
   for (const name of ["Acorn", "Ribbon", "Spoon", "Button"]) press(name);
@@ -191,7 +195,7 @@ test("native partial hidden puzzle resumes at its level and cannot pay twice aft
   );
   await cleanupAsync();
   await renderAsync(<App />);
-  await screen.findByText("Welcome to Cozy Solitaire, Puzzle Gardener!");
+  await screen.findByTestId("main-tabs");
   press("✿ Mini-games");
   await screen.findByText("Beautifully done! +20 Glimmers");
   expect((await stored()).economy.wallet.glimmers).toBe(20);
@@ -227,7 +231,7 @@ test("native world area purchase, visible building upgrade and story reward pers
   };
   await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(original));
   await renderAsync(<App />);
-  await screen.findByText("Welcome to Cozy Solitaire, World Gardener!");
+  await screen.findByTestId("main-tabs");
   press("◇ World Map");
   fireEvent.press(
     within(screen.getByTestId("world-area-forest")).getByRole("button", {
@@ -258,7 +262,7 @@ test("native world area purchase, visible building upgrade and story reward pers
   });
   await cleanupAsync();
   await renderAsync(<App />);
-  await screen.findByText("Welcome to Cozy Solitaire, World Gardener!");
+  await screen.findByTestId("main-tabs");
   press("◇ World Map");
   expect(screen.getByText("Forest greenhouse")).toBeOnTheScreen();
   expect((await stored()).world.buildings.greenhouse).toBe(1);
@@ -287,7 +291,7 @@ test("native illustrated card deal safely completes and pays a victory once acro
   s.game.initial = snapshot(s.game);
   await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(s));
   await renderAsync(<App />);
-  await screen.findByText("Welcome to Cozy Solitaire, Card Gardener!");
+  await screen.findByTestId("main-tabs");
   press("♠ Play Solitaire");
   press("Safe finish");
   await screen.findByText("A lovely win!");
@@ -321,7 +325,7 @@ test("double tap promotes exposed ace and two to foundations; undo retains the o
   expose(1);
   await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(initial));
   await renderAsync(<App />);
-  await screen.findByText("Welcome to Cozy Solitaire, Cozy Native!");
+  await screen.findByTestId("main-tabs");
   press("♠ Play Solitaire");
   const board = screen.getByTestId("solitaire-board");
   expect(within(board).queryByRole("button", { name: "Undo" })).toBeNull();
@@ -379,7 +383,7 @@ test("Tea Time can be started and completed entirely through native controls", a
     JSON.stringify(setProfile(fresh("tea-native", "en"), "Tea Native", "p")),
   );
   await renderAsync(<App />);
-  await screen.findByText("Welcome to Cozy Solitaire, Tea Native!");
+  await screen.findByTestId("main-tabs");
   press("✿ Mini-games");
   fireEvent.press(screen.getAllByRole("button", { name: "Continue" })[2]);
   for (const [a, b] of path) {
@@ -388,4 +392,75 @@ test("Tea Time can be started and completed entirely through native controls", a
   }
   await screen.findByText("Beautifully done! +20 Glimmers");
   await waitFor(async () => expect((await stored()).counters.tea).toBe(1));
+});
+
+test("game panels scroll in a bounded viewport; oversized menu screens retain their own scroll", async () => {
+  await AsyncStorage.setItem(
+    SAVE_KEY,
+    JSON.stringify(setProfile(fresh("scroll", "en"), "Scroll Native", "p")),
+  );
+  await renderAsync(<App />);
+  await screen.findByTestId("main-tabs");
+  function expectBoundedGame() {
+    const viewport = screen.getByTestId("game-viewport");
+    expect(viewport).toHaveStyle({ flex: 1, minHeight: 0 });
+    expect(screen.queryByTestId("screen-scroll")).toBeNull();
+    let ancestor = viewport.parent;
+    while (ancestor) {
+      expect(["ScrollView", "RCTScrollView"]).not.toContain(ancestor.type);
+      ancestor = ancestor.parent;
+    }
+  }
+  expectBoundedGame();
+  press("♠ Play Solitaire");
+  expectBoundedGame();
+  expect(screen.getByTestId("card-board-scroll").props.scrollEnabled).toBe(
+    true,
+  );
+  expect(
+    screen.getByTestId("card-board-scroll").props.nestedScrollEnabled,
+  ).toBe(true);
+  press("⚙ Settings");
+  expect(screen.queryByTestId("game-viewport")).toBeNull();
+  expect(screen.getByTestId("screen-scroll").props.scrollEnabled).not.toBe(
+    false,
+  );
+  fireEvent.scroll(screen.getByTestId("screen-scroll"), {
+    nativeEvent: {
+      contentOffset: { x: 0, y: 800 },
+      contentSize: { width: 600, height: 1600 },
+      layoutMeasurement: { width: 600, height: 320 },
+    },
+  });
+  expect(screen.getByRole("button", { name: "Draw three" })).toBeOnTheScreen();
+  press("✿ Mini-games");
+  fireEvent.press(screen.getAllByRole("button", { name: "Continue" })[0]);
+  expectBoundedGame();
+  expect(screen.getByTestId("garden-match-board")).toBeOnTheScreen();
+});
+
+test("compact tabs navigate with localized accessible names and dismissible timed labels", async () => {
+  await AsyncStorage.setItem(
+    SAVE_KEY,
+    JSON.stringify(setProfile(fresh("tabs", "en"), "Tabs Native", "p")),
+  );
+  await renderAsync(<App />);
+  await screen.findByTestId("main-tabs");
+  expect(screen.getAllByRole("tab")).toHaveLength(9);
+  expect(screen.queryByText("Cozy Solitaire")).toBeNull();
+  press("♠ Play Solitaire");
+  expect(
+    screen.getByRole("tab", { name: "♠ Play Solitaire" }).props
+      .accessibilityState.selected,
+  ).toBe(true);
+  expect(screen.getByTestId("compact-tooltip")).toHaveTextContent(
+    "Play Solitaire",
+  );
+  fireEvent.press(screen.getByTestId("compact-tooltip"));
+  expect(screen.queryByTestId("compact-tooltip")).toBeNull();
+  press("⌂ My Garden");
+  await waitFor(
+    () => expect(screen.queryByTestId("compact-tooltip")).toBeNull(),
+    { timeout: 4000 },
+  );
 });

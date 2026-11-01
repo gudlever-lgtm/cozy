@@ -20,3 +20,7 @@
 The previous dependency-host network blocker was resolved when the user published the environment configuration. The 1.7.0 APK was already distributed on a separate Git download branch. 1.7.1 remains a test-signed native preview for device review, not a claim of production readiness or completed visual approval.
 
 Public download branch: `android-download-1.7.1`. Binary and QR verification metadata accompany the download. Source and main branches do not contain the APK.
+
+## 1.7.2 scroll regression
+
+TypeScript and formatting passed; 37 engine/presentation tests and 36 Android/iOS native component tests passed. See [SCROLL_FIX_1.7.2.md](SCROLL_FIX_1.7.2.md). Native tests do not perform native layout or establish physical-device scrolling behavior. The 1.7.1 APK checksum above remains historical evidence for that version; the new APK has its own BUILD_INFO.json and SHA256SUMS.txt on `android-download-1.7.2`.

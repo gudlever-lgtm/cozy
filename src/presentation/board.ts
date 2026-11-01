@@ -32,8 +32,8 @@ export function dropDestination(
     )[0]?.place;
 }
 export function boardMetrics(width: number, height: number) {
-  const rail = width < 800 ? 100 : 136;
-  const available = width - rail * 2 - 40;
+  const rail = 104;
+  const available = width - rail - 40;
   const cardWidth = Math.max(
     30,
     Math.min(

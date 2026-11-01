@@ -96,6 +96,7 @@ import {
   treasuresForLevel,
   type MiniLevel,
 } from "./engine/session";
+import { GameIcon } from "./GameIcon";
 import { Audio } from "./Audio";
 import { cozyImages } from "./assets/images";
 
@@ -142,11 +143,18 @@ export default function App() {
   const playing = screen === "play";
   const metrics = boardMetrics(
     width - insets.left - insets.right,
-    height - insets.top - insets.bottom,
+    height - insets.top - insets.bottom - 58,
   );
   const railWidth = metrics.rail;
   const [dragging, setDragging] = useState<Place | null>(null);
 
+  const [tip, setTip] = useState<string | null>(null);
+  const [challengeOpen, setChallengeOpen] = useState(false);
+  useEffect(() => {
+    if (!tip) return;
+    const timer = setTimeout(() => setTip(null), 2500);
+    return () => clearTimeout(timer);
+  }, [tip]);
   const [pendingChallenge, setPendingChallenge] = useState<ChallengeId | null>(
     null,
   );
@@ -157,6 +165,11 @@ export default function App() {
     [npc, setNpc] = useState<"millie" | "marmalade" | "pip" | null>(null),
     [placing, setPlacing] = useState<UpgradeId | null>(null),
     [nextDraw, setNextDraw] = useState<1 | 3>(1);
+  useEffect(() => {
+    if (!npc) return;
+    const timer = setTimeout(() => setNpc(null), 2500);
+    return () => clearTimeout(timer);
+  }, [npc]);
   const location = s?.world.area ?? "cottage";
   const setLocation = (area: AreaId) => act((v) => enterArea(v, area));
   const [miniLevel, setMiniLevel] = useState<MiniLevel>(1);
@@ -301,6 +314,33 @@ export default function App() {
           : number(c.rank, i18n.language),
       suit: tt(suitKeys[c.suit]),
     });
+  const iconButton = (
+    icon: string,
+    label: string,
+    onPress: () => void,
+    disabled = false,
+    selected = false,
+  ) => (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled, selected }}
+      disabled={disabled}
+      onPress={() => {
+        setTip(label);
+        onPress();
+      }}
+      onLongPress={() => setTip(label)}
+      style={({ pressed }) => [
+        st.iconButton,
+        selected && st.navActive,
+        disabled && st.disabled,
+        pressed && { opacity: 0.65 },
+      ]}
+    >
+      <GameIcon name={icon} color={selected ? "#fff9eb" : "#345b49"} />
+    </Pressable>
+  );
   const button = (
     label: string,
     onPress: () => void,
@@ -308,28 +348,54 @@ export default function App() {
     quiet = false,
     accessibilityLabel?: string,
     selected?: boolean,
-  ) => (
-    <Pressable
-      accessibilityRole="button"
-      disabled={disabled}
-      accessibilityLabel={accessibilityLabel ?? label}
-      accessibilityState={{
+  ) => {
+    const compact: Partial<Record<Key, string>> = {
+      undo: "undo",
+      hint: "hint",
+      help: "help",
+      auto: "auto",
+      restart: "restart",
+      newGame: "newGame",
+      saveContinue: "garden",
+      gather: "gather",
+      daily: "gift",
+      dailyDone: "gift",
+      pip: "friend",
+      cottage: "garden",
+      exploreForest: "world",
+    };
+    const key = (Object.keys(compact) as Key[]).find((k) => tt(k) === label);
+    if ((screen === "garden" || playing) && key && s?.profile)
+      return iconButton(
+        compact[key]!,
+        accessibilityLabel ?? label,
+        onPress,
         disabled,
-        ...(selected === undefined ? {} : { selected }),
-      }}
-      onPress={onPress}
-      style={({ pressed }) => [
-        st.button,
-        quiet && st.quiet,
-        disabled && st.disabled,
-        pressed && { opacity: 0.65 },
-      ]}
-    >
-      <Text style={[st.buttonText, quiet && { color: "#345b49" }]}>
-        {label}
-      </Text>
-    </Pressable>
-  );
+        selected,
+      );
+    return (
+      <Pressable
+        accessibilityRole="button"
+        disabled={disabled}
+        accessibilityLabel={accessibilityLabel ?? label}
+        accessibilityState={{
+          disabled,
+          ...(selected === undefined ? {} : { selected }),
+        }}
+        onPress={onPress}
+        style={({ pressed }) => [
+          st.button,
+          quiet && st.quiet,
+          disabled && st.disabled,
+          pressed && { opacity: 0.65 },
+        ]}
+      >
+        <Text style={[st.buttonText, quiet && { color: "#345b49" }]}>
+          {label}
+        </Text>
+      </Pressable>
+    );
+  };
   const heading = (title: string, sub?: string) => (
     <View style={st.heading}>
       <Text style={st.eyebrow}>COZY SOLITAIRE</Text>
@@ -377,6 +443,7 @@ export default function App() {
   const language = s.preferences.language;
   const go = (id: Screen) => {
     setMatchBusy(false);
+    setChallengeOpen(false);
     setScreen(id);
     setMessage("");
     setHelp(false);
@@ -686,6 +753,7 @@ export default function App() {
     return (
       <SafeAreaView style={st.root}>
         <ScrollView
+          nestedScrollEnabled
           contentContainerStyle={[
             st.onboarding,
             wide && { flexDirection: "row" },
@@ -756,33 +824,7 @@ export default function App() {
             )}
         </View>
       }
-      <View style={[st.shell, !focused && { flexDirection: "row" }]}>
-        {!focused && (
-          <ScrollView
-            style={[st.playRail, { width: railWidth, margin: 8 }]}
-            contentContainerStyle={st.railContent}
-          >
-            <Image
-              source={require("../assets/icon.png")}
-              style={st.rabbitLogo}
-            />
-            <Text style={st.railBrand}>Cozy Solitaire</Text>
-            <Text style={st.small}>{s.profile.username}</Text>
-            <Text style={st.currencyText}>
-              ✦ {number(s.economy.wallet.glimmers, language)} {tt("glimmers")}
-            </Text>
-            {nav.map((n) => (
-              <React.Fragment key={n.id}>
-                {button(
-                  n.icon + " " + tt(n.id),
-                  () => go(n.id),
-                  false,
-                  screen !== n.id,
-                )}
-              </React.Fragment>
-            ))}
-          </ScrollView>
-        )}
+      <View style={st.shell}>
         <View style={st.main}>
           {writeError && (
             <View style={st.notice}>
@@ -796,46 +838,43 @@ export default function App() {
               )}
             </View>
           )}
-          <ScrollView
-            scrollEnabled={!focused}
-            style={focused ? { flex: 1 } : undefined}
-            contentContainerStyle={
-              focused ? st.playContent : [st.content, st.menuSheet]
-            }
-            keyboardShouldPersistTaps="handled"
-          >
+          <ScreenViewport fixed={focused}>
             {screen === "world" && <WorldPanel save={s} onUpdate={act} />}
             {screen === "garden" && (
               <View style={st.playLayout}>
-                <ScrollView
-                  style={[st.playRail, { width: railWidth }]}
-                  contentContainerStyle={st.railContent}
-                >
-                  <Image
-                    source={require("../assets/icon.png")}
-                    style={st.rabbitLogo}
-                  />
-                  <Text style={st.railBrand}>Cozy Solitaire</Text>
-                  <Text style={st.small}>
-                    {tt("welcome", { username: s.profile.username })}
-                  </Text>
-                  <Text style={st.currencyText}>
-                    ✦ {number(s.economy.wallet.glimmers, language)}{" "}
-                    {tt("glimmers")}
-                  </Text>
-                  {nav.map((n) => (
-                    <React.Fragment key={n.id}>
-                      {button(
-                        n.icon + " " + tt(n.id),
-                        () => go(n.id),
-                        false,
-                        screen !== n.id,
-                      )}
-                    </React.Fragment>
-                  ))}
-                </ScrollView>
                 <View style={st.playCenter}>
                   {gardenScene()}
+                  <View style={st.gardenHud}>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={tt("welcome", {
+                        username: s.profile.username,
+                      })}
+                      onPress={() =>
+                        setTip(tt("welcome", { username: s.profile!.username }))
+                      }
+                    >
+                      <Image
+                        source={require("../assets/icon.png")}
+                        style={{ width: 44, height: 44, borderRadius: 14 }}
+                      />
+                    </Pressable>
+                    <View
+                      accessible
+                      accessibilityLabel={
+                        "✦ " +
+                        number(s.economy.wallet.glimmers, language) +
+                        " " +
+                        tt("glimmers")
+                      }
+                      style={st.hudPill}
+                    >
+                      <GameIcon name="glimmer" color="#917133" size={22} />
+                      <Text style={st.currencyText}>
+                        {number(s.economy.wallet.glimmers, language)}
+                      </Text>
+                    </View>
+                  </View>
                   <View style={st.gardenFriends}>
                     {(["millie", "marmalade"] as const).map((n) => (
                       <Pressable
@@ -848,13 +887,13 @@ export default function App() {
                           character={n}
                           enabled={s.preferences.animations}
                           reducedMotion={s.preferences.reducedMotion}
-                          size={Math.min(160, height * 0.36)}
+                          size={Math.min(128, (height - 58) * 0.32)}
                         />
                       </Pressable>
                     ))}
                   </View>
                   {npc && (
-                    <View style={st.dialogue}>
+                    <Pressable onPress={() => setNpc(null)} style={st.dialogue}>
                       <Text style={st.label}>{tt(npc)}</Text>
                       <Text style={st.subtitle}>
                         {tt((npc + "Hello") as Key, {
@@ -865,11 +904,12 @@ export default function App() {
                         {button(tt("quests"), () => go("quests"))}
                         {button(tt("close"), () => setNpc(null), false, true)}
                       </View>
-                    </View>
+                    </Pressable>
                   )}
                 </View>
                 <ScrollView
-                  style={[st.playRail, { width: railWidth + 24 }]}
+                  nestedScrollEnabled
+                  style={[st.playRail, { width: 56 }]}
                   contentContainerStyle={st.railContent}
                 >
                   {s.economy.inventory.includes("forest") && (
@@ -889,9 +929,8 @@ export default function App() {
                     </View>
                   )}
                   {button(tt("pip"), () => setNpc("pip"), false, true)}
-                  <View style={st.panel}>
-                    <Text style={st.small}>{tt("gatherHint")}</Text>
-                    <View style={st.row}>
+                  <View style={{ gap: 8 }}>
+                    <View style={{ gap: 8 }}>
                       {button(
                         tt("gather"),
                         () =>
@@ -938,38 +977,19 @@ export default function App() {
             )}
             {screen === "play" && (
               <View style={st.playLayout} testID="landscape-play-layout">
-                <ScrollView
-                  style={[st.playRail, { width: railWidth }]}
-                  contentContainerStyle={st.railContent}
-                >
-                  <Image
-                    source={require("../assets/icon.png")}
-                    style={st.rabbitLogo}
-                  />
-                  <Text style={st.railBrand}>Cozy Solitaire</Text>
-                  <Text style={st.small}>{s.profile.username}</Text>
-                  <Text style={st.currencyText}>
-                    ✦ {number(s.economy.wallet.glimmers, language)}{" "}
-                    {tt("glimmers")}
-                  </Text>
-                  <Text style={st.small}>
-                    {tt("moves", { count: s.game.moves })}
-                  </Text>
-                  {nav
-                    .filter((n) => n.id !== "play")
-                    .map((n) => (
-                      <React.Fragment key={n.id}>
-                        {button(
-                          n.icon + " " + tt(n.id),
-                          () => go(n.id),
-                          false,
-                          true,
-                        )}
-                      </React.Fragment>
-                    ))}
-                </ScrollView>
                 <View style={st.playCenter}>
+                  <View style={st.playStatus}>
+                    <GameIcon name="play" size={18} />
+                    <Text style={st.small}>
+                      {tt("moves", { count: s.game.moves })}
+                    </Text>
+                    <GameIcon name="glimmer" size={18} />
+                    <Text style={st.small}>
+                      {number(s.economy.wallet.glimmers, language)}
+                    </Text>
+                  </View>
                   <ScrollView
+                    nestedScrollEnabled
                     style={{ flex: 1 }}
                     contentContainerStyle={{ flexGrow: 1 }}
                     scrollEnabled={!dragging}
@@ -1072,10 +1092,19 @@ export default function App() {
                   </ScrollView>
                 </View>
                 <ScrollView
+                  nestedScrollEnabled
                   style={[st.playRail, { width: railWidth }]}
-                  contentContainerStyle={st.railContent}
+                  contentContainerStyle={[
+                    st.railContent,
+                    {
+                      flexDirection: "row",
+                      flexWrap: "wrap",
+                      gap: 4,
+                      justifyContent: "center",
+                    },
+                  ]}
                 >
-                  <View style={st.row}>
+                  <>
                     {button(
                       tt("undo"),
                       () => applyGame(undo),
@@ -1109,8 +1138,7 @@ export default function App() {
                       true,
                     )}
                     {button(tt("help"), () => setHelp(!help), false, true)}
-                  </View>
-                  {help && <Text style={st.rules}>{tt("solitaireRules")}</Text>}
+                  </>
                   {s.game.won && (
                     <View style={st.panel}>
                       <Text style={st.sectionTitle}>{tt("victory")}</Text>
@@ -1121,7 +1149,7 @@ export default function App() {
                       />
                     </View>
                   )}
-                  <View style={st.row}>
+                  <>
                     {button(
                       tt("auto"),
                       () => applyGame(autoComplete),
@@ -1149,29 +1177,10 @@ export default function App() {
                       false,
                       true,
                     )}
-                  </View>
-                  <View style={st.panel}>
-                    <Text style={st.sectionTitle}>{tt("challengeTitle")}</Text>
-                    <Text style={st.small}>{tt("challengeIntro")}</Text>
-                    {challenges.map((c) => (
-                      <View key={c.id} style={st.row}>
-                        {button(
-                          tt(("challenge_" + c.id) as Key),
-                          () => {
-                            setPendingChallenge(c.id);
-                            setDialog("new");
-                          },
-                          false,
-                          true,
-                        )}
-                        {s.world.challenges.includes(c.id) && (
-                          <Text style={st.small}>
-                            {tt("challengeCompleted")}
-                          </Text>
-                        )}
-                      </View>
-                    ))}
-                  </View>
+                  </>
+                  {iconButton("challenge", tt("challengeTitle"), () =>
+                    setChallengeOpen(true),
+                  )}
                 </ScrollView>
               </View>
             )}
@@ -1250,6 +1259,7 @@ export default function App() {
                 ) : (
                   <View style={st.playLayout} testID="mini-play-layout">
                     <ScrollView
+                      nestedScrollEnabled
                       style={[st.playRail, { width: width < 800 ? 174 : 220 }]}
                       contentContainerStyle={st.railContent}
                     >
@@ -1266,6 +1276,22 @@ export default function App() {
                           })}
                         </Text>
                       )}
+                      {activeMini === "match" && (
+                        <>
+                          {" "}
+                          {button(
+                            tt("shuffle"),
+                            () =>
+                              setMatch((g) => ({
+                                ...matchForLevel(miniLevel),
+                                score: g.score,
+                                turns: g.turns,
+                              })),
+                            miniDone || match.turns === 0 || matchBusy,
+                            true,
+                          )}
+                        </>
+                      )}{" "}
                       {miniDone && (
                         <Text style={st.sectionTitle}>{tt("miniWon")}</Text>
                       )}
@@ -1294,6 +1320,7 @@ export default function App() {
                       {button(tt("garden"), () => go("garden"), false, true)}
                     </ScrollView>
                     <ScrollView
+                      nestedScrollEnabled
                       style={st.playCenter}
                       contentContainerStyle={{
                         padding: 8,
@@ -1307,24 +1334,13 @@ export default function App() {
                             game={match}
                             size={Math.min(
                               336,
-                              height - insets.top - insets.bottom - 76,
+                              height - insets.top - insets.bottom - 82,
                             )}
                             disabled={miniDone || match.turns === 0}
                             reducedMotion={s.preferences.reducedMotion}
                             onChange={setMatch}
                             onBusyChange={setMatchBusy}
                           />
-                          {button(
-                            tt("shuffle"),
-                            () =>
-                              setMatch((g) => ({
-                                ...matchForLevel(miniLevel),
-                                score: g.score,
-                                turns: g.turns,
-                              })),
-                            miniDone || match.turns === 0 || matchBusy,
-                            true,
-                          )}
                           {!miniDone && match.turns === 0 && (
                             <Text style={st.label}>{tt("miniLost")}</Text>
                           )}
@@ -1751,9 +1767,84 @@ export default function App() {
                 {button(tt("close"), () => setMessage(""), false, true)}
               </View>
             )}
-          </ScrollView>
+          </ScreenViewport>
         </View>
       </View>
+      <View testID="main-tabs" accessibilityRole="tablist" style={st.tabDock}>
+        {nav.map((n) => (
+          <Pressable
+            key={n.id}
+            accessibilityRole="tab"
+            accessibilityLabel={n.icon + " " + tt(n.id)}
+            accessibilityState={{ selected: screen === n.id }}
+            onPress={() => {
+              go(n.id);
+              setTip(tt(n.id));
+            }}
+            onLongPress={() => setTip(tt(n.id))}
+            style={[st.tabButton, screen === n.id && st.navActive]}
+          >
+            <GameIcon
+              name={n.id}
+              color={screen === n.id ? "#fff9eb" : "#345b49"}
+            />
+          </Pressable>
+        ))}
+      </View>
+      {tip && (
+        <Pressable
+          testID="compact-tooltip"
+          accessibilityRole="alert"
+          onPress={() => setTip(null)}
+          style={st.tooltip}
+        >
+          <Text style={st.subtitle}>{tip}</Text>
+        </Pressable>
+      )}
+      {(help || challengeOpen) && (
+        <View style={st.overlay}>
+          <View style={[st.modal, { maxHeight: "85%" }]}>
+            <ScrollView
+              nestedScrollEnabled
+              contentContainerStyle={{ gap: 12, padding: 12 }}
+            >
+              {help ? (
+                <Text style={st.rules}>{tt("solitaireRules")}</Text>
+              ) : (
+                <View style={st.panel}>
+                  <Text style={st.sectionTitle}>{tt("challengeTitle")}</Text>
+                  <Text style={st.small}>{tt("challengeIntro")}</Text>
+                  {challenges.map((c) => (
+                    <View key={c.id} style={st.row}>
+                      {button(
+                        tt(("challenge_" + c.id) as Key),
+                        () => {
+                          setPendingChallenge(c.id);
+                          setDialog("new");
+                        },
+                        false,
+                        true,
+                      )}
+                      {s.world.challenges.includes(c.id) && (
+                        <Text style={st.small}>{tt("challengeCompleted")}</Text>
+                      )}
+                    </View>
+                  ))}
+                </View>
+              )}
+              {button(
+                tt("close"),
+                () => {
+                  setHelp(false);
+                  setChallengeOpen(false);
+                },
+                false,
+                true,
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      )}
       {dialog && (
         <View style={st.overlay}>
           <View style={st.modal}>
@@ -1786,6 +1877,32 @@ export default function App() {
         </View>
       )}
     </SafeAreaView>
+  );
+}
+/** Bound game scroll areas to the viewport; never nest them inside a disabled ScrollView. */
+function ScreenViewport({
+  fixed,
+  children,
+}: {
+  fixed: boolean;
+  children: React.ReactNode;
+}) {
+  if (fixed)
+    return (
+      <View testID="game-viewport" style={{ flex: 1, minHeight: 0 }}>
+        {children}
+      </View>
+    );
+  return (
+    <ScrollView
+      testID="screen-scroll"
+      style={{ flex: 1, minHeight: 0 }}
+      nestedScrollEnabled
+      keyboardShouldPersistTaps="handled"
+      contentContainerStyle={[st.content, st.menuSheet]}
+    >
+      {children}
+    </ScrollView>
   );
 }
 function Draggable({
@@ -1868,7 +1985,77 @@ function Draggable({
 }
 const st = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#f6f2e8" },
-  shell: { flex: 1 },
+  iconButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: "#fff7e8ed",
+    borderWidth: 1,
+    borderColor: "#cdbd96",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  tabDock: {
+    height: 54,
+    marginHorizontal: 8,
+    marginBottom: 4,
+    padding: 4,
+    borderRadius: 19,
+    backgroundColor: "#fff8e9ed",
+    borderWidth: 1,
+    borderColor: "#cdbd96",
+    flexDirection: "row",
+    justifyContent: "space-evenly",
+    alignItems: "center",
+    flexShrink: 0,
+  },
+  tabButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  tooltip: {
+    position: "absolute",
+    bottom: 66,
+    alignSelf: "center",
+    maxWidth: "85%",
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 16,
+    backgroundColor: "#fff9eef5",
+    borderWidth: 1,
+    borderColor: "#cdbd96",
+    elevation: 20,
+  },
+  gardenHud: {
+    position: "absolute",
+    top: 10,
+    left: 10,
+    right: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  hudPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    padding: 8,
+    borderRadius: 18,
+    backgroundColor: "#fff9eede",
+  },
+  playStatus: {
+    height: 24,
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "center",
+    paddingHorizontal: 8,
+    backgroundColor: "#fff9eedd",
+    borderRadius: 10,
+  },
+  shell: { flex: 1, minHeight: 0 },
   sidebar: {
     width: 238,
     padding: 24,
@@ -1892,7 +2079,7 @@ const st = StyleSheet.create({
   nav: { padding: 12, borderRadius: 10, marginBottom: 5 },
   navActive: { backgroundColor: "#345b49" },
   navText: { fontSize: 14, color: "#556850" },
-  main: { flex: 1 },
+  main: { flex: 1, minHeight: 0 },
   topbar: {
     height: 64,
     borderBottomWidth: 1,
@@ -2063,8 +2250,13 @@ const st = StyleSheet.create({
     gap: 8,
     backgroundColor: "#fff9eef5",
   },
-  playContent: { flexGrow: 1 },
-  playLayout: { flex: 1, flexDirection: "row", padding: 8, gap: 8 },
+  playLayout: {
+    flex: 1,
+    minHeight: 0,
+    flexDirection: "row",
+    padding: 8,
+    gap: 8,
+  },
   playRail: {
     flexGrow: 0,
     flexShrink: 0,
@@ -2073,13 +2265,13 @@ const st = StyleSheet.create({
     borderColor: "#dbc99a",
     borderRadius: 16,
   },
-  railContent: { padding: 8, gap: 10 },
+  railContent: { padding: 4, paddingBottom: 16, gap: 6, alignItems: "center" },
   railBrand: {
     fontFamily: Platform.OS === "ios" ? "Georgia" : "serif",
     color: "#345b49",
     fontSize: 19,
   },
-  playCenter: { flex: 1, minWidth: 0 },
+  playCenter: { flex: 1, minWidth: 0, minHeight: 0 },
   board: {
     flexGrow: 1,
     padding: 12,
