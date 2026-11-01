@@ -124,7 +124,7 @@
       "source_sha256": "c907591a0c677249db72e4f9fc4a3aceb133e8cd4f1c8d33bca97bdecc98f28b",
       "native_path": "assets/ambient/flower-petal.png",
       "scales": [1, 2, 3],
-      "logical_size": [16, 16]
+      "logical_size": [32, 32]
     },
     {
       "id": "glimmer",
@@ -132,7 +132,7 @@
       "source_sha256": "bc6b1c39e81af9b93f2eab9ca1da35e35482ee469cde423b9d1f17b8d9f0061d",
       "native_path": "assets/ambient/glimmer.png",
       "scales": [1, 2, 3],
-      "logical_size": [24, 24]
+      "logical_size": [48, 48]
     }
   ]
 }

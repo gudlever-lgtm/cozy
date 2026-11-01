@@ -1,5 +1,7 @@
+import { expansionDa } from "./expansion-da";
 import type { en } from "./en";
 export const da: Record<keyof typeof en, string> = {
+  ...expansionDa,
   animations: "Animationer",
   animationQuality: "Animationskvalitet",
   low: "Lav",

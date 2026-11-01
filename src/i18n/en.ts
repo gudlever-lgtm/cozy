@@ -1,4 +1,6 @@
+import { expansionEn } from "./expansion-en";
 export const en = {
+  ...expansionEn,
   animations: "Animations",
   animationQuality: "Animation quality",
   low: "Low",

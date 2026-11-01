@@ -6,7 +6,7 @@ import hashlib, io, json
 import cairosvg
 from PIL import Image
 ROOT=Path(__file__).resolve().parents[1]
-SIZES={'firefly':(24,24),'bird':(40,25),'butterfly':(28,28),'autumn-leaf':(20,20),'snowflake':(12,12),'flower-petal':(16,16),'glimmer':(24,24)}
+SIZES={'firefly':(24,24),'bird':(40,25),'butterfly':(28,28),'autumn-leaf':(20,20),'snowflake':(12,12),'flower-petal':(32,32),'glimmer':(48,48)}
 OUT=ROOT/'assets/ambient';OUT.mkdir(parents=True,exist_ok=True)
 provenance=[]
 for name,(w,h) in SIZES.items():

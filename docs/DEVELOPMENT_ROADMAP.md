@@ -11,3 +11,5 @@ The canonical design is `COZY_MASTER_GAME_DESIGN.md`. The uploaded execution bri
 7. Verify native bundles and available APK compilation. EAS production jobs, iOS signing and physical-device QA remain external prerequisites unless credentials/devices become available.
 
 Status and evidence are maintained in `IMPLEMENTATION_STATUS.md` and `TEST_RESULTS.md`. Source and tests, not version labels, establish completion.
+
+Implemented increments: approved ambient engine/art catalog; schema-3 session/world migration and local backup; expanded areas/buildings/stories/relationships/festivals; illustrated card themes, deterministic challenges and puzzle variants. Current gates are signed native binaries, network activation for the local APK, real-device performance/gesture/audio tests, SDK advisory review and final store/visual approval. No public version promotion or store publication has occurred.
