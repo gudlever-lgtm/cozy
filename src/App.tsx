@@ -9,7 +9,6 @@ import {
   StyleSheet,
   useWindowDimensions,
   Platform,
-  AccessibilityInfo,
   AppState,
   PanResponder,
   Animated,
@@ -24,6 +23,7 @@ import {
   dropDestination,
   type DropRegion,
 } from "./presentation/board";
+import { StackCardPicker } from "./StackCardPicker";
 import { ScreenPager } from "./ScreenPager";
 import { GardenMatch } from "./GardenMatch";
 import { MiniArtwork } from "./MiniArtwork";
@@ -88,7 +88,7 @@ import {
   type ChallengeId,
 } from "./engine/challenges";
 import { FestivalDecorations } from "./FestivalDecorations";
-import { WorldPanel } from "./WorldPanel";
+import { WorldNavigator } from "./WorldNavigator";
 import { WorldArt } from "./WorldArt";
 import { CardArtwork } from "./CardArtwork";
 import { enterArea, type AreaId } from "./engine/progression";
@@ -199,6 +199,7 @@ export default function App() {
     screen === "garden" ||
     screen === "decorations" ||
     screen === "statistics" ||
+    screen === "world" ||
     (screen === "mini" && !!activeMini);
   const lastCardTap = useRef<{ id: string; time: number } | null>(null);
   const dropTargets = useRef<Record<string, { node: View; place: Place }>>({});
@@ -235,16 +236,13 @@ export default function App() {
   }, []);
   const load = useCallback(async () => {
     try {
-      const [{ save: data, recovered }, reduced] = await Promise.all([
-        loadSave(
-          AsyncStorage,
-          uuid(),
-          deviceLanguage(getLocales()[0]?.languageCode ?? "en"),
-        ),
-        AccessibilityInfo.isReduceMotionEnabled(),
-      ]);
+      const { save: data, recovered } = await loadSave(
+        AsyncStorage,
+        uuid(),
+        deviceLanguage(getLocales()[0]?.languageCode ?? "en"),
+      );
       if (recovered) setMessage(String(i18n.t("backupRecovered")));
-      if (reduced) data.preferences.reducedMotion = true;
+      // System reduced motion is observed live; do not latch it into a permanent manual preference.
       await i18n.changeLanguage(data.preferences.language);
       if (data.profile) data.profile.lastPlayedAt = new Date().toISOString();
       setS(data);
@@ -948,7 +946,9 @@ export default function App() {
             </View>
           )}
           <ScreenViewport fixed={focused}>
-            {screen === "world" && <WorldPanel save={s} onUpdate={act} />}
+            {screen === "world" && (
+              <WorldNavigator save={s} onUpdate={act} onNavigate={go} />
+            )}
             {screen === "garden" && (
               <View style={st.playLayout}>
                 <View style={st.playCenter}>
@@ -2165,48 +2165,21 @@ export default function App() {
         }}
       >
         {!dialog && !help && !challengeOpen && stackPile !== null && (
-          <View accessibilityViewIsModal style={st.overlay}>
-            <View style={[st.modal, { height: "80%", maxHeight: "85%" }]}>
-              <Text style={st.sectionTitle}>{tt("stackTitle")}</Text>
-              <Text style={st.small}>{tt("stackInstructions")}</Text>
-              <ScrollView
-                nestedScrollEnabled
-                contentContainerStyle={{ gap: 8, padding: 8 }}
-              >
-                {boardLayout.columns[stackPile].hiddenIndices.map((index) => {
-                  const card = s.game.tableau[stackPile][index];
-                  return (
-                    <Pressable
-                      key={card.id}
-                      accessibilityRole="button"
-                      accessibilityLabel={cardName(card)}
-                      onPress={() => {
-                        setSelected({
-                          kind: "tableau",
-                          pile: stackPile,
-                          index,
-                        });
-                        setStackPile(null);
-                        setTip(cardName(card));
-                      }}
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        gap: 12,
-                        minHeight: 44,
-                        padding: 6,
-                      }}
-                    >
-                      <View style={{ width: 36, height: 52 }}>
-                        <CardArtwork card={card} theme={s.world.theme} />
-                      </View>
-                      <Text style={st.subtitle}>{cardName(card)}</Text>
-                    </Pressable>
-                  );
-                })}
-              </ScrollView>
-              {button(tt("close"), () => setStackPile(null), false, true)}
-            </View>
+          <View accessibilityViewIsModal style={[st.overlay, { padding: 8 }]}>
+            <StackCardPicker
+              cards={boardLayout.columns[stackPile].hiddenIndices.map(
+                (index) => ({ index, card: s.game.tableau[stackPile][index] }),
+              )}
+              theme={s.world.theme}
+              cardName={cardName}
+              onClose={() => setStackPile(null)}
+              onSelect={(index) => {
+                const card = s.game.tableau[stackPile][index];
+                setSelected({ kind: "tableau", pile: stackPile, index });
+                setStackPile(null);
+                setTip(cardName(card));
+              }}
+            />
           </View>
         )}
         {!dialog && (help || challengeOpen) && (

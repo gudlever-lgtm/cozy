@@ -256,3 +256,24 @@ test("fixed decoration/statistic pages fit their viewport without overflow", asy
     assert.ok(g.perPage >= 1 && g.perPage <= 4);
   }
 });
+
+test("stack picker reserves full card faces and measured paging controls", async () => {
+  const { stackPickerGeometry } =
+    await import("../src/presentation/stackPicker");
+  for (const [w, h] of [
+    [400, 190],
+    [568, 280],
+    [740, 320],
+    [900, 650],
+  ]) {
+    const g = stackPickerGeometry(w, h);
+    assert.ok(g.cardHeight >= 60);
+    assert.ok(g.cardHeight <= g.areaHeight);
+    assert.ok(
+      g.perPage * g.cardWidth + (g.perPage - 1) * g.gap <= w - 2 * g.padding,
+    );
+    assert.ok(
+      g.padding * 2 + g.header + g.footer + g.gap * 2 + g.areaHeight <= h,
+    );
+  }
+});

@@ -247,6 +247,7 @@ test("native world area purchase, visible building upgrade and story reward pers
       },
     ),
   );
+  press("Stories along the path");
   fireEvent.press(
     within(screen.getByTestId("world-story-forest1")).getByRole("button", {
       name: "Collect reward",
@@ -264,6 +265,11 @@ test("native world area purchase, visible building upgrade and story reward pers
   await renderAsync(<App />);
   await screen.findByTestId("main-tabs");
   press("◇ World Map");
+  fireEvent.press(
+    within(screen.getByTestId("world-area-forest")).getByRole("button", {
+      name: "Manage area",
+    }),
+  );
   expect(screen.getByText("Forest greenhouse")).toBeOnTheScreen();
   expect((await stored()).world.buildings.greenhouse).toBe(1);
 });
@@ -631,4 +637,77 @@ test("Decorations and Statistics use bounded pages with no scroll and retain pur
   expect(
     screen.getByRole("button", { name: "Curious explorer" }),
   ).toBeOnTheScreen();
+});
+
+test("compact world map explains the actual missing quest instead of a disabled unlock wall", async () => {
+  const initial = setProfile(fresh("world-guide", "en"), "Guide Native", "p");
+  initial.economy.wallet.glimmers = 75;
+  await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(initial));
+  await renderAsync(<App />);
+  await screen.findByTestId("main-tabs");
+  press("◇ World Map");
+  expect(screen.queryByTestId("screen-scroll")).toBeNull();
+  fireEvent.press(
+    within(screen.getByTestId("world-area-forest")).getByRole("button", {
+      name: "What is missing?",
+    }),
+  );
+  expect(screen.getByText("Your next step")).toBeOnTheScreen();
+  expect(
+    screen.getByText(
+      String(i18n.t("completeQuestFirst", { quest: i18n.t("pip1") })),
+    ),
+  ).toBeOnTheScreen();
+  fireEvent.press(screen.getByRole("button", { name: "Go to quests" }));
+  expect(
+    screen.getByRole("tab", { name: "☷ Quest Journal" }).props
+      .accessibilityState.selected,
+  ).toBe(true);
+});
+
+test("world shortcuts apply card themes and persist animation controls without latching system reduced motion", async () => {
+  const initial = setProfile(fresh("world-themes", "en"), "Themes Native", "p");
+  initial.economy.wallet = {
+    glimmers: 100,
+    wood: 10,
+    stone: 10,
+    flowers: 10,
+    seeds: 10,
+  };
+  await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(initial));
+  await renderAsync(<App />);
+  await screen.findByTestId("main-tabs");
+  press("◇ World Map");
+  press(String(i18n.t("cardThemes")));
+  fireEvent.press(
+    within(screen.getByTestId("world-theme-botanical")).getByRole("button", {
+      name: String(i18n.t("chooseTheme")),
+    }),
+  );
+  await waitFor(async () => {
+    const s = await stored();
+    expect(s.world.theme).toBe("botanical");
+    expect(s.game).toEqual(initial.game);
+    expect(s.preferences.reducedMotion).toBe(false);
+  });
+  expect(
+    within(screen.getByTestId("world-theme-botanical")).getByText(
+      "Active card design",
+    ),
+  ).toBeOnTheScreen();
+  press("Back");
+  press("Animations");
+  expect(screen.getByTestId("animation-panel")).toBeOnTheScreen();
+  await screen.findByText("Paused by your system’s reduced-motion setting.");
+  press("Animation quality: High");
+  press("Season: Winter");
+  press("Animations: On");
+  await waitFor(async () => {
+    const s = await stored();
+    expect(s.preferences.animationQuality).toBe("high");
+    expect(s.preferences.season).toBe("winter");
+    expect(s.preferences.animations).toBe(false);
+    expect(s.game).toEqual(initial.game);
+  });
+  expect(screen.getByText("Animations are switched off.")).toBeOnTheScreen();
 });

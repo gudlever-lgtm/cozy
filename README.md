@@ -82,3 +82,5 @@ Preview 1.7.3 fits Solitaire to the measured board viewport and collapses each e
 Preview 1.7.4 restores original illustrated icons/resource pieces, uses a native modal/HUD above the board, gives Garden Match one dedicated swipe surface, simplifies card faces to one large suit, improves card-footprint drop handling and compacts inventory with a persistent overflow scrollbar. See [usability validation](docs/USABILITY_1.7.4.md).
 
 Preview 1.7.5 animates Garden Match as local swaps, clears and column falls rather than a whole-board fade, with interruption-safe input recovery. Decorations and Statistics fit measured pages without scrolling. See [motion and page validation](docs/GARDEN_MATCH_MOTION_1.7.5.md).
+
+Preview 1.7.6 uses full-card stack-picker pages and a compact world map with precise next-step guidance. Header shortcuts expose card designs and seasonal/motion previews; system reduced motion no longer latches the saved manual preference. See [world clarity validation](docs/WORLD_CLARITY_1.7.6.md).

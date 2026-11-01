@@ -10,6 +10,7 @@ import { useTranslation } from "react-i18next";
 import { planMatchSwap, type Match } from "./engine/minigames";
 import { swipeNeighbour } from "./presentation/matchGesture";
 import Svg, { Defs, LinearGradient, Stop, Rect } from "react-native-svg";
+import { useMotionStatus } from "./living/useMotionPolicy";
 import { MiniArtwork } from "./MiniArtwork";
 type Piece = {
   id: string;
@@ -50,14 +51,22 @@ export function GardenMatch({
     );
   const gestureTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pending = useRef(new Set<() => void>());
+  const motion = useMotionStatus(true, reducedMotion);
+  const effectiveReducedMotion = reducedMotion || motion.reason === "system";
   const latest = useRef({
     game,
     disabled,
-    reducedMotion,
+    reducedMotion: effectiveReducedMotion,
     onChange,
     onBusyChange,
   });
-  latest.current = { game, disabled, reducedMotion, onChange, onBusyChange };
+  latest.current = {
+    game,
+    disabled,
+    reducedMotion: effectiveReducedMotion,
+    onChange,
+    onBusyChange,
+  };
   const represented = useRef(game),
     previousCell = useRef(cell);
   const origin = useRef({ x: 0, y: 0, index: -1 });

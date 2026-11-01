@@ -27,12 +27,22 @@ import {
 import { cozyImages } from "./assets/images";
 import { seasonAt } from "./engine/world";
 import { FestivalDecorations } from "./FestivalDecorations";
+import { CardArtwork } from "./CardArtwork";
 import { WorldArt } from "./WorldArt";
 export function WorldPanel({
   save,
   onUpdate,
+  detailsOnly = false,
+  section,
 }: {
   save: Save;
+  detailsOnly?: boolean;
+  section?:
+    | "buildings"
+    | "storyJournal"
+    | "festivals"
+    | "cardThemes"
+    | "worldAchievements";
   onUpdate: (fn: (s: Save) => Save) => void;
 }) {
   const { t, i18n } = useTranslation();
@@ -73,188 +83,247 @@ export function WorldPanel({
   );
   return (
     <View style={{ gap: 18 }}>
-      <Text accessibilityRole="header" style={s.title}>
-        {tt("world")}
-      </Text>
-      <Text style={s.text}>{tt("worldIntro")}</Text>
-      <View style={s.scene}>
-        {save.world.area === "cottage" ? (
-          <Image
-            source={
-              cozyImages.seasons[
-                save.preferences.season === "auto"
-                  ? seasonAt(new Date())
-                  : save.preferences.season
-              ]
-            }
-            resizeMode="cover"
-            style={StyleSheet.absoluteFill}
-          />
-        ) : (
-          <WorldArt
-            season={
-              save.preferences.season === "auto"
-                ? seasonAt(new Date())
-                : save.preferences.season
-            }
-            area={save.world.area}
-            levels={save.world.buildings}
-          />
-        )}
-        <FestivalDecorations events={save.world.events} />
-      </View>
-      <Text style={s.title}>{tt(("area_" + save.world.area) as Key)}</Text>
-      <View style={s.grid}>
-        {areas.map((a) => (
-          <View key={a.id} testID={`world-area-${a.id}`} style={s.panel}>
-            <Text style={s.heading}>{tt(("area_" + a.id) as Key)}</Text>
-            {!areaOwned(save, a.id) && (
-              <>
-                <Text style={s.text}>{cost(a.cost)}</Text>
-                <Text style={s.text}>
-                  {tt("requirements", {
-                    quest: a.quest ? tt(a.quest as Key) : tt("complete"),
-                  })}
-                </Text>
-              </>
+      {!detailsOnly && (
+        <>
+          <Text accessibilityRole="header" style={s.title}>
+            {tt("world")}
+          </Text>
+          <Text style={s.text}>{tt("worldIntro")}</Text>
+          <View style={s.scene}>
+            {save.world.area === "cottage" ? (
+              <Image
+                source={
+                  cozyImages.seasons[
+                    save.preferences.season === "auto"
+                      ? seasonAt(new Date())
+                      : save.preferences.season
+                  ]
+                }
+                resizeMode="cover"
+                style={StyleSheet.absoluteFill}
+              />
+            ) : (
+              <WorldArt
+                season={
+                  save.preferences.season === "auto"
+                    ? seasonAt(new Date())
+                    : save.preferences.season
+                }
+                area={save.world.area}
+                levels={save.world.buildings}
+              />
             )}
-            {button(
-              tt(areaOwned(save, a.id) ? "enterArea" : "unlockArea"),
-              () => onUpdate((v) => enterArea(v, a.id)),
-              !areaOwned(save, a.id) && !areaReady(save, a.id),
-              save.world.area === a.id,
-            )}
+            <FestivalDecorations events={save.world.events} />
           </View>
-        ))}
-      </View>
-      <Text style={s.title}>{tt("buildings")}</Text>
-      <View style={s.grid}>
-        {buildings
-          .filter((b) => b.area === save.world.area)
-          .map((b) => {
-            const level = save.world.buildings[b.id] ?? 0;
-            return (
-              <View
-                key={b.id}
-                testID={`world-building-${b.id}`}
-                style={s.panel}
-              >
-                <Text style={s.heading}>{tt(b.id)}</Text>
-                <Text style={s.text}>
-                  {cost(
-                    Object.fromEntries(
-                      Object.entries(b.cost).map(([k, v]) => [
-                        k,
-                        v * (level + 1),
-                      ]),
-                    ),
-                  )}
-                </Text>
+          <Text style={s.title}>{tt(("area_" + save.world.area) as Key)}</Text>
+          <View style={s.grid}>
+            {areas.map((a) => (
+              <View key={a.id} testID={`world-area-${a.id}`} style={s.panel}>
+                <Text style={s.heading}>{tt(("area_" + a.id) as Key)}</Text>
+                {!areaOwned(save, a.id) && (
+                  <>
+                    <Text style={s.text}>{cost(a.cost)}</Text>
+                    <Text style={s.text}>
+                      {tt("requirements", {
+                        quest: a.quest ? tt(a.quest as Key) : tt("complete"),
+                      })}
+                    </Text>
+                  </>
+                )}
                 {button(
-                  level >= 3
-                    ? tt("maxLevel")
-                    : tt("improveBuilding", { level }),
-                  () => onUpdate((v) => improve(v, b.id)),
-                  level >= 3,
+                  tt(areaOwned(save, a.id) ? "enterArea" : "unlockArea"),
+                  () => onUpdate((v) => enterArea(v, a.id)),
+                  !areaOwned(save, a.id) && !areaReady(save, a.id),
+                  save.world.area === a.id,
                 )}
               </View>
-            );
-          })}
-      </View>
-      <Text style={s.title}>{tt("storyJournal")}</Text>
-      {stories
-        .filter((story) => story.area === save.world.area)
-        .map((story) => {
-          const p = storyProgress(save, story.id),
-            done = save.world.stories.includes(story.id),
-            ready =
-              areaOwned(save, story.area) &&
-              (!story.requires || save.world.stories.includes(story.requires));
-          return (
-            <View
-              key={story.id}
-              testID={`world-story-${story.id}`}
-              style={s.panel}
-            >
-              <Text style={s.heading}>{tt(story.id as Key)}</Text>
+            ))}
+          </View>
+        </>
+      )}
+      {(!section || section === "buildings") && (
+        <>
+          <Text style={s.title}>{tt("buildings")}</Text>
+          <View style={s.grid}>
+            {buildings
+              .filter((b) => b.area === save.world.area)
+              .map((b) => {
+                const level = save.world.buildings[b.id] ?? 0;
+                return (
+                  <View
+                    key={b.id}
+                    testID={`world-building-${b.id}`}
+                    style={s.panel}
+                  >
+                    <Text style={s.heading}>{tt(b.id)}</Text>
+                    <Text style={s.text}>
+                      {cost(
+                        Object.fromEntries(
+                          Object.entries(b.cost).map(([k, v]) => [
+                            k,
+                            v * (level + 1),
+                          ]),
+                        ),
+                      )}
+                    </Text>
+                    {button(
+                      level >= 3
+                        ? tt("maxLevel")
+                        : tt("improveBuilding", { level }),
+                      () => onUpdate((v) => improve(v, b.id)),
+                      level >= 3,
+                    )}
+                  </View>
+                );
+              })}
+          </View>
+        </>
+      )}
+      {(!section || section === "storyJournal") && (
+        <>
+          <Text style={s.title}>{tt("storyJournal")}</Text>
+          {stories
+            .filter((story) => story.area === save.world.area)
+            .map((story) => {
+              const p = storyProgress(save, story.id),
+                done = save.world.stories.includes(story.id),
+                ready =
+                  areaOwned(save, story.area) &&
+                  (!story.requires ||
+                    save.world.stories.includes(story.requires));
+              return (
+                <View
+                  key={story.id}
+                  testID={`world-story-${story.id}`}
+                  style={s.panel}
+                >
+                  <Text style={s.heading}>{tt(story.id as Key)}</Text>
+                  <Text style={s.text}>
+                    {tt((story.id + "Dialogue") as Key, {
+                      username: save.profile?.username ?? "",
+                    })}
+                  </Text>
+                  <Text style={s.text}>{tt((story.id + "Text") as Key)}</Text>
+                  <Text style={s.text}>
+                    {tt(story.npc)} ·{" "}
+                    {tt("friendship", { level: friendship(save, story.npc) })}
+                  </Text>
+                  <Text style={s.text}>
+                    {tt("progress", p)} ·{" "}
+                    {tt("storyReward", { amount: story.reward.glimmers })}
+                  </Text>
+                  {button(
+                    tt(done ? "complete" : "claim"),
+                    () => onUpdate((v) => claimStory(v, story.id)),
+                    done || !ready || p.done < p.total,
+                  )}
+                </View>
+              );
+            })}
+        </>
+      )}
+      {(!section || section === "festivals") && (
+        <>
+          <Text style={s.title}>{tt("festivals")}</Text>
+          <Text style={s.text}>{tt("festivalIntro")}</Text>
+          <View style={s.grid}>
+            {festivals.map((f) => (
+              <View key={f.id} style={s.panel}>
+                <Text style={s.heading}>{tt(("festival_" + f.id) as Key)}</Text>
+                <Text style={s.text}>
+                  {tt("festivalObjective", {
+                    game: tt(f.counter === "solitaire" ? "play" : f.counter),
+                    count: f.count,
+                  })}
+                </Text>
+                <Text style={s.text}>{tt("festivalReward")}</Text>
+                {button(
+                  tt(save.world.events.includes(f.id) ? "complete" : "claim"),
+                  () => onUpdate((v) => claimFestival(v, f.id)),
+                  save.world.events.includes(f.id) ||
+                    save.counters[f.counter] < f.count,
+                )}
+              </View>
+            ))}
+          </View>
+        </>
+      )}
+      {(!section || section === "cardThemes") && (
+        <>
+          <Text style={s.title}>{tt("cardThemes")}</Text>
+          <View style={s.grid}>
+            {themes.map((theme) => (
+              <View
+                key={theme.id}
+                testID={`world-theme-${theme.id}`}
+                style={s.panel}
+              >
+                <Text style={s.heading}>
+                  {tt(("theme_" + theme.id) as Key)}
+                </Text>
+                <View style={{ flexDirection: "row", gap: 8 }}>
+                  <View style={{ width: 42, height: 60 }}>
+                    <CardArtwork
+                      card={{
+                        id: "preview-back",
+                        rank: 1,
+                        suit: "♠",
+                        up: false,
+                      }}
+                      theme={theme.id}
+                    />
+                  </View>
+                  <View style={{ width: 42, height: 60 }}>
+                    <CardArtwork
+                      card={{
+                        id: "preview-front",
+                        rank: 1,
+                        suit: "♥",
+                        up: true,
+                      }}
+                      theme={theme.id}
+                    />
+                  </View>
+                </View>
+                <Text style={s.text}>
+                  {save.world.theme === theme.id
+                    ? tt("themeActive")
+                    : cost(theme.cost)}
+                </Text>
+                {button(
+                  tt("chooseTheme"),
+                  () => onUpdate((v) => chooseTheme(v, theme.id)),
+                  false,
+                  save.world.theme === theme.id,
+                )}
+              </View>
+            ))}
+          </View>
+        </>
+      )}
+      {(!section || section === "worldAchievements") && (
+        <>
+          <Text style={s.title}>{tt("worldAchievements")}</Text>
+          {worldAchievements.map((id) => (
+            <View key={id} style={s.panel}>
+              <Text style={s.heading}>{tt(("achievement_" + id) as Key)}</Text>
               <Text style={s.text}>
-                {tt((story.id + "Dialogue") as Key, {
-                  username: save.profile?.username ?? "",
-                })}
-              </Text>
-              <Text style={s.text}>{tt((story.id + "Text") as Key)}</Text>
-              <Text style={s.text}>
-                {tt(story.npc)} ·{" "}
-                {tt("friendship", { level: friendship(save, story.npc) })}
-              </Text>
-              <Text style={s.text}>
-                {tt("progress", p)} ·{" "}
-                {tt("storyReward", { amount: story.reward.glimmers })}
+                {tt(("achievement_" + id + "Text") as Key)}
               </Text>
               {button(
-                tt(done ? "complete" : "claim"),
-                () => onUpdate((v) => claimStory(v, story.id)),
-                done || !ready || p.done < p.total,
+                tt(
+                  save.economy.receipts.includes("achievement:" + id)
+                    ? "earned"
+                    : "achievementReward",
+                ),
+                () => onUpdate((v) => claimWorldAchievement(v, id)),
+                save.economy.receipts.includes("achievement:" + id) ||
+                  !achievementReady(save, id),
               )}
             </View>
-          );
-        })}
-      <Text style={s.title}>{tt("festivals")}</Text>
-      <Text style={s.text}>{tt("festivalIntro")}</Text>
-      <View style={s.grid}>
-        {festivals.map((f) => (
-          <View key={f.id} style={s.panel}>
-            <Text style={s.heading}>{tt(("festival_" + f.id) as Key)}</Text>
-            <Text style={s.text}>
-              {tt("festivalObjective", {
-                game: tt(f.counter === "solitaire" ? "play" : f.counter),
-                count: f.count,
-              })}
-            </Text>
-            <Text style={s.text}>{tt("festivalReward")}</Text>
-            {button(
-              tt(save.world.events.includes(f.id) ? "complete" : "claim"),
-              () => onUpdate((v) => claimFestival(v, f.id)),
-              save.world.events.includes(f.id) ||
-                save.counters[f.counter] < f.count,
-            )}
-          </View>
-        ))}
-      </View>
-      <Text style={s.title}>{tt("cardThemes")}</Text>
-      <View style={s.grid}>
-        {themes.map((theme) => (
-          <View key={theme.id} style={s.panel}>
-            <Text style={s.heading}>{tt(("theme_" + theme.id) as Key)}</Text>
-            <Text style={s.text}>{cost(theme.cost)}</Text>
-            {button(
-              tt("chooseTheme"),
-              () => onUpdate((v) => chooseTheme(v, theme.id)),
-              false,
-              save.world.theme === theme.id,
-            )}
-          </View>
-        ))}
-      </View>
-      <Text style={s.title}>{tt("worldAchievements")}</Text>
-      {worldAchievements.map((id) => (
-        <View key={id} style={s.panel}>
-          <Text style={s.heading}>{tt(("achievement_" + id) as Key)}</Text>
-          <Text style={s.text}>
-            {tt(("achievement_" + id + "Text") as Key)}
-          </Text>
-          {button(
-            tt(
-              save.economy.receipts.includes("achievement:" + id)
-                ? "earned"
-                : "achievementReward",
-            ),
-            () => onUpdate((v) => claimWorldAchievement(v, id)),
-            save.economy.receipts.includes("achievement:" + id) ||
-              !achievementReady(save, id),
-          )}
-        </View>
-      ))}
+          ))}
+        </>
+      )}
     </View>
   );
 }

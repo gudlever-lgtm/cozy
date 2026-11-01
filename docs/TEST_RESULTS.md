@@ -38,3 +38,9 @@ TypeScript and formatting passed; 37 engine/presentation tests and 36 Android/iO
 44 engine/presentation tests and 62 native component tests pass. New coverage checks local cascade mappings, stationary identities, input recovery after interrupted/missing callbacks and lost releases, plus Decorations/Statistics page geometry/navigation and preserved purchase/placement behavior. See [GARDEN_MATCH_MOTION_1.7.5.md](GARDEN_MATCH_MOTION_1.7.5.md). Physical-device appearance, gesture feel and FPS remain unverified.
 
 1.7.5 native build evidence: local ARM64 Gradle APK build succeeded in 59 seconds, and Expo native JS/Hermes exports passed for Android and iOS. This does not replace physical-device gesture/performance verification.
+
+## 1.7.6 card/world/appearance clarity
+
+45 engine/presentation tests and 68 Android/iOS native component tests pass. The supplied phone screenshots informed the layout correction, but physical-device validation of the replacement remains outstanding. See [WORLD_CLARITY_1.7.6.md](WORLD_CLARITY_1.7.6.md) for exact scope, motion-policy correction, theme/season verification and device limits.
+
+1.7.6 native evidence: Android and iOS JS/Hermes exports passed; the local ARM64 Android APK compiled successfully in 59 seconds. This is build evidence, not physical-device visual or animation verification.

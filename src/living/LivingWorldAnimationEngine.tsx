@@ -214,6 +214,7 @@ const WarmLights = memo(function WarmLights({
   );
 });
 export type LivingWorldProps = {
+  preview?: boolean;
   season: LivingSeason;
   enabled: boolean;
   quality: AnimationQuality;
@@ -235,11 +236,24 @@ export function LivingWorldAnimationEngine({
   height,
   time = "afternoon",
   cottageLights = true,
+  preview = false,
 }: LivingWorldProps) {
   const active = useMotionPolicy(enabled, reducedMotion);
   const objects = useMemo(
-    () => createAmbientObjects(season, quality, intensity),
-    [season, quality, intensity],
+    () =>
+      createAmbientObjects(season, quality, intensity).map((object, index) =>
+        preview
+          ? {
+              ...object,
+              delay: index * 120,
+              pause: 0,
+              duration: Math.min(object.duration, 6000),
+              size: object.size * 1.25,
+              opacity: 1,
+            }
+          : object,
+      ),
+    [season, quality, intensity, preview],
   );
   return (
     <View

@@ -13,10 +13,12 @@ export function ScreenPager({
   title,
   items,
   id,
+  actions,
 }: {
   title: string;
   items: React.ReactNode[];
   id: string;
+  actions?: React.ReactNode;
 }) {
   const window = useWindowDimensions(),
     { t } = useTranslation();
@@ -25,7 +27,7 @@ export function ScreenPager({
     height: window.height - 58,
   });
   const [requested, setPage] = useState(0);
-  const layout = pageGeometry(bounds.width, bounds.height),
+  const layout = pageGeometry(bounds.width, bounds.height, actions ? 44 : 30),
     pages = Math.max(1, Math.ceil(items.length / layout.perPage)),
     page = Math.min(requested, pages - 1);
   return (
@@ -42,14 +44,24 @@ export function ScreenPager({
           );
       }}
     >
-      <Text
-        accessibilityRole="header"
-        numberOfLines={1}
-        maxFontSizeMultiplier={1.2}
-        style={styles.title}
+      <View
+        style={{
+          height: actions ? 44 : 30,
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 8,
+        }}
       >
-        {title}
-      </Text>
+        <Text
+          accessibilityRole="header"
+          numberOfLines={1}
+          maxFontSizeMultiplier={1.2}
+          style={[styles.title, { flex: 1 }]}
+        >
+          {title}
+        </Text>
+        {actions}
+      </View>
       <View
         style={{
           height: layout.gridHeight,
