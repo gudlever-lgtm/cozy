@@ -1,6 +1,15 @@
 import { newWorld, validWorld, type WorldProgress } from "./progression";
 import { validSession, type MiniSession } from "./session";
-import { newGame, type Game, type Board, suits } from "./solitaire";
+import {
+  newGame,
+  type Game,
+  type Board,
+  type Delta,
+  type PileRef,
+  suits,
+  revert,
+  validDelta,
+} from "./solitaire";
 import {
   type Economy,
   type Counters,
@@ -33,7 +42,7 @@ export type Preferences = {
   animationQuality: "low" | "medium" | "high";
 };
 export type Save = {
-  version: 3;
+  version: 4;
   world: WorldProgress;
   miniSession: MiniSession | null;
   profile: Profile | null;
@@ -60,7 +69,7 @@ export const deviceLanguage = (language: string): Language =>
   language.toLowerCase().startsWith("da") ? "da" : "en";
 export function fresh(id: string, language: Language): Save {
   return {
-    version: 3,
+    version: 4,
     world: newWorld(),
     miniSession: null,
     profile: null,
@@ -156,6 +165,64 @@ function validBoard(board: Board): boolean {
     new Set(cards.map((c) => c.id)).size === 52
   );
 }
+/** Keep only the newest contiguous, exactly verified legacy undo suffix. */
+function migrateHistory(history: unknown, current: Board): Delta[] {
+  if (!Array.isArray(history) || !validBoard(current)) return [];
+  const result: Delta[] = [];
+  let after = current;
+  const key = (b: Board) =>
+    JSON.stringify(
+      [b.stock, b.waste, ...b.tableau, ...b.foundations].map((p) =>
+        p.map((c) => [c.id, c.up]),
+      ),
+    );
+  for (
+    let i = history.length - 1;
+    i >= Math.max(0, history.length - 200);
+    i--
+  ) {
+    const before = history[i] as Board;
+    if (!validBoard(before)) break;
+    const piles = (b: Board) => [
+      b.stock,
+      b.waste,
+      ...b.tableau,
+      ...b.foundations,
+    ];
+    const a = piles(before),
+      b = piles(after);
+    const changed = a.map((p, j) => b[j].length - p.length);
+    const sources = changed.flatMap((n, j) => (n < 0 ? [j] : [])),
+      targets = changed.flatMap((n, j) => (n > 0 ? [j] : []));
+    if (sources.length !== 1 || targets.length !== 1) break;
+    const from = sources[0],
+      to = targets[0],
+      n = changed[to];
+    if (-changed[from] !== n) break;
+    const flipped = after.tableau.flatMap((p, j) => {
+      const top = p.at(-1);
+      return top?.up && before.tableau[j].some((c) => c.id === top.id && !c.up)
+        ? [j]
+        : [];
+    });
+    const ref = (j: number): PileRef =>
+      j === 1
+        ? { kind: "waste" }
+        : j < 9
+          ? { kind: "tableau", pile: j - 2 }
+          : { kind: "foundations", pile: j - 9 };
+    const delta: Delta =
+      from === 0 && to === 1
+        ? { op: "draw", n, flipped }
+        : from === 1 && to === 0
+          ? { op: "recycle", n, flipped }
+          : { op: "move", from: ref(from), to: ref(to), n, flipped };
+    if (!validDelta(delta) || key(revert(after, delta)) !== key(before)) break;
+    result.unshift(delta);
+    after = before;
+  }
+  return result;
+}
 export function migrate(
   raw: string | null,
   id: string,
@@ -163,17 +230,13 @@ export function migrate(
 ): Save {
   if (!raw) return fresh(id, language);
   const old = JSON.parse(raw);
-  if (
-    !old ||
-    typeof old !== "object" ||
-    (old.version !== 1 && old.version !== 2 && old.version !== 3)
-  )
+  if (!old || typeof old !== "object" || ![1, 2, 3, 4].includes(old.version))
     throw Error("saveError");
   const base = fresh(id, language);
   const s = {
     ...base,
     ...old,
-    version: 3,
+    version: 4,
     world: { ...newWorld(old.economy?.inventory ?? []), ...old.world },
     miniSession: old.miniSession ?? null,
     preferences: { ...base.preferences, ...old.preferences },
@@ -217,12 +280,14 @@ export function migrate(
     throw Error("saveError");
   if (s.profile && (!validateUsername(s.profile.username) || !s.profile.id))
     throw Error("saveError");
+  if (old.version < 4 && s.game)
+    s.game = { ...s.game, history: migrateHistory(s.game.history, s.game) };
   if (
     !validBoard(s.game) ||
     !validBoard(s.game.initial) ||
     !Array.isArray(s.game.history) ||
     s.game.history.length > 200 ||
-    !s.game.history.every(validBoard) ||
+    !s.game.history.every(validDelta) ||
     ![1, 3].includes(s.game.draw) ||
     !Number.isSafeInteger(s.game.moves) ||
     s.game.moves < 0 ||

@@ -171,7 +171,7 @@ test("native save without a profile migrates through onboarding without losing r
     const save = await stored();
     expect(save.economy.wallet.glimmers).toBe(75);
     expect(save.game.id).toBe("legacy");
-    expect(save.version).toBe(3);
+    expect(save.version).toBe(4);
   });
 });
 

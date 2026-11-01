@@ -122,7 +122,7 @@ test("version two saves migrate without changing profiles, games, wallets, legac
     "new",
     "en",
   );
-  assert.equal(restored.version, 3);
+  assert.equal(restored.version, 4);
   assert.deepEqual(restored.profile, s.profile);
   assert.deepEqual(restored.game, s.game);
   assert.deepEqual(restored.economy, s.economy);

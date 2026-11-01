@@ -10,7 +10,7 @@ export type Game = Board & {
   id: string;
   draw: 1 | 3;
   moves: number;
-  history: Board[];
+  history: Delta[];
   initial: Board;
   won: boolean;
   challenge?: string;
@@ -20,15 +20,74 @@ export type Place =
   | { kind: "waste" };
 export const suits: Suit[] = ["♠", "♥", "♣", "♦"];
 export const red = (c: Card) => c.suit === "♥" || c.suit === "♦";
-export const snapshot = (g: Board): Board =>
-  JSON.parse(
-    JSON.stringify({
-      stock: g.stock,
-      waste: g.waste,
-      tableau: g.tableau,
-      foundations: g.foundations,
-    }),
+export type PileRef =
+  { kind: "waste" } | { kind: "tableau" | "foundations"; pile: number };
+export type Delta =
+  | { op: "draw"; n: number; flipped: number[] }
+  | { op: "recycle"; n: number; flipped: number[] }
+  | { op: "move"; from: PileRef; to: PileRef; n: number; flipped: number[] };
+export const snapshot = (g: Board): Board => ({
+  stock: g.stock.map((c) => ({ ...c })),
+  waste: g.waste.map((c) => ({ ...c })),
+  tableau: g.tableau.map((p) => p.map((c) => ({ ...c }))),
+  foundations: g.foundations.map((p) => p.map((c) => ({ ...c }))),
+});
+function pileAt(b: Board, p: PileRef): Card[] {
+  return p.kind === "waste" ? b.waste : b[p.kind][p.pile];
+}
+export function validDelta(value: unknown): value is Delta {
+  if (!value || typeof value !== "object") return false;
+  const d = value as Delta;
+  const validRef = (p: PileRef) =>
+    !!p &&
+    (p.kind === "waste" ||
+      ((p.kind === "tableau" || p.kind === "foundations") &&
+        Number.isInteger(p.pile) &&
+        p.pile >= 0 &&
+        p.pile < (p.kind === "tableau" ? 7 : 4)));
+  return (
+    ["draw", "recycle", "move"].includes(d.op) &&
+    Number.isInteger(d.n) &&
+    d.n >= 1 &&
+    d.n <= 52 &&
+    Array.isArray(d.flipped) &&
+    d.flipped.length <= 7 &&
+    new Set(d.flipped).size === d.flipped.length &&
+    d.flipped.every((i) => Number.isInteger(i) && i >= 0 && i < 7) &&
+    (d.op !== "move" ||
+      (validRef(d.from) &&
+        validRef(d.to) &&
+        d.to.kind !== "waste" &&
+        JSON.stringify(d.from) !== JSON.stringify(d.to)))
   );
+}
+/** Pure inverse. Even a malformed delta must never create or discard a card. */
+export function revert(board: Board, delta: Delta): Board {
+  const b = snapshot(board);
+  if (!validDelta(delta)) return b;
+  for (const i of delta.flipped) {
+    const top = b.tableau[i].at(-1);
+    if (top) top.up = false;
+  }
+  if (delta.op === "draw") {
+    for (let i = 0; i < delta.n && b.waste.length; i++) {
+      const c = b.waste.pop();
+      if (c) {
+        c.up = false;
+        b.stock.push(c);
+      }
+    }
+  } else if (delta.op === "recycle") {
+    // Preserve an unexpected waste as well: corruption cannot silently delete cards.
+    b.waste.push(...b.stock.reverse().map((c) => ({ ...c, up: true })));
+    b.stock = [];
+  } else {
+    const from = pileAt(b, delta.from),
+      to = pileAt(b, delta.to);
+    from.push(...to.splice(Math.max(0, to.length - delta.n)));
+  }
+  return b;
+}
 export function newGame(
   id: string,
   draw: 1 | 3 = 3,
@@ -98,46 +157,68 @@ export function canMove(g: Board, from: Place, to: Place): boolean {
     ? c.rank === 13
     : top.up && red(top) !== red(c) && top.rank === c.rank + 1;
 }
-function update(g: Game, mutate: (b: Board) => void): Game {
+function update(g: Game, delta: Delta, mutate: (b: Board) => void): Game {
   const b = snapshot(g);
   mutate(b);
-  for (const p of b.tableau) if (p.length) p[p.length - 1].up = true;
+  b.tableau.forEach((p, i) => {
+    const top = p.at(-1);
+    if (top && !top.up) {
+      delta.flipped.push(i);
+      top.up = true;
+    }
+  });
   return {
     ...g,
     ...b,
     moves: g.moves + 1,
-    history: [...g.history.slice(-199), snapshot(g)],
+    history: [...g.history.slice(-199), delta],
     won: victory(b),
   };
 }
 export function move(g: Game, from: Place, to: Place): Game {
   if (!canMove(g, from, to) || to.kind === "waste") return g;
-  return update(g, (b) => {
-    const p = from.kind === "waste" ? b.waste : b[from.kind][from.pile];
-    const n = cardsAt(b, from).length;
-    b[to.kind][to.pile].push(...p.splice(p.length - n));
-  });
+  const n = cardsAt(g, from).length;
+  const ref = (p: Place): PileRef =>
+    p.kind === "waste" ? { kind: "waste" } : { kind: p.kind, pile: p.pile };
+  return update(
+    g,
+    { op: "move", from: ref(from), to: ref(to), n, flipped: [] },
+    (b) => {
+      const p = from.kind === "waste" ? b.waste : b[from.kind][from.pile];
+      const n = cardsAt(b, from).length;
+      b[to.kind][to.pile].push(...p.splice(p.length - n));
+    },
+  );
 }
 export function drawCards(g: Game): Game {
   if (g.won || (!g.stock.length && !g.waste.length)) return g;
-  return update(g, (b) => {
-    if (!b.stock.length) {
-      b.stock = b.waste.reverse().map((c) => ({ ...c, up: false }));
-      b.waste = [];
-    } else
-      for (let i = 0; i < g.draw && b.stock.length; i++) {
-        const c = b.stock.pop()!;
-        c.up = true;
-        b.waste.push(c);
-      }
-  });
+  return update(
+    g,
+    {
+      op: g.stock.length ? "draw" : "recycle",
+      n: g.stock.length ? Math.min(g.draw, g.stock.length) : g.waste.length,
+      flipped: [],
+    },
+    (b) => {
+      if (!b.stock.length) {
+        b.stock = b.waste.reverse().map((c) => ({ ...c, up: false }));
+        b.waste = [];
+      } else
+        for (let i = 0; i < g.draw && b.stock.length; i++) {
+          const c = b.stock.pop()!;
+          c.up = true;
+          b.waste.push(c);
+        }
+    },
+  );
 }
 export function undo(g: Game): Game {
-  const b = g.history.at(-1);
+  const delta = g.history.at(-1);
+  const b = delta ? revert(g, delta) : null;
   return b
     ? {
         ...g,
-        ...snapshot(b),
+        ...b,
         history: g.history.slice(0, -1),
         moves: Math.max(0, g.moves - 1),
         won: victory(b),
