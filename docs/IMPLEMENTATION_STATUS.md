@@ -1,6 +1,6 @@
 # Implementation status — development toward V2.0
 
-Baseline: `35a3e91`, Android/iOS only. The approved ambient artwork through `19aa34b` was preserved and integrated. Public app version is 1.7.2; this is a development increment, not a completed V2.0 release.
+Baseline: `35a3e91`, Android/iOS only. The approved ambient artwork through `19aa34b` was preserved and integrated. Public app version is 1.7.4; this is a development increment, not a completed V2.0 release.
 
 | Milestone / feature | Actual status | Remaining acceptance work | Dependencies / tests | Acceptance |
 |---|---|---|---|---|
@@ -18,8 +18,8 @@ Baseline: `35a3e91`, Android/iOS only. The approved ambient artwork through `19a
 
 ## Verified checks
 
-- 37 engine/localization/asset/progression/presentation tests, no skips.
-- 36 React Native component test runs across iOS and Android Jest Expo presets, no skips.
+- 42 engine/localization/asset/progression/presentation tests, no skips.
+- 52 React Native component test runs across iOS and Android Jest Expo presets, no skips.
 - TypeScript and formatting pass.
 - Native JS/Hermes exports include all seven ambient sprites at all three densities. These are not signed native app builds.
 - Existing Solitaire move rules and reward values remain unchanged; only optional challenge metadata was added to the game type.
@@ -33,3 +33,5 @@ Baseline: `35a3e91`, Android/iOS only. The approved ambient artwork through `19a
 5. No high-quality separated foreground tree mask was supplied. Birds use safe sky bands. Existing high-quality seasonal/NPC art is retained; expansion scenes and cards are original vectors and require product/device visual approval.
 
 Next acceptance step: review the 1.7.1 landscape APK on actual phones/tablets, including long card columns, foundation drop/double tap, Garden Match swipes, safe areas and system-bar resume. See `LANDSCAPE_GAMEPLAY.md` and `TEST_RESULTS.md`.
+
+Latest usability acceptance: original icon/resource atlases integrated, native modal/HUD layering, board-level Garden Match swipe capture, compact inventory/high-contrast scrolling and large single-suit card faces. See `USABILITY_1.7.4.md` for executed checks and remaining physical-device review.
