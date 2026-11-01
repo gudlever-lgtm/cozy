@@ -48,3 +48,7 @@ TypeScript and formatting passed; 37 engine/presentation tests and 36 Android/iO
 ## 1.7.7 defaults, board ambience and gathering feedback
 
 45 engine/presentation and 72 Android/iOS native component tests pass, with TypeScript/formatting, both native JS exports and the local APK build (55 seconds). See [PLAY_DEFAULTS_1.7.7.md](PLAY_DEFAULTS_1.7.7.md). This does not claim physical-device animation or touch validation.
+
+## 1.7.8 quest journal and connected journey
+
+47 engine/presentation and 78 Android/iOS component test runs pass, plus TypeScript, formatting, native JS exports and local ARM64 APK compilation. See [QUEST_JOURNEY_1.7.8.md](QUEST_JOURNEY_1.7.8.md) for functional scope and explicit physical-device limits.

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, Pressable, Modal, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
 import type { Save } from "./engine/save";
@@ -29,8 +29,12 @@ export function WorldNavigator({
   save,
   onUpdate,
   onNavigate,
+  onQuest,
+  appearanceRequest = 0,
 }: {
   save: Save;
+  onQuest?: (id: string) => void;
+  appearanceRequest?: number;
   onUpdate: (fn: (save: Save) => Save) => void;
   onNavigate: (screen: "garden" | "quests" | "play" | "mini") => void;
 }) {
@@ -38,6 +42,9 @@ export function WorldNavigator({
     tt = (key: Key, options?: Record<string, unknown>) =>
       String(t(key, options));
   const [animationOpen, setAnimationOpen] = useState(false);
+  useEffect(() => {
+    if (appearanceRequest > 0) setAnimationOpen(true);
+  }, [appearanceRequest]);
   const [manage, setManage] = useState(false),
     [section, setSection] = useState<Section>("buildings"),
     [inspect, setInspect] = useState<AreaId | null>(null);
@@ -87,7 +94,8 @@ export function WorldNavigator({
     } else if (missingArea) setInspect(missingArea);
     else if (missingQuest) {
       setInspect(null);
-      onNavigate("quests");
+      if (onQuest) onQuest(missingQuest);
+      else onNavigate("quests");
     } else if (missingStory && selected.requires)
       openManage(selected.requires, "storyJournal");
     else if (!canBuy) {

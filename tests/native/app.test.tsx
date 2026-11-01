@@ -100,7 +100,7 @@ test("native hidden-object completion grants its reward once and survives restar
   await renderAsync(<App />);
   await screen.findByTestId("main-tabs");
   press("✿ Mini-games");
-  fireEvent.press(screen.getAllByRole("button", { name: "Continue" })[1]);
+  fireEvent.press(screen.getByTestId("mini-start-hidden"));
   for (const name of ["Key", "Acorn", "Ribbon", "Spoon", "Button"]) press(name);
   await screen.findByText("Beautifully done! +20 Glimmers");
   await waitFor(async () =>
@@ -141,6 +141,9 @@ test("native ambience settings persist independently of game, balances and profi
   await renderAsync(<App />);
   await screen.findByTestId("main-tabs");
   press("⚙ Settings");
+  fireEvent.press(
+    screen.getByRole("tab", { name: "Appearance and animations" }),
+  );
   press("Animation quality: Low");
   press("Animations: On");
   await waitFor(async () => {
@@ -155,6 +158,9 @@ test("native ambience settings persist independently of game, balances and profi
   await renderAsync(<App />);
   await screen.findByTestId("main-tabs");
   press("⚙ Settings");
+  fireEvent.press(
+    screen.getByRole("tab", { name: "Appearance and animations" }),
+  );
   expect(
     screen.getByRole("button", { name: "Animations: Off" }),
   ).toBeOnTheScreen();
@@ -174,7 +180,7 @@ test("native partial hidden puzzle resumes at its level and cannot pay twice aft
   await screen.findByTestId("main-tabs");
   press("✿ Mini-games");
   press("Level 3");
-  fireEvent.press(screen.getAllByRole("button", { name: "Continue" })[1]);
+  fireEvent.press(screen.getByTestId("mini-start-hidden"));
   press("Key");
   await waitFor(async () => {
     const s = await stored();
@@ -394,7 +400,7 @@ test("Tea Time can be started and completed entirely through native controls", a
   await renderAsync(<App />);
   await screen.findByTestId("main-tabs");
   press("✿ Mini-games");
-  fireEvent.press(screen.getAllByRole("button", { name: "Continue" })[2]);
+  fireEvent.press(screen.getByTestId("mini-start-tea"));
   for (const [a, b] of path) {
     press(`Tray ${a + 1}`);
     press(`Tray ${b + 1}`);
@@ -429,20 +435,13 @@ test("game panels scroll in a bounded viewport; oversized menu screens retain th
   });
   expect(screen.queryByTestId("card-board-scroll")).toBeNull();
   press("⚙ Settings");
-  expect(screen.queryByTestId("game-viewport")).toBeNull();
-  expect(screen.getByTestId("screen-scroll").props.scrollEnabled).not.toBe(
+  expect(screen.getByTestId("settings-scroll").props.scrollEnabled).not.toBe(
     false,
   );
-  fireEvent.scroll(screen.getByTestId("screen-scroll"), {
-    nativeEvent: {
-      contentOffset: { x: 0, y: 800 },
-      contentSize: { width: 600, height: 1600 },
-      layoutMeasurement: { width: 600, height: 320 },
-    },
-  });
+  fireEvent.press(screen.getByRole("tab", { name: "Next deal" }));
   expect(screen.getByRole("button", { name: "Draw three" })).toBeOnTheScreen();
   press("✿ Mini-games");
-  fireEvent.press(screen.getAllByRole("button", { name: "Continue" })[0]);
+  fireEvent.press(screen.getByTestId("mini-start-match"));
   expectBoundedGame();
   expect(screen.getByTestId("garden-match-board")).toBeOnTheScreen();
   let boardParent = screen.getByTestId("garden-match-board").parent;
@@ -663,9 +662,10 @@ test("compact world map explains the actual missing quest instead of a disabled 
   ).toBeOnTheScreen();
   fireEvent.press(screen.getByRole("button", { name: "Go to quests" }));
   expect(
-    screen.getByRole("tab", { name: "☷ Quest Journal" }).props
-      .accessibilityState.selected,
-  ).toBe(true);
+    within(screen.getByTestId("quest-details")).getByText(
+      String(i18n.t("pip1Info")),
+    ),
+  ).toBeOnTheScreen();
 });
 
 test("world shortcuts apply card themes and persist animation controls without latching system reduced motion", async () => {
@@ -756,6 +756,9 @@ test("Solitaire runs sparse seasonal effects behind cards without intercepting t
     expect((await stored()).game).toEqual(initial.game),
   );
   press("⚙ Settings");
+  fireEvent.press(
+    screen.getByRole("tab", { name: "Appearance and animations" }),
+  );
   press("Animations: On");
   press("♠ Play Solitaire");
   expect(
@@ -785,4 +788,95 @@ test("gathering visibly confirms wood and stone and preserves Glimmers and the d
     expect(saved.counters.gather).toBe(1);
     expect(saved.game).toEqual(initial.game);
   });
+});
+
+test("quest journal explains objectives and exact materials, claims once and recommends the next chapter", async () => {
+  const initial = setProfile(fresh("journal", "en"), "Journal Native", "p");
+  initial.counters.match = 1;
+  await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(initial));
+  await renderAsync(<App />);
+  await screen.findByTestId("main-tabs");
+  press("☷ Quest Journal");
+  expect(screen.queryByTestId("screen-scroll")).toBeNull();
+  fireEvent.press(screen.getByTestId("quest-card-millie1"));
+  const detail = screen.getByTestId("quest-details");
+  expect(
+    within(detail).getByText(String(i18n.t("millie1Info"))),
+  ).toBeOnTheScreen();
+  expect(within(detail).getByLabelText("Seeds: 3")).toBeOnTheScreen();
+  press("Collect reward");
+  await waitFor(async () => {
+    const save = await stored();
+    expect(save.completed).toContain("millie1");
+    expect(save.economy.wallet.glimmers).toBe(25);
+    expect(save.economy.wallet.seeds).toBe(3);
+    expect(save.game).toEqual(initial.game);
+  });
+  fireEvent.press(screen.getByTestId("quest-card-millie1"));
+  expect(
+    within(screen.getByTestId("quest-details")).getByRole("button", {
+      name: "Completed",
+    }),
+  ).toBeDisabled();
+  press("Close");
+  fireEvent.press(screen.getByTestId("quest-card-millie2"));
+  press("Go to next step");
+  expect(screen.getByTestId("decorations-pages")).toBeOnTheScreen();
+  await waitFor(async () =>
+    expect((await stored()).economy.wallet.glimmers).toBe(25),
+  );
+});
+
+test("locked quest details lead to the previous quest and objective actions keep the saved deal", async () => {
+  const initial = setProfile(
+    fresh("locked-journal", "en"),
+    "Quest Native",
+    "p",
+  );
+  await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(initial));
+  await renderAsync(<App />);
+  await screen.findByTestId("main-tabs");
+  press("☷ Quest Journal");
+  fireEvent.press(screen.getByTestId("quest-card-millie2"));
+  press("Show previous quest");
+  expect(
+    within(screen.getByTestId("quest-details")).getByText(
+      String(i18n.t("millie1Info")),
+    ),
+  ).toBeOnTheScreen();
+  press("Go to next step");
+  expect(screen.getByTestId("mini-start-match")).toBeOnTheScreen();
+  await waitFor(async () =>
+    expect((await stored()).game).toEqual(initial.game),
+  );
+});
+
+test("shared journey links the real next quest and saved appearance controls", async () => {
+  const initial = setProfile(
+    fresh("journey-flow", "en"),
+    "Journey Native",
+    "p",
+  );
+  await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(initial));
+  await renderAsync(<App />);
+  await screen.findByTestId("main-tabs");
+  expect(screen.queryByTestId("journey-ribbon")).toBeNull();
+  press("☷ Quest Journal");
+  const ribbon = screen.getByTestId("journey-ribbon");
+  expect(within(ribbon).getByRole("progressbar")).toHaveAccessibilityValue({
+    min: 0,
+    now: 0,
+  });
+  fireEvent.press(within(ribbon).getAllByRole("button")[0]);
+  expect(screen.getByTestId("quest-details")).toBeOnTheScreen();
+  press("Close");
+  fireEvent.press(
+    within(screen.getByTestId("journey-ribbon")).getByRole("button", {
+      name: "Appearance and animations",
+    }),
+  );
+  expect(screen.getByTestId("animation-panel")).toBeOnTheScreen();
+  await waitFor(async () =>
+    expect((await stored()).game).toEqual(initial.game),
+  );
 });

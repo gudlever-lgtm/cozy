@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -14,11 +14,13 @@ export function ScreenPager({
   items,
   id,
   actions,
+  focusIndex,
 }: {
   title: string;
   items: React.ReactNode[];
   id: string;
   actions?: React.ReactNode;
+  focusIndex?: number;
 }) {
   const window = useWindowDimensions(),
     { t } = useTranslation();
@@ -30,6 +32,10 @@ export function ScreenPager({
   const layout = pageGeometry(bounds.width, bounds.height, actions ? 44 : 30),
     pages = Math.max(1, Math.ceil(items.length / layout.perPage)),
     page = Math.min(requested, pages - 1);
+  useEffect(() => {
+    if (focusIndex !== undefined && focusIndex >= 0)
+      setPage(Math.floor(focusIndex / layout.perPage));
+  }, [focusIndex, layout.perPage]);
   return (
     <View
       testID={`${id}-pages`}
@@ -47,6 +53,9 @@ export function ScreenPager({
       <View
         style={{
           height: actions ? 44 : 30,
+          backgroundColor: "#fff8e9e6",
+          borderRadius: 12,
+          paddingHorizontal: 8,
           flexDirection: "row",
           alignItems: "center",
           gap: 8,

@@ -86,3 +86,5 @@ Preview 1.7.5 animates Garden Match as local swaps, clears and column falls rath
 Preview 1.7.6 uses full-card stack-picker pages and a compact world map with precise next-step guidance. Header shortcuts expose card designs and seasonal/motion previews; system reduced motion no longer latches the saved manual preference. See [world clarity validation](docs/WORLD_CLARITY_1.7.6.md).
 
 Preview 1.7.7 defaults new free Solitaire deals to draw-three, adds sparse seasonal particles beneath the cards, and confirms gathering (+1 wood/+1 stone). Existing deals are preserved. See [play defaults validation](docs/PLAY_DEFAULTS_1.7.7.md).
+
+Preview 1.7.8 adds illustrated quest details and objective shortcuts, a shared progression ribbon, compact inventory/mini-game/settings panels and earlier, clearer seasonal ambience. Existing progress and deals are preserved. See [quest and journey validation](docs/QUEST_JOURNEY_1.7.8.md).

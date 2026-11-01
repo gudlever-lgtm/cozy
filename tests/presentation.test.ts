@@ -277,3 +277,62 @@ test("stack picker reserves full card faces and measured paging controls", async
     );
   }
 });
+
+test("quest guidance separates locked, active, ready and collected rewards", async () => {
+  const { fresh } = await import("../src/engine/save");
+  const { quests, claimQuest } = await import("../src/engine/world");
+  const { questView, recommendedQuest } =
+    await import("../src/presentation/quests");
+  let save = fresh("quests", "en");
+  const first = quests.find((q) => q.id === "millie1")!,
+    second = quests.find((q) => q.id === "millie2")!;
+  save.economy.inventory = ["flowers"];
+  assert.equal(questView(save, first).status, "active");
+  assert.equal(questView(save, second).status, "locked");
+  save.counters.match = 1;
+  assert.equal(questView(save, first).status, "ready");
+  assert.equal(recommendedQuest(save)?.quest.id, "millie1");
+  const result = claimQuest(
+    save.economy,
+    save.completed,
+    first.id,
+    save.counters,
+  );
+  save = { ...save, ...result };
+  assert.equal(questView(save, first).status, "completed");
+  assert.equal(questView(save, second).status, "ready");
+  const pip = questView(
+    save,
+    quests.find((q) => q.id === "pip1")!,
+  );
+  assert.equal(pip.next?.objective.type, "hidden");
+  assert.equal(pip.progress.total, 3);
+});
+
+test("journey progress reflects real objectives, claims, areas, stories and upgrades without mutating saves", async () => {
+  const { fresh } = await import("../src/engine/save"),
+    { quests, upgrades } = await import("../src/engine/world"),
+    { areas, stories, buildings } = await import("../src/engine/progression"),
+    { journeyProgress } = await import("../src/presentation/journey");
+  const save = fresh("journey", "en");
+  assert.equal(journeyProgress(save).percent, 0);
+  save.counters.gather = 1;
+  assert.ok(journeyProgress(save).done > 0);
+  save.counters = {
+    solitaire: 100,
+    match: 100,
+    hidden: 100,
+    tea: 100,
+    gather: 100,
+  };
+  save.completed = quests.map((q) => q.id);
+  save.economy.inventory = upgrades.map((u) => u.id);
+  save.world.areas = areas.map((a) => a.id);
+  save.world.stories = stories.map((s) => s.id);
+  save.world.buildings = Object.fromEntries(buildings.map((b) => [b.id, 3]));
+  const original = JSON.stringify(save),
+    progress = journeyProgress(save);
+  assert.equal(progress.done, progress.total);
+  assert.equal(progress.percent, 100);
+  assert.equal(JSON.stringify(save), original);
+});

@@ -24,6 +24,11 @@ import {
   type DropRegion,
 } from "./presentation/board";
 import { StackCardPicker } from "./StackCardPicker";
+import { JourneyRibbon } from "./JourneyRibbon";
+import { InventoryPanel } from "./InventoryPanel";
+import { MiniGameHub } from "./MiniGameHub";
+import { QuestJournal } from "./QuestJournal";
+import type { QuestObjective } from "./presentation/quests";
 import { ScreenPager } from "./ScreenPager";
 import { GardenMatch } from "./GardenMatch";
 import { MiniArtwork } from "./MiniArtwork";
@@ -61,9 +66,6 @@ import {
 } from "./engine/save";
 import {
   upgrades,
-  quests,
-  questProgress,
-  claimQuest,
   transact,
   place,
   seasonAt,
@@ -78,7 +80,7 @@ import {
   treasures,
   hiddenWon,
 } from "./engine/minigames";
-import { Cottage, NPC_ICON, Portrait, Forest } from "./Art";
+import { Cottage, Portrait, Forest } from "./Art";
 import { LivingWorldAnimationEngine } from "./living/LivingWorldAnimationEngine";
 import { VictorySparkles } from "./living/VictorySparkles";
 import { CharacterIdle } from "./living/CharacterIdle";
@@ -150,7 +152,17 @@ export default function App() {
     height - insets.top - insets.bottom - 58,
   );
   const railWidth = metrics.rail;
-  const [inventoryPage, setInventoryPage] = useState(0);
+  const [settingsTab, setSettingsTab] = useState<
+    "profile" | "appearance" | "audio" | "rules"
+  >("profile");
+  const [miniHelp, setMiniHelp] = useState(false);
+  const [questRequest, setQuestRequest] = useState(0);
+  const [appearanceRequest, setAppearanceRequest] = useState(0);
+  const [miniTarget, setMiniTarget] = useState<
+    "match" | "hidden" | "tea" | null
+  >(null);
+  const [questFocus, setQuestFocus] = useState<string | null>(null);
+  const [decorationFocus, setDecorationFocus] = useState<number | undefined>();
   const [miniBounds, setMiniBounds] = useState({ width: 0, height: 0 });
   const [stackPile, setStackPile] = useState<number | null>(null);
   const [boardSize, setBoardSize] = useState({ width: 0, height: 0 });
@@ -200,7 +212,10 @@ export default function App() {
     screen === "decorations" ||
     screen === "statistics" ||
     screen === "world" ||
-    (screen === "mini" && !!activeMini);
+    screen === "quests" ||
+    screen === "inventory" ||
+    screen === "settings" ||
+    screen === "mini";
   const lastCardTap = useRef<{ id: string; time: number } | null>(null);
   const dropTargets = useRef<Record<string, { node: View; place: Place }>>({});
   const update = useCallback(
@@ -452,6 +467,11 @@ export default function App() {
       : s.preferences.season;
   const language = s.preferences.language;
   const go = (id: Screen) => {
+    if (id !== "quests") setQuestFocus(null);
+    if (id !== "world") setAppearanceRequest(0);
+    if (id !== "mini") setMiniTarget(null);
+    setMiniHelp(false);
+    if (id !== "decorations") setDecorationFocus(undefined);
     setMatchBusy(false);
     setStackPile(null);
     setChallengeOpen(false);
@@ -931,6 +951,24 @@ export default function App() {
             )}
         </View>
       }
+      {screen !== "garden" &&
+        screen !== "play" &&
+        !(screen === "mini" && activeMini) && (
+          <JourneyRibbon
+            save={s}
+            onNext={(id) => {
+              if (id) {
+                setQuestFocus(id);
+                setQuestRequest((n) => n + 1);
+                go("quests");
+              } else go("world");
+            }}
+            onAppearance={() => {
+              setAppearanceRequest((n) => n + 1);
+              go("world");
+            }}
+          />
+        )}
       <View style={st.shell}>
         <View style={st.main}>
           {writeError && (
@@ -947,7 +985,17 @@ export default function App() {
           )}
           <ScreenViewport fixed={focused}>
             {screen === "world" && (
-              <WorldNavigator save={s} onUpdate={act} onNavigate={go} />
+              <WorldNavigator
+                save={s}
+                onUpdate={act}
+                onNavigate={go}
+                appearanceRequest={appearanceRequest}
+                onQuest={(id) => {
+                  setQuestFocus(id);
+                  setQuestRequest((n) => n + 1);
+                  go("quests");
+                }}
+              />
             )}
             {screen === "garden" && (
               <View style={st.playLayout}>
@@ -1402,87 +1450,35 @@ export default function App() {
             )}
             {screen === "mini" && (
               <>
-                {!activeMini &&
-                  heading(
-                    tt(activeMini ?? "mini"),
-                    activeMini
-                      ? tt((activeMini + "Rules") as Key)
-                      : tt("currencyHint"),
-                  )}
-                {!activeMini && (
-                  <>
-                    <Text style={st.small}>{tt("miniLevelHint")}</Text>
-                    <View style={st.row}>
-                      {([1, 2, 3] as const).map((level) => (
-                        <React.Fragment key={level}>
-                          {button(
-                            tt("level", { number: level }),
-                            () => setNextMiniLevel(level),
-                            false,
-                            nextMiniLevel !== level,
-                          )}
-                        </React.Fragment>
-                      ))}
-                    </View>
-                  </>
-                )}
-                {!activeMini &&
-                  mini &&
-                  button(
-                    tt("resumeMini"),
-                    () => setMiniHub(false),
-                    false,
-                    true,
-                  )}
                 {!activeMini ? (
-                  <View style={st.tiles}>
-                    {(["match", "hidden", "tea"] as const).map((m, i) => (
-                      <View key={m} style={st.npc}>
-                        <MiniArtwork
-                          kind={
-                            m === "match"
-                              ? "match"
-                              : m === "tea"
-                                ? "tea"
-                                : "treasure"
-                          }
-                          value={0}
-                          size={52}
-                        />
-                        <Text style={st.sectionTitle}>{tt(m)}</Text>
-                        <Text style={st.small}>
-                          {tt("progress", {
-                            done: [1, 2, 3].filter((level) =>
-                              s.world.medals.includes(`${m}:${level}`),
-                            ).length,
-                            total: 3,
-                          })}
-                        </Text>
-                        <Text style={st.small}>{tt((m + "Rules") as Key)}</Text>
-                        {button(tt("continue"), () => {
-                          setMiniHub(false);
-                          setMiniLevel(nextMiniLevel);
-                          setMini(m);
-                          setMiniId(uuid());
-                          setMatch(matchForLevel(nextMiniLevel));
-                          setFound([]);
-                          setTea(teaForLevel(nextMiniLevel));
-                          setTeaSelected(null);
-                        })}
-                      </View>
-                    ))}
-                  </View>
+                  <MiniGameHub
+                    level={nextMiniLevel}
+                    onLevel={setNextMiniLevel}
+                    target={miniTarget}
+                    saved={mini}
+                    medals={s.world.medals}
+                    onResume={() => setMiniHub(false)}
+                    onStart={(kind) => {
+                      setMiniTarget(null);
+                      setMiniHub(false);
+                      setMiniLevel(nextMiniLevel);
+                      setMini(kind);
+                      setMiniId(uuid());
+                      setMatch(matchForLevel(nextMiniLevel));
+                      setFound([]);
+                      setTea(teaForLevel(nextMiniLevel));
+                      setTeaSelected(null);
+                    }}
+                  />
                 ) : (
                   <View style={st.playLayout} testID="mini-play-layout">
                     <ScrollView
                       nestedScrollEnabled
-                      style={[st.playRail, { width: width < 800 ? 174 : 220 }]}
+                      style={[st.playRail, { width: width < 800 ? 140 : 170 }]}
                       contentContainerStyle={st.railContent}
                     >
                       <Text style={st.railBrand}>{tt(activeMini)}</Text>
-                      <Text style={st.small}>
-                        {tt((activeMini + "Rules") as Key)}
-                      </Text>
+                      {iconButton("hint", tt("help"), () => setMiniHelp(true))}
                       {activeMini === "match" && (
                         <Text style={st.label}>
                           {tt("matchProgress", {
@@ -1652,62 +1648,35 @@ export default function App() {
               </>
             )}
             {screen === "quests" && (
-              <>
-                {heading(
-                  tt("quests"),
-                  tt("gardenIntro", { username: s.profile.username }),
-                )}
-                {quests.map((q) => {
-                  const p = questProgress(
-                      q.id,
-                      s.counters,
-                      s.economy.inventory,
-                    ),
-                    done = s.completed.includes(q.id),
-                    locked = !q.requires.every((id) =>
-                      s.completed.includes(id),
+              <QuestJournal
+                key={questRequest}
+                save={s}
+                focusQuest={questFocus}
+                onUpdate={act}
+                onToast={setTip}
+                onAction={(objective: QuestObjective) => {
+                  if (objective.type === "upgrade") {
+                    setDecorationFocus(
+                      upgrades.findIndex((u) => u.id === objective.item),
                     );
-                  return (
-                    <View
-                      key={q.id}
-                      style={[st.panel, locked && { opacity: 0.6 }]}
-                    >
-                      <Text style={st.eyebrow}>
-                        {NPC_ICON[q.npc]} {tt(q.npc)}
-                      </Text>
-                      <Text style={st.sectionTitle}>{tt(q.id as Key)}</Text>
-                      <Text style={st.subtitle}>
-                        {tt((q.id + "Text") as Key)}
-                      </Text>
-                      <Text style={st.small}>
-                        {tt("progress", p)} ·{" "}
-                        {tt("questReward", { amount: q.reward.glimmers })}
-                      </Text>
-                      {button(
-                        tt(
-                          done ? "complete" : locked ? "lockedQuest" : "claim",
-                        ),
-                        () =>
-                          update((v) => {
-                            const result = claimQuest(
-                              v.economy,
-                              v.completed,
-                              q.id,
-                              v.counters,
-                            );
-                            return { ...v, ...result };
-                          }),
-                        done || locked || p.done < p.total,
-                        true,
-                      )}
-                    </View>
-                  );
-                })}
-              </>
+                    go("decorations");
+                    setTip(tt("questUnlockItem", { item: tt(objective.item) }));
+                  } else if (objective.type === "gather") {
+                    go("garden");
+                    setTip(tt("gatherHint"));
+                  } else {
+                    setMiniTarget(objective.type);
+                    go("mini");
+                    setMiniHub(mini !== objective.type);
+                    setTip(tt("questChooseGame", { game: tt(objective.type) }));
+                  }
+                }}
+              />
             )}
             {screen === "decorations" && (
               <ScreenPager
                 id="decorations"
+                focusIndex={decorationFocus}
                 title={tt("decorations")}
                 items={upgrades.map((u) => {
                   const owned = s.economy.inventory.includes(u.id),
@@ -1740,7 +1709,11 @@ export default function App() {
                       };
                     });
                   return (
-                    <View key={u.id} style={st.fittedTile}>
+                    <View
+                      key={u.id}
+                      testID={`decoration-${u.id}`}
+                      style={st.fittedTile}
+                    >
                       <GameIcon
                         name={
                           u.id === "cards"
@@ -1827,112 +1800,7 @@ export default function App() {
               />
             )}
             {screen === "inventory" && (
-              <>
-                {heading(tt("inventory"))}
-                <View testID="compact-inventory" style={st.inventoryGrid}>
-                  {(
-                    Object.keys(
-                      s.economy.wallet,
-                    ) as (keyof typeof s.economy.wallet)[]
-                  ).map((r) => (
-                    <Pressable
-                      key={r}
-                      accessibilityRole="button"
-                      accessibilityLabel={
-                        tt(r === "flowers" ? "flowersResource" : r) +
-                        ": " +
-                        number(s.economy.wallet[r], language)
-                      }
-                      onPress={() =>
-                        setTip(tt(r === "flowers" ? "flowersResource" : r))
-                      }
-                      style={st.resourceTile}
-                    >
-                      <GameIcon
-                        name={
-                          r === "glimmers"
-                            ? "glimmer"
-                            : r === "wood"
-                              ? "wood"
-                              : r === "stone"
-                                ? "stone"
-                                : r === "seeds"
-                                  ? "seeds"
-                                  : "decorations"
-                        }
-                        size={32}
-                      />
-                      <Text style={st.resourceAmount}>
-                        {number(s.economy.wallet[r], language)}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
-                {s.economy.inventory.length > 0 && (
-                  <View style={{ gap: 8 }}>
-                    <Text style={st.small}>
-                      {tt("owned")} · {s.economy.inventory.length}
-                    </Text>
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        gap: 6,
-                        alignItems: "center",
-                      }}
-                    >
-                      {s.economy.inventory
-                        .slice(inventoryPage * 6, inventoryPage * 6 + 6)
-                        .map((id) => (
-                          <Pressable
-                            key={id}
-                            accessibilityRole="button"
-                            accessibilityLabel={
-                              i18n.exists(id) ? tt(id as Key) : tt("owned")
-                            }
-                            onPress={() =>
-                              setTip(
-                                i18n.exists(id) ? tt(id as Key) : tt("owned"),
-                              )
-                            }
-                            style={st.iconButton}
-                          >
-                            <GameIcon
-                              name={
-                                id.includes("card")
-                                  ? "play"
-                                  : id.includes("forest")
-                                    ? "world"
-                                    : id.includes("lantern")
-                                      ? "glimmer"
-                                      : "decorations"
-                              }
-                            />
-                          </Pressable>
-                        ))}
-                    </View>
-                    {s.economy.inventory.length > 6 && (
-                      <View style={st.row}>
-                        {iconButton(
-                          "undo",
-                          tt("back"),
-                          () => setInventoryPage((n) => Math.max(0, n - 1)),
-                          inventoryPage === 0,
-                        )}
-                        <Text style={st.small}>
-                          {inventoryPage + 1}/
-                          {Math.ceil(s.economy.inventory.length / 6)}
-                        </Text>
-                        {iconButton(
-                          "world",
-                          tt("continue"),
-                          () => setInventoryPage((n) => n + 1),
-                          (inventoryPage + 1) * 6 >= s.economy.inventory.length,
-                        )}
-                      </View>
-                    )}
-                  </View>
-                )}
-              </>
+              <InventoryPanel save={s} onInfo={setTip} />
             )}
             {screen === "statistics" && (
               <ScreenPager
@@ -1998,134 +1866,285 @@ export default function App() {
               />
             )}
             {screen === "settings" && (
-              <>
-                {heading(tt("settings"))}
-                <View style={st.panel}>
-                  <Text style={st.sectionTitle}>{tt("profile")}</Text>
-                  <TextInput
-                    accessibilityLabel={tt("username")}
-                    value={name}
-                    onChangeText={setName}
-                    maxLength={60}
-                    style={st.input}
-                  />
-                  {button(
-                    tt("rename"),
-                    () => {
-                      update((v) => setProfile(v, name, uuid()));
-                      notify("saved");
-                    },
-                    !validateUsername(name),
-                  )}
-                  <Text style={st.small}>
-                    {tt("created", {
-                      date: date(s.profile.createdAt, language),
-                    })}
+              <View style={{ flex: 1, minHeight: 0, padding: 8, gap: 8 }}>
+                <View
+                  style={{
+                    height: 44,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 8,
+                    paddingHorizontal: 8,
+                    borderRadius: 12,
+                    backgroundColor: "#fff8e9e6",
+                  }}
+                >
+                  <Text
+                    style={[st.sectionTitle, { flex: 1 }]}
+                    numberOfLines={1}
+                  >
+                    {tt("settings")}
                   </Text>
-                  {button(
-                    tt("statistics"),
-                    () => go("statistics"),
-                    false,
-                    true,
+                  {(["profile", "appearance", "audio", "rules"] as const).map(
+                    (tab) => (
+                      <Pressable
+                        key={tab}
+                        accessibilityRole="tab"
+                        accessibilityLabel={tt(
+                          tab === "appearance"
+                            ? "appearanceShortcut"
+                            : tab === "audio"
+                              ? "sound"
+                              : tab === "rules"
+                                ? "drawSetting"
+                                : "profile",
+                        )}
+                        accessibilityState={{ selected: settingsTab === tab }}
+                        onPress={() => setSettingsTab(tab)}
+                        onLongPress={() =>
+                          setTip(
+                            tt(
+                              tab === "appearance"
+                                ? "appearanceShortcut"
+                                : tab === "audio"
+                                  ? "sound"
+                                  : tab === "rules"
+                                    ? "drawSetting"
+                                    : "profile",
+                            ),
+                          )
+                        }
+                        style={[
+                          st.iconButton,
+                          settingsTab === tab && {
+                            borderColor: "#c7a458",
+                            borderWidth: 2,
+                          },
+                        ]}
+                      >
+                        {tab === "profile" ? (
+                          <Image
+                            source={require("../assets/icon.png")}
+                            style={{ width: 30, height: 30, borderRadius: 9 }}
+                          />
+                        ) : (
+                          <GameIcon
+                            name={
+                              tab === "appearance"
+                                ? "settings"
+                                : tab === "audio"
+                                  ? "music"
+                                  : "play"
+                            }
+                            size={28}
+                          />
+                        )}
+                      </Pressable>
+                    ),
                   )}
                 </View>
-                <View style={st.panel}>
-                  <Text style={st.sectionTitle}>{tt("language")}</Text>
-                  {chooseLanguage()}
-                </View>
-                <View style={st.panel}>
-                  <Text style={st.sectionTitle}>{tt("season")}</Text>
-                  <View style={st.row}>
-                    {(
-                      ["auto", "spring", "summer", "autumn", "winter"] as const
-                    ).map((x) => (
-                      <React.Fragment key={x}>
+                <ScrollView
+                  testID="settings-scroll"
+                  style={{ flex: 1 }}
+                  contentContainerStyle={{ paddingBottom: 8, gap: 8 }}
+                  keyboardShouldPersistTaps="handled"
+                >
+                  {settingsTab === "profile" && (
+                    <View
+                      style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}
+                    >
+                      <View
+                        style={[
+                          st.panel,
+                          { flex: 1, minWidth: 180, padding: 10, gap: 6 },
+                        ]}
+                      >
+                        <Text style={st.label}>{tt("profile")}</Text>
+                        <TextInput
+                          accessibilityLabel={tt("username")}
+                          value={name}
+                          onChangeText={setName}
+                          maxLength={60}
+                          style={[st.input, { padding: 8, minHeight: 44 }]}
+                        />
+                        <View style={st.row}>
+                          {button(
+                            tt("rename"),
+                            () => {
+                              update((v) => setProfile(v, name, uuid()));
+                              notify("saved");
+                            },
+                            !validateUsername(name),
+                          )}
+                          {iconButton("statistics", tt("statistics"), () =>
+                            go("statistics"),
+                          )}
+                        </View>
+                        <Text style={st.small}>
+                          {tt("created", {
+                            date: date(s.profile.createdAt, language),
+                          })}
+                        </Text>
+                      </View>
+                      <View
+                        style={[
+                          st.panel,
+                          { flex: 1, minWidth: 180, padding: 10, gap: 6 },
+                        ]}
+                      >
+                        <Text style={st.label}>{tt("language")}</Text>
+                        {chooseLanguage()}
                         {button(
-                          tt(x === "auto" ? "automatic" : x),
-                          () => pref("season", x),
+                          tt("privacyTitle"),
+                          () => setMessage(tt("privacy")),
                           false,
-                          s.preferences.season !== x,
+                          true,
                         )}
-                      </React.Fragment>
-                    ))}
-                  </View>
-                  <Text style={st.label}>{tt("time")}</Text>
-                  <View style={st.row}>
-                    {(
-                      ["morning", "afternoon", "sunset", "evening"] as const
-                    ).map((x) => (
-                      <React.Fragment key={x}>
-                        {button(
-                          tt(x),
-                          () => pref("time", x),
-                          false,
-                          s.preferences.time !== x,
-                        )}
-                      </React.Fragment>
-                    ))}
-                  </View>
-                  <Text style={st.label}>{tt("weather")}</Text>
-                  <View style={st.row}>
-                    {[0, 0.4, 1].map((x) => (
-                      <React.Fragment key={x}>
-                        {button(
-                          number(x * 100, language) + "%",
-                          () => pref("weather", x),
-                          false,
-                          s.preferences.weather !== x,
-                        )}
-                      </React.Fragment>
-                    ))}
-                  </View>
-                  <Text style={st.label}>{tt("animationQuality")}</Text>
-                  <View style={st.row}>
-                    {(["low", "medium", "high"] as const).map((quality) => (
-                      <React.Fragment key={quality}>
-                        {button(
-                          tt(quality),
-                          () => pref("animationQuality", quality),
-                          false,
-                          s.preferences.animationQuality !== quality,
-                          tt("animationQuality") + ": " + tt(quality),
-                          s.preferences.animationQuality === quality,
-                        )}
-                      </React.Fragment>
-                    ))}
-                  </View>
-                  {(
-                    ["animations", "reducedMotion", "sound", "music"] as const
-                  ).map((x) => (
-                    <View key={x} style={st.settingRow}>
-                      <Text style={st.label}>{tt(x)}</Text>
+                      </View>
+                    </View>
+                  )}
+                  {settingsTab === "appearance" && (
+                    <>
                       {button(
-                        tt(s.preferences[x] ? "on" : "off"),
-                        () => pref(x, !s.preferences[x]),
+                        tt("appearanceShortcut"),
+                        () => {
+                          setAppearanceRequest((n) => n + 1);
+                          go("world");
+                        },
                         false,
                         true,
-                        tt(x) + ": " + tt(s.preferences[x] ? "on" : "off"),
-                      )}
+                      )}{" "}
+                      <View style={st.panel}>
+                        <Text style={st.sectionTitle}>{tt("season")}</Text>
+                        <View style={st.row}>
+                          {(
+                            [
+                              "auto",
+                              "spring",
+                              "summer",
+                              "autumn",
+                              "winter",
+                            ] as const
+                          ).map((x) => (
+                            <React.Fragment key={x}>
+                              {button(
+                                tt(x === "auto" ? "automatic" : x),
+                                () => pref("season", x),
+                                false,
+                                s.preferences.season !== x,
+                              )}
+                            </React.Fragment>
+                          ))}
+                        </View>
+                        <Text style={st.label}>{tt("time")}</Text>
+                        <View style={st.row}>
+                          {(
+                            [
+                              "morning",
+                              "afternoon",
+                              "sunset",
+                              "evening",
+                            ] as const
+                          ).map((x) => (
+                            <React.Fragment key={x}>
+                              {button(
+                                tt(x),
+                                () => pref("time", x),
+                                false,
+                                s.preferences.time !== x,
+                              )}
+                            </React.Fragment>
+                          ))}
+                        </View>
+                        <Text style={st.label}>{tt("weather")}</Text>
+                        <View style={st.row}>
+                          {[0, 0.4, 1].map((x) => (
+                            <React.Fragment key={x}>
+                              {button(
+                                number(x * 100, language) + "%",
+                                () => pref("weather", x),
+                                false,
+                                s.preferences.weather !== x,
+                              )}
+                            </React.Fragment>
+                          ))}
+                        </View>
+                        <Text style={st.label}>{tt("animationQuality")}</Text>
+                        <View style={st.row}>
+                          {(["low", "medium", "high"] as const).map(
+                            (quality) => (
+                              <React.Fragment key={quality}>
+                                {button(
+                                  tt(quality),
+                                  () => pref("animationQuality", quality),
+                                  false,
+                                  s.preferences.animationQuality !== quality,
+                                  tt("animationQuality") + ": " + tt(quality),
+                                  s.preferences.animationQuality === quality,
+                                )}
+                              </React.Fragment>
+                            ),
+                          )}
+                        </View>
+                        {(["animations", "reducedMotion"] as const).map((x) => (
+                          <View key={x} style={st.settingRow}>
+                            <Text style={st.label}>{tt(x)}</Text>
+                            {button(
+                              tt(s.preferences[x] ? "on" : "off"),
+                              () => pref(x, !s.preferences[x]),
+                              false,
+                              true,
+                              tt(x) +
+                                ": " +
+                                tt(s.preferences[x] ? "on" : "off"),
+                            )}
+                          </View>
+                        ))}
+                      </View>
+                    </>
+                  )}
+                  {settingsTab === "audio" && (
+                    <View style={st.panel}>
+                      {(["sound", "music"] as const).map((key) => (
+                        <View key={key} style={st.settingRow}>
+                          <Text style={st.label}>{tt(key)}</Text>
+                          {button(
+                            tt(s.preferences[key] ? "on" : "off"),
+                            () => pref(key, !s.preferences[key]),
+                            false,
+                            true,
+                            tt(key) +
+                              ": " +
+                              tt(s.preferences[key] ? "on" : "off"),
+                          )}
+                        </View>
+                      ))}
                     </View>
-                  ))}
-                </View>
-                <View style={st.panel}>
-                  <Text style={st.sectionTitle}>{tt("drawSetting")}</Text>
-                  <View style={st.row}>
-                    {button(
-                      tt("drawOne"),
-                      () => setNextDraw(1),
-                      false,
-                      nextDraw !== 1,
-                    )}
-                    {button(
-                      tt("drawThree"),
-                      () => setNextDraw(3),
-                      false,
-                      nextDraw !== 3,
-                    )}
-                  </View>
-                </View>
-                <Text style={st.small}>{tt("privacy")}</Text>
-              </>
+                  )}
+                  {settingsTab === "rules" && (
+                    <>
+                      {" "}
+                      <View style={st.panel}>
+                        <Text style={st.sectionTitle}>{tt("drawSetting")}</Text>
+                        <View style={st.row}>
+                          {button(
+                            tt("drawOne"),
+                            () => setNextDraw(1),
+                            false,
+                            nextDraw !== 1,
+                          )}
+                          {button(
+                            tt("drawThree"),
+                            () => setNextDraw(3),
+                            false,
+                            nextDraw !== 3,
+                          )}
+                        </View>
+                      </View>
+                      <Text style={st.rules}>{tt("solitaireRules")}</Text>
+                    </>
+                  )}
+                </ScrollView>
+              </View>
             )}
           </ScreenViewport>
         </View>
@@ -2182,7 +2201,9 @@ export default function App() {
       <Modal
         testID="game-dialog"
         transparent
-        visible={!!(dialog || help || challengeOpen || stackPile !== null)}
+        visible={
+          !!(dialog || help || miniHelp || challengeOpen || stackPile !== null)
+        }
         statusBarTranslucent
         navigationBarTranslucent
         animationType="fade"
@@ -2191,6 +2212,7 @@ export default function App() {
           else if (stackPile !== null) setStackPile(null);
           else {
             setHelp(false);
+            setMiniHelp(false);
             setChallengeOpen(false);
           }
         }}
@@ -2213,15 +2235,21 @@ export default function App() {
             />
           </View>
         )}
-        {!dialog && (help || challengeOpen) && (
+        {!dialog && (help || miniHelp || challengeOpen) && (
           <View accessibilityViewIsModal style={st.overlay}>
             <View style={[st.modal, { height: "80%", maxHeight: "85%" }]}>
               <ScrollView
                 nestedScrollEnabled
                 contentContainerStyle={{ gap: 12, padding: 12 }}
               >
-                {help ? (
-                  <Text style={st.rules}>{tt("solitaireRules")}</Text>
+                {help || miniHelp ? (
+                  <Text style={st.rules}>
+                    {tt(
+                      miniHelp && activeMini
+                        ? ((activeMini + "Rules") as Key)
+                        : "solitaireRules",
+                    )}
+                  </Text>
                 ) : (
                   <View style={st.panel}>
                     <Text style={st.sectionTitle}>{tt("challengeTitle")}</Text>
@@ -2251,6 +2279,7 @@ export default function App() {
                   tt("close"),
                   () => {
                     setHelp(false);
+                    setMiniHelp(false);
                     setChallengeOpen(false);
                   },
                   false,
@@ -2739,7 +2768,7 @@ const st = StyleSheet.create({
   welcome: { maxWidth: 460, gap: 18, padding: 16 },
   rabbitLogo: { width: 64, height: 64, borderRadius: 20, alignSelf: "center" },
   menuSheet: {
-    backgroundColor: "#fff9eeeb",
+    backgroundColor: "#fff9ee66",
     borderRadius: 24,
     borderWidth: 1,
     borderColor: "#d7c79e",
