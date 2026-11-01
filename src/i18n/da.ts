@@ -199,6 +199,22 @@ export const da: Record<keyof typeof en, string> = {
   spoon: "Ske",
   button: "Knap",
   tea: "Tehygge",
+  teaGoal: "Saml tre ens lækkerier på hver bakke.",
+  teaChooseSource: "Tryk på en bakke med lækkerier for at vælge den øverste.",
+  teaChooseTarget:
+    "Bakke {{number}} valgt. Tryk på en grøn bakke for at flytte den øverste.",
+  teaEmptySource: "Bakken er tom. Vælg først en bakke med lækkerier.",
+  teaInvalid:
+    "Vælg en tom bakke eller en med samme lækkeri øverst og en ledig plads.",
+  teaValidTarget: "Flyt det valgte lækkeri hertil",
+  teaEmpty: "Tom bakke",
+  teaCup: "Tekop",
+  teaPinkCake: "Lyserød kage",
+  teaGoldCake: "Gylden kage",
+  teaStalled: "Ingen mulige træk. Fortryd et træk, eller start igen.",
+  hiddenProgress: "{{count}} / 5 skatte fundet",
+  matchNoMoves:
+    "Ingen mulige match. Brug Forny blomster for at fortsætte uden at miste træk.",
   teaRules:
     "Tryk på en bakke og derefter en anden for at flytte de øverste godbidder. Kun ens godbidder eller en tom bakke kan modtage dem. Sorter hver slags i en fuld bakke med tre.",
   tray: "Bakke {{number}}",

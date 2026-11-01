@@ -1,6 +1,7 @@
 import React from "react";
-import { AccessibilityInfo } from "react-native";
+import { AccessibilityInfo, Animated } from "react-native";
 import {
+  act,
   renderAsync,
   within,
   screen,
@@ -9,8 +10,8 @@ import {
   cleanupAsync,
 } from "@testing-library/react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { pour, teaWon } from "../../src/engine/minigames";
-import { teaForLevel } from "../../src/engine/session";
+import { pour, teaWon, hasMatchMove } from "../../src/engine/minigames";
+import { teaForLevel, type MiniLevel } from "../../src/engine/session";
 import App from "../../src/App";
 import i18n from "../../src/i18n";
 import { fresh, setProfile, SAVE_KEY } from "../../src/engine/save";
@@ -370,44 +371,57 @@ test("double tap promotes exposed ace and two to foundations; undo retains the o
   );
 });
 
-test("Tea Time can be started and completed entirely through native controls", async () => {
-  const queue: { cups: number[][]; path: number[][] }[] = [
-    { cups: teaForLevel(1), path: [] },
-  ];
-  const seen = new Set<string>();
-  let path: number[][] = [];
-  while (queue.length) {
-    const node = queue.shift()!;
-    if (teaWon(node.cups)) {
-      path = node.path;
-      break;
-    }
-    for (let a = 0; a < 5; a++)
-      for (let b = 0; b < 5; b++) {
-        const next = pour(node.cups, a, b),
-          key = JSON.stringify(next);
-        if (next !== node.cups && !seen.has(key)) {
-          seen.add(key);
-          queue.push({ cups: next, path: [...node.path, [a, b]] });
-        }
+test.each([1, 2, 3] as MiniLevel[])(
+  "Tea Time level %s completes, persists and pays only once through native controls",
+  async (level) => {
+    const queue: { cups: number[][]; path: number[][] }[] = [
+      { cups: teaForLevel(level), path: [] },
+    ];
+    const seen = new Set<string>();
+    let path: number[][] = [];
+    while (queue.length) {
+      const node = queue.shift()!;
+      if (teaWon(node.cups)) {
+        path = node.path;
+        break;
       }
-  }
-  expect(path.length).toBeGreaterThan(0);
-  await AsyncStorage.setItem(
-    SAVE_KEY,
-    JSON.stringify(setProfile(fresh("tea-native", "en"), "Tea Native", "p")),
-  );
-  await renderAsync(<App />);
-  await screen.findByTestId("main-tabs");
-  press("✿ Mini-games");
-  fireEvent.press(screen.getByTestId("mini-start-tea"));
-  for (const [a, b] of path) {
-    press(`Tray ${a + 1}`);
-    press(`Tray ${b + 1}`);
-  }
-  await screen.findByText("Beautifully done! +20 Glimmers");
-  await waitFor(async () => expect((await stored()).counters.tea).toBe(1));
-});
+      for (let a = 0; a < 5; a++)
+        for (let b = 0; b < 5; b++) {
+          const next = pour(node.cups, a, b),
+            key = JSON.stringify(next);
+          if (next !== node.cups && !seen.has(key)) {
+            seen.add(key);
+            queue.push({ cups: next, path: [...node.path, [a, b]] });
+          }
+        }
+    }
+    expect(path.length).toBeGreaterThan(0);
+    await AsyncStorage.setItem(
+      SAVE_KEY,
+      JSON.stringify(setProfile(fresh("tea-native", "en"), "Tea Native", "p")),
+    );
+    await renderAsync(<App />);
+    await screen.findByTestId("main-tabs");
+    press("✿ Mini-games");
+    press(`Level ${level}`);
+    fireEvent.press(screen.getByTestId("mini-start-tea"));
+    for (const [a, b] of path) {
+      press(`Tray ${a + 1}`);
+      press(`Tray ${b + 1}`);
+    }
+    await screen.findByText("Beautifully done! +20 Glimmers");
+    await waitFor(async () => expect((await stored()).counters.tea).toBe(1));
+    expect((await stored()).world.medals).toContain(`tea:${level}`);
+    const game = (await stored()).game;
+    await cleanupAsync();
+    await renderAsync(<App />);
+    await screen.findByTestId("main-tabs");
+    press("✿ Mini-games");
+    expect(screen.getByRole("button", { name: "Tray 1" })).toBeDisabled();
+    expect((await stored()).economy.wallet.glimmers).toBe(20);
+    expect((await stored()).game).toEqual(game);
+  },
+);
 
 test("game panels scroll in a bounded viewport; oversized menu screens retain their own scroll", async () => {
   await AsyncStorage.setItem(
@@ -880,3 +894,161 @@ test("shared journey links the real next quest and saved appearance controls", a
     expect((await stored()).game).toEqual(initial.game),
   );
 });
+
+test.each([1, 2, 3] as MiniLevel[])(
+  "Hidden Treasures level %s fits a fixed scene with all targets and completes once",
+  async (level) => {
+    const original = setProfile(
+      fresh("hidden-fit", "en"),
+      "Hidden Native",
+      "p",
+    );
+    await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(original));
+    await renderAsync(<App />);
+    await screen.findByTestId("main-tabs");
+    press("✿ Mini-games");
+    press(`Level ${level}`);
+    fireEvent.press(screen.getByTestId("mini-start-hidden"));
+    const scene = screen.getByTestId("garden-scene");
+    expect(scene).toHaveStyle({ flex: 1, minHeight: 0 });
+    let ancestor = scene.parent;
+    while (ancestor) {
+      expect(["ScrollView", "RCTScrollView"]).not.toContain(ancestor.type);
+      ancestor = ancestor.parent;
+    }
+    expect(screen.getByTestId("treasure-checklist")).toHaveStyle({
+      height: 44,
+    });
+    for (const name of ["Key", "Acorn", "Ribbon", "Spoon", "Button"]) {
+      const target = screen.getByRole("button", { name });
+      expect(target).toHaveStyle({ width: 44, height: 44 });
+      fireEvent.press(target);
+    }
+    await screen.findByText("Beautifully done! +20 Glimmers");
+    await waitFor(async () => {
+      const saved = await stored();
+      expect(saved.counters.hidden).toBe(1);
+      expect(saved.economy.wallet.glimmers).toBe(20);
+      expect(saved.world.medals).toContain(`hidden:${level}`);
+      expect(saved.game).toEqual(original.game);
+    });
+  },
+);
+
+test("Garden Match dead board offers shuffle preserving score, turns, session and Solitaire", async () => {
+  const original = setProfile(fresh("match-dead", "en"), "Match Native", "p");
+  const cells = Array.from(
+    { length: 36 },
+    (_, i) => ((i % 6) + Math.floor(i / 6)) % 5,
+  );
+  expect(hasMatchMove(cells)).toBe(false);
+  original.miniSession = {
+    id: "dead-board",
+    kind: "match",
+    level: 2,
+    match: { cells, score: 12, turns: 8, target: 45 },
+    tea: teaForLevel(2),
+    found: [],
+  };
+  await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(original));
+  await renderAsync(<App />);
+  await screen.findByTestId("main-tabs");
+  press("✿ Mini-games");
+  expect(screen.getByText(String(i18n.t("matchNoMoves")))).toBeOnTheScreen();
+  press(String(i18n.t("shuffle")));
+  await waitFor(async () => {
+    const saved = await stored();
+    expect(hasMatchMove(saved.miniSession.match.cells)).toBe(true);
+    expect(saved.miniSession.match.score).toBe(12);
+    expect(saved.miniSession.match.turns).toBe(8);
+    expect(saved.miniSession.id).toBe("dead-board");
+    expect(saved.game).toEqual(original.game);
+    expect(saved.economy.wallet).toEqual(original.economy.wallet);
+  });
+});
+
+test.each([1, 2, 3] as MiniLevel[])(
+  "Garden Match level %s accepts a swipe in the app, finishes and pays once",
+  async (level) => {
+    jest.spyOn(Animated, "parallel").mockImplementation((animations) => ({
+      start: (cb) => {
+        animations.forEach((a) => a.start());
+        cb?.({ finished: true });
+      },
+      stop: () => {},
+      reset: () => {},
+    }));
+    jest.spyOn(Animated, "timing").mockImplementation((value, config) => ({
+      start: (cb) => {
+        value.setValue(config.toValue as never);
+        cb?.({ finished: true });
+      },
+      stop: () => {},
+      reset: () => {},
+    }));
+    const original = setProfile(
+      fresh("match-swipe", "en"),
+      "Swipe Native",
+      "p",
+    );
+    const cells = Array.from(
+      { length: 36 },
+      (_, i) => ((i % 6) + Math.floor(i / 6)) % 5,
+    );
+    cells[0] = 0;
+    cells[1] = 1;
+    cells[2] = 0;
+    cells[7] = 0;
+    original.miniSession = {
+      id: `swipe-${level}`,
+      kind: "match",
+      level,
+      match: {
+        cells,
+        score: 29 + (level - 1) * 15,
+        turns: 8,
+        target: 30 + (level - 1) * 15,
+      },
+      tea: teaForLevel(level),
+      found: [],
+    };
+    await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(original));
+    await renderAsync(<App />);
+    await screen.findByTestId("main-tabs");
+    press("✿ Mini-games");
+    const area = screen.getByTestId("mini-play-area");
+    fireEvent(area, "layout", {
+      nativeEvent: { layout: { width: 500, height: 260 } },
+    });
+    const board = screen.getByTestId("garden-match-board");
+    const cell = (244 - 18) / 6;
+    expect(board.props.onStartShouldSetResponder()).toBe(true);
+    act(() =>
+      board.props.onResponderGrant({
+        nativeEvent: {
+          locationX: 9 + 1.5 * cell,
+          locationY: 9 + 0.5 * cell,
+          pageX: 200,
+          pageY: 100,
+        },
+      }),
+    );
+    act(() =>
+      board.props.onResponderRelease({
+        nativeEvent: { pageX: 200, pageY: 150 },
+      }),
+    );
+    await screen.findByText("Beautifully done! +20 Glimmers");
+    await waitFor(async () => {
+      const saved = await stored();
+      expect(saved.miniSession.match.turns).toBe(7);
+      expect(saved.counters.match).toBe(1);
+      expect(saved.economy.wallet.glimmers).toBe(20);
+      expect(saved.world.medals).toContain(`match:${level}`);
+      expect(saved.game).toEqual(original.game);
+    });
+    press("Back");
+    press("Resume saved puzzle");
+    expect((await stored()).counters.match).toBe(1);
+  },
+);

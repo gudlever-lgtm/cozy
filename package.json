@@ -1,6 +1,6 @@
 {
   "name": "cozy-solitaire",
-  "version": "1.7.8",
+  "version": "1.7.9",
   "private": true,
   "main": "expo-router/entry",
   "scripts": {

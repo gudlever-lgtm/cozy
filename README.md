@@ -88,3 +88,5 @@ Preview 1.7.6 uses full-card stack-picker pages and a compact world map with pre
 Preview 1.7.7 defaults new free Solitaire deals to draw-three, adds sparse seasonal particles beneath the cards, and confirms gathering (+1 wood/+1 stone). Existing deals are preserved. See [play defaults validation](docs/PLAY_DEFAULTS_1.7.7.md).
 
 Preview 1.7.8 adds illustrated quest details and objective shortcuts, a shared progression ribbon, compact inventory/mini-game/settings panels and earlier, clearer seasonal ambience. Existing progress and deals are preserved. See [quest and journey validation](docs/QUEST_JOURNEY_1.7.8.md).
+
+Preview 1.7.9 makes Tea Time selections, legal destinations and invalid moves explicit, adds undo, fits Hidden Treasures and its checklist in the game viewport, and keeps all three boards outside scrolling gesture containers. Garden Match explains dead-board recovery without losing score or turns. See [mini-game validation](docs/MINIGAME_USABILITY_1.7.9.md).

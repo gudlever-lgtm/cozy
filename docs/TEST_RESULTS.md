@@ -52,3 +52,7 @@ TypeScript and formatting passed; 37 engine/presentation tests and 36 Android/iO
 ## 1.7.8 quest journal and connected journey
 
 47 engine/presentation and 78 Android/iOS component test runs pass, plus TypeScript, formatting, native JS exports and local ARM64 APK compilation. See [QUEST_JOURNEY_1.7.8.md](QUEST_JOURNEY_1.7.8.md) for functional scope and explicit physical-device limits.
+
+## 1.7.9 mini-game interaction and fixed play areas
+
+47 engine/presentation tests and 100 Android/iOS native component test runs pass. TypeScript/formatting, native JS exports and local ARM64 APK compilation were executed. See [MINIGAME_USABILITY_1.7.9.md](MINIGAME_USABILITY_1.7.9.md) for exact input, completion, persistence and reward coverage, plus the explicit device-testing limits.

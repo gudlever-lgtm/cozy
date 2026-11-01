@@ -30,6 +30,7 @@ import { MiniGameHub } from "./MiniGameHub";
 import { QuestJournal } from "./QuestJournal";
 import type { QuestObjective } from "./presentation/quests";
 import { ScreenPager } from "./ScreenPager";
+import { TeaTime } from "./TeaTime";
 import { GardenMatch } from "./GardenMatch";
 import { MiniArtwork } from "./MiniArtwork";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -75,7 +76,7 @@ import {
 import {
   newMatch,
   newTea,
-  pour,
+  hasMatchMove,
   teaWon,
   treasures,
   hiddenWon,
@@ -203,7 +204,6 @@ export default function App() {
     [miniId, setMiniId] = useState(uuid),
     [match, setMatch] = useState(newMatch),
     [tea, setTea] = useState(newTea),
-    [teaSelected, setTeaSelected] = useState<number | null>(null),
     [found, setFound] = useState<string[]>([]);
   const activeMini = miniHub ? null : mini;
   const focused =
@@ -763,14 +763,11 @@ export default function App() {
   const gardenScene = (hidden = false) => (
     <View
       testID="garden-scene"
-      style={[
-        st.scene,
-        hidden ? { height: Math.max(230, height - 70) } : { flex: 1 },
-      ]}
+      style={[st.scene, { flex: 1, minHeight: 0 }]}
       onLayout={(e) => setSceneSize(e.nativeEvent.layout)}
-      onStartShouldSetResponder={() => !!placing}
+      onStartShouldSetResponder={() => !hidden && !!placing}
       onResponderRelease={(e) => {
-        if (!placing) return;
+        if (hidden || !placing) return;
         const { locationX, locationY } = e.nativeEvent;
         act((v) => ({
           ...v,
@@ -857,23 +854,28 @@ export default function App() {
                   top: `${o.y}%`,
                   width: 44,
                   height: 44,
+                  transform: [{ translateX: -22 }, { translateY: -22 }],
                   alignItems: "center",
                   justifyContent: "center",
                 }}
               >
-                <MiniArtwork
-                  kind="treasure"
-                  value={treasures.findIndex((t) => t.id === o.id)}
-                  size={30}
-                />
+                <View pointerEvents="none">
+                  <MiniArtwork
+                    kind="treasure"
+                    value={treasures.findIndex((t) => t.id === o.id)}
+                    size={30}
+                  />
+                </View>
               </Pressable>
             ))
         : null}
-      <View style={st.sceneLabel}>
-        <Text style={st.sceneLabelText}>
-          {tt(season)} · {tt(s.preferences.time)}
-        </Text>
-      </View>
+      {!hidden && (
+        <View style={st.sceneLabel}>
+          <Text style={st.sceneLabelText}>
+            {tt(season)} · {tt(s.preferences.time)}
+          </Text>
+        </View>
+      )}
     </View>
   );
   if (!s.profile)
@@ -1467,182 +1469,168 @@ export default function App() {
                       setMatch(matchForLevel(nextMiniLevel));
                       setFound([]);
                       setTea(teaForLevel(nextMiniLevel));
-                      setTeaSelected(null);
                     }}
                   />
                 ) : (
                   <View style={st.playLayout} testID="mini-play-layout">
                     <ScrollView
-                      nestedScrollEnabled
-                      style={[st.playRail, { width: width < 800 ? 140 : 170 }]}
+                      testID="mini-controls"
+                      style={[st.playRail, { width: 56 }]}
                       contentContainerStyle={st.railContent}
                     >
-                      <Text style={st.railBrand}>{tt(activeMini)}</Text>
                       {iconButton("hint", tt("help"), () => setMiniHelp(true))}
-                      {activeMini === "match" && (
-                        <Text style={st.label}>
-                          {tt("matchProgress", {
-                            score: match.score,
-                            target: match.target,
-                            turns: match.turns,
-                          })}
-                        </Text>
-                      )}
-                      {activeMini === "match" && (
-                        <>
-                          {" "}
-                          {button(
-                            tt("shuffle"),
-                            () =>
-                              setMatch((g) => ({
-                                ...matchForLevel(miniLevel),
-                                score: g.score,
-                                turns: g.turns,
-                              })),
-                            miniDone || match.turns === 0 || matchBusy,
-                            true,
-                          )}
-                        </>
-                      )}{" "}
-                      {miniDone && (
-                        <Text style={st.sectionTitle}>{tt("miniWon")}</Text>
-                      )}
-                      {button(
-                        tt("replay"),
-                        () => {
-                          setMiniId(uuid());
-                          setMatch(matchForLevel(miniLevel));
-                          setTea(teaForLevel(miniLevel));
-                          setFound([]);
-                          setTeaSelected(null);
-                        },
-                        false,
-                        true,
-                      )}
-                      {button(
-                        tt("back"),
-                        () => {
-                          setMatchBusy(false);
-                          setMiniHub(true);
-                        },
-                        false,
-                        true,
-                      )}
-                      {button(tt("play"), () => go("play"), false, true)}
-                      {button(tt("garden"), () => go("garden"), false, true)}
+                      {activeMini === "match" &&
+                        iconButton(
+                          "auto",
+                          tt("shuffle"),
+                          () =>
+                            setMatch((g) => ({
+                              ...matchForLevel(miniLevel),
+                              score: g.score,
+                              turns: g.turns,
+                            })),
+                          miniDone || match.turns === 0 || matchBusy,
+                        )}
+                      {iconButton("restart", tt("replay"), () => {
+                        setMiniId(uuid());
+                        setMatch(matchForLevel(miniLevel));
+                        setTea(teaForLevel(miniLevel));
+                        setFound([]);
+                      })}
+                      {iconButton("close", tt("back"), () => {
+                        setMatchBusy(false);
+                        setMiniHub(true);
+                      })}
+                      {iconButton("play", tt("play"), () => go("play"))}
+                      {iconButton("garden", tt("garden"), () => go("garden"))}
                     </ScrollView>
-                    <MiniPlayArea
-                      swipeBoard={activeMini === "match"}
-                      onLayout={(event) => {
-                        const { width, height } = event.nativeEvent.layout;
-                        setMiniBounds((old) =>
-                          old.width === width && old.height === height
-                            ? old
-                            : { width, height },
-                        );
-                      }}
+                    <View
+                      style={{ flex: 1, minWidth: 0, minHeight: 0, gap: 4 }}
                     >
-                      {activeMini === "match" && (
-                        <>
-                          <GardenMatch
-                            game={match}
-                            size={Math.min(
-                              336,
-                              (miniBounds.width ||
-                                width - (width < 800 ? 174 : 220) - 32) - 16,
-                              (miniBounds.height ||
-                                height - insets.top - insets.bottom - 74) - 16,
-                            )}
-                            disabled={miniDone || match.turns === 0}
-                            reducedMotion={s.preferences.reducedMotion}
-                            onChange={setMatch}
-                            onBusyChange={setMatchBusy}
-                          />
-                          {!miniDone && match.turns === 0 && (
-                            <Text style={st.label}>{tt("miniLost")}</Text>
-                          )}
-                        </>
-                      )}
-                      {activeMini === "hidden" && (
-                        <>
-                          {gardenScene(true)}
-                          <View style={st.row}>
-                            {treasures.map((o) => (
-                              <Text
-                                key={o.id}
-                                style={[
-                                  st.chip,
-                                  found.includes(o.id) && {
-                                    textDecorationLine: "line-through",
-                                    opacity: 0.45,
-                                  },
-                                ]}
-                              >
-                                {tt(o.id)} {found.includes(o.id) ? "✓" : ""}
-                              </Text>
-                            ))}
-                          </View>
-                        </>
-                      )}
-                      {activeMini === "tea" && (
-                        <View style={st.tiles}>
-                          {tea.map((tray, i) => (
-                            <Pressable
-                              key={i}
-                              disabled={miniDone}
-                              accessibilityRole="button"
-                              accessibilityLabel={tt("tray", { number: i + 1 })}
-                              accessibilityState={{
-                                selected: teaSelected === i,
+                      <View
+                        testID="mini-status"
+                        style={{
+                          minHeight: 36,
+                          paddingHorizontal: 10,
+                          paddingVertical: 4,
+                          borderRadius: 12,
+                          backgroundColor: "#fff8e9f5",
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: 10,
+                        }}
+                      >
+                        <Text
+                          style={[st.label, { flexShrink: 1 }]}
+                          numberOfLines={1}
+                        >
+                          {tt(activeMini)}
+                        </Text>
+                        <Text
+                          accessibilityLiveRegion="polite"
+                          style={[st.small, { flex: 1 }]}
+                        >
+                          {miniDone
+                            ? tt("miniWon")
+                            : activeMini === "match"
+                              ? match.turns === 0
+                                ? tt("miniLost")
+                                : !hasMatchMove(match.cells)
+                                  ? tt("matchNoMoves")
+                                  : tt("matchProgress", {
+                                      score: match.score,
+                                      target: match.target,
+                                      turns: match.turns,
+                                    })
+                              : activeMini === "hidden"
+                                ? tt("hiddenProgress", { count: found.length })
+                                : tt("teaGoal")}
+                        </Text>
+                      </View>
+                      <MiniPlayArea
+                        onLayout={(event) => {
+                          const { width, height } = event.nativeEvent.layout;
+                          setMiniBounds((old) =>
+                            old.width === width && old.height === height
+                              ? old
+                              : { width, height },
+                          );
+                        }}
+                      >
+                        {activeMini === "match" && (
+                          <>
+                            <GardenMatch
+                              game={match}
+                              size={Math.min(
+                                336,
+                                (miniBounds.width || width - 88) - 16,
+                                (miniBounds.height ||
+                                  height - insets.top - insets.bottom - 126) -
+                                  16,
+                              )}
+                              disabled={miniDone || match.turns === 0}
+                              reducedMotion={s.preferences.reducedMotion}
+                              onChange={setMatch}
+                              onBusyChange={setMatchBusy}
+                            />
+                          </>
+                        )}
+                        {activeMini === "hidden" && (
+                          <>
+                            {gardenScene(true)}
+                            <View
+                              testID="treasure-checklist"
+                              style={{
+                                flexDirection: "row",
+                                gap: 4,
+                                alignSelf: "stretch",
+                                height: 44,
+                                backgroundColor: "#fff8e9f5",
+                                borderRadius: 12,
                               }}
-                              onPress={() => {
-                                if (teaSelected === null) setTeaSelected(i);
-                                else {
-                                  setTea(pour(tea, teaSelected, i));
-                                  setTeaSelected(null);
-                                }
-                              }}
-                              style={[
-                                st.tray,
-                                {
-                                  width: Math.min(
-                                    95,
-                                    (width -
-                                      (width < 800 ? 174 : 220) -
-                                      insets.left -
-                                      insets.right -
-                                      100) /
-                                      5,
-                                  ),
-                                },
-                                teaSelected === i && st.selected,
-                              ]}
                             >
-                              {Array.from({ length: 3 }, (_, j) => (
+                              {treasures.map((o, i) => (
                                 <View
-                                  key={j}
+                                  key={o.id}
+                                  accessible
+                                  accessibilityLabel={
+                                    tt(o.id) +
+                                    (found.includes(o.id)
+                                      ? " · " + tt("found")
+                                      : "")
+                                  }
                                   style={{
-                                    height: 44,
+                                    flex: 1,
+                                    minWidth: 0,
                                     alignItems: "center",
                                     justifyContent: "center",
+                                    flexDirection: "row",
+                                    opacity: found.includes(o.id) ? 0.5 : 1,
                                   }}
                                 >
-                                  {tray[2 - j] === undefined ? (
-                                    <Text style={st.small}>·</Text>
-                                  ) : (
-                                    <MiniArtwork
-                                      kind="tea"
-                                      value={tray[2 - j]}
-                                      size={40}
-                                    />
-                                  )}
+                                  <MiniArtwork
+                                    kind="treasure"
+                                    value={i}
+                                    size={24}
+                                  />
+                                  <Text style={st.small}>
+                                    {found.includes(o.id) ? "✓" : ""}
+                                  </Text>
                                 </View>
                               ))}
-                            </Pressable>
-                          ))}
-                        </View>
-                      )}
-                    </MiniPlayArea>
+                            </View>
+                          </>
+                        )}
+                        {activeMini === "tea" && (
+                          <TeaTime
+                            key={miniId}
+                            game={tea}
+                            disabled={miniDone}
+                            onChange={setTea}
+                          />
+                        )}
+                      </MiniPlayArea>
+                    </View>
                   </View>
                 )}
               </>
@@ -2325,11 +2313,9 @@ export default function App() {
   );
 }
 function MiniPlayArea({
-  swipeBoard,
   onLayout,
   children,
 }: {
-  swipeBoard: boolean;
   onLayout: (event: LayoutChangeEvent) => void;
   children: React.ReactNode;
 }) {
@@ -2339,29 +2325,19 @@ function MiniPlayArea({
       onLayout={onLayout}
       style={{ flex: 1, minHeight: 0, minWidth: 0 }}
     >
-      {swipeBoard ? (
-        <View
-          style={{
-            flex: 1,
-            minHeight: 0,
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          {children}
-        </View>
-      ) : (
-        <ScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={{
-            padding: 8,
-            flexGrow: 1,
-            justifyContent: "center",
-          }}
-        >
-          {children}
-        </ScrollView>
-      )}
+      <View
+        style={{
+          flex: 1,
+          minHeight: 0,
+          minWidth: 0,
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 4,
+          gap: 6,
+        }}
+      >
+        {children}
+      </View>
     </View>
   );
 }

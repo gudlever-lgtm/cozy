@@ -196,6 +196,22 @@ export const en = {
   spoon: "Spoon",
   button: "Button",
   tea: "Tea Time Puzzle",
+  teaGoal: "Sort three matching treats into each tray.",
+  teaChooseSource: "Tap a tray with treats to pick the top one.",
+  teaChooseTarget:
+    "Tray {{number}} selected. Tap a green tray to move the top treat.",
+  teaEmptySource: "This tray is empty. First choose a tray with treats.",
+  teaInvalid:
+    "Choose an empty tray or one with the same top treat and a free space.",
+  teaValidTarget: "Move the selected top treat here",
+  teaEmpty: "Empty tray",
+  teaCup: "Tea cup",
+  teaPinkCake: "Pink cake",
+  teaGoldCake: "Golden cake",
+  teaStalled: "No moves available. Undo a move or start again.",
+  hiddenProgress: "{{count}} / 5 treasures found",
+  matchNoMoves:
+    "No matches available. Use Refresh flowers to continue without losing moves.",
   teaRules:
     "Tap a tray, then another tray to move its top treats. Only matching treats or an empty tray can receive them. Sort each treat into a full tray of three.",
   tray: "Tray {{number}}",
