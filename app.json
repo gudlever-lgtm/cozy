@@ -1,0 +1,58 @@
+{
+  "expo": {
+    "name": "Cozy Solitaire",
+    "slug": "cozy-solitaire",
+    "scheme": "cozysolitaire",
+    "version": "1.7.0",
+    "orientation": "default",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#f6f2e8"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.gudlever.cozy",
+      "buildNumber": "1",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.gudlever.cozy",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#f6f2e8"
+      },
+      "permissions": [],
+      "blockedPermissions": ["android.permission.RECORD_AUDIO"]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/icon.png",
+      "name": "Cozy Solitaire",
+      "shortName": "Cozy",
+      "themeColor": "#234b3b",
+      "backgroundColor": "#f6f2e8"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-localization",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": false,
+          "recordAudioAndroid": false,
+          "enableBackgroundRecording": false
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

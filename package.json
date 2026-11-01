@@ -1,0 +1,54 @@
+{
+  "name": "cozy-solitaire",
+  "version": "1.7.0",
+  "private": true,
+  "main": "expo-router/entry",
+  "scripts": {
+    "start": "expo start",
+    "web": "expo start --web",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test --test-isolation=none tests/*.test.ts",
+    "build:web": "expo export --platform web && node scripts/pwa.mjs",
+    "build:android": "eas build --platform android --profile production",
+    "build:ios": "eas build --platform ios --profile production",
+    "test:browser": "playwright test",
+    "format:check": "prettier --check src app tests scripts/*.mjs *.json *.ts"
+  },
+  "dependencies": {
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "expo": "~54.0.38",
+    "expo-asset": "~12.0.14",
+    "expo-audio": "~1.1.1",
+    "expo-constants": "~18.0.14",
+    "expo-crypto": "~15.0.9",
+    "expo-linking": "~8.0.12",
+    "expo-localization": "~17.0.9",
+    "expo-router": "~6.0.24",
+    "expo-status-bar": "~3.0.9",
+    "i18next": "^25.6.0",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "react-i18next": "^16.2.0",
+    "react-native": "0.81.5",
+    "react-native-safe-area-context": "~5.6.0",
+    "react-native-screens": "~4.16.0",
+    "react-native-svg": "15.12.1",
+    "react-native-web": "^0.21.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.1",
+    "@types/node": "^24.10.0",
+    "@types/react": "~19.1.10",
+    "eas-cli": "^16.28.0",
+    "prettier": "^3.9.10",
+    "tsx": "^4.20.6",
+    "typescript": "~5.9.2"
+  },
+  "overrides": {
+    "nanoid": "^3.3.20",
+    "postcss": "^8.5.32"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}
