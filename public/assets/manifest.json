@@ -1,0 +1,80 @@
+{
+  "version": "1.7",
+  "currency": "Lysglimt",
+  "assets": [
+    {
+      "id": "background.spring",
+      "path": "/assets/backgrounds/seasons/spring_cottage_garden.webp",
+      "type": "background",
+      "season": "spring",
+      "aspect": "landscape",
+      "note": "Illustrated static background; weather effects implemented in runtime"
+    },
+    {
+      "id": "background.summer",
+      "path": "/assets/backgrounds/seasons/summer_cottage_garden.webp",
+      "type": "background",
+      "season": "summer",
+      "aspect": "landscape",
+      "note": "Illustrated static background; weather effects implemented in runtime"
+    },
+    {
+      "id": "background.autumn",
+      "path": "/assets/backgrounds/seasons/autumn_cottage_garden.webp",
+      "type": "background",
+      "season": "autumn",
+      "aspect": "landscape",
+      "note": "Illustrated static background; weather effects implemented in runtime"
+    },
+    {
+      "id": "background.winter",
+      "path": "/assets/backgrounds/seasons/winter_cottage_garden.webp",
+      "type": "background",
+      "season": "winter",
+      "aspect": "landscape",
+      "note": "Illustrated static background; weather effects implemented in runtime"
+    },
+    {
+      "id": "millie_rabbit",
+      "path": "/assets/characters/millie_rabbit.png",
+      "type": "character",
+      "season": null
+    },
+    {
+      "id": "marmalade_cat",
+      "path": "/assets/characters/marmalade_cat.png",
+      "type": "character",
+      "season": null
+    },
+    {
+      "id": "ui_icons_sheet",
+      "path": "/assets/icons/ui_icons_sheet.png",
+      "type": "spritesheet",
+      "season": null
+    },
+    {
+      "id": "resources_sheet",
+      "path": "/assets/resources/resources_sheet.png",
+      "type": "spritesheet",
+      "season": null
+    },
+    {
+      "id": "summer_evening_board",
+      "path": "/assets/backgrounds/seasons/summer_evening_board.png",
+      "type": "background",
+      "season": "summer"
+    },
+    {
+      "id": "autumn_rain_board",
+      "path": "/assets/backgrounds/seasons/autumn_rain_board.png",
+      "type": "background",
+      "season": "autumn"
+    },
+    {
+      "id": "winter_snow_board",
+      "path": "/assets/backgrounds/seasons/winter_snow_board.png",
+      "type": "background",
+      "season": "winter"
+    }
+  ]
+}
