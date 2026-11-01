@@ -85,6 +85,7 @@ export const da: Record<keyof typeof en, string> = {
   millieHello: "Hej, {{username}}! Skal vi få noget til at blomstre?",
   marmaladeHello: "En kop te og et hyggeligt hjørne. Mere behøver vi ikke.",
   pipHello: "Der er små skatte langs alle stier. Kom og se!",
+  gatheredMaterials: "Samlet: +1 træ · +1 sten",
   gather: "Saml materialer",
   gatherHint:
     "Udforsk stien, og saml et stykke træ og en sten. Ingen ventetid.",

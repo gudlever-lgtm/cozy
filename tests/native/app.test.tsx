@@ -63,6 +63,9 @@ test("native draw/undo, live localization and profile editing retain the active 
   press("♠ Play Solitaire");
   press("Draw cards");
   await screen.findByText("1 move");
+  await waitFor(async () =>
+    expect((await stored()).game.waste).toHaveLength(3),
+  );
   press("Undo");
   await screen.findByText("0 moves");
   press("Draw cards");
@@ -710,4 +713,76 @@ test("world shortcuts apply card themes and persist animation controls without l
     expect(s.game).toEqual(initial.game);
   });
   expect(screen.getByText("Animations are switched off.")).toBeOnTheScreen();
+});
+
+test("Solitaire runs sparse seasonal effects behind cards without intercepting touch", async () => {
+  const { AppState } = require("react-native");
+  Object.defineProperty(AppState, "currentState", {
+    value: "active",
+    configurable: true,
+  });
+  jest
+    .spyOn(AccessibilityInfo, "isReduceMotionEnabled")
+    .mockResolvedValue(false);
+  const initial = setProfile(fresh("board-motion", "en"), "Board Native", "p");
+  initial.preferences.season = "winter";
+  initial.preferences.weather = 1;
+  await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(initial));
+  await renderAsync(<App />);
+  await screen.findByTestId("main-tabs");
+  press("♠ Play Solitaire");
+  const backdrop = within(screen.getByTestId("solitaire-board")).getByTestId(
+    "board-ambience",
+  );
+  expect(backdrop.props.pointerEvents).toBe("none");
+  expect(backdrop).toHaveStyle({ zIndex: 0 });
+  const engine = within(backdrop).getByTestId("living-world-board", {
+    includeHiddenElements: true,
+  });
+  expect(engine.props.pointerEvents).toBe("none");
+  const snow = within(engine).getAllByTestId("living-sprite-snowflake", {
+    includeHiddenElements: true,
+  });
+  expect(snow.length).toBeGreaterThan(0);
+  expect(snow.length).toBeLessThanOrEqual(4);
+  press("Draw cards");
+  await waitFor(async () => {
+    const saved = await stored();
+    expect(saved.game.moves).toBe(1);
+    expect(saved.game.waste).toHaveLength(3);
+  });
+  press("Undo");
+  await waitFor(async () =>
+    expect((await stored()).game).toEqual(initial.game),
+  );
+  press("⚙ Settings");
+  press("Animations: On");
+  press("♠ Play Solitaire");
+  expect(
+    within(
+      screen.getByTestId("living-world-board", { includeHiddenElements: true }),
+    ).queryAllByTestId("living-sprite-snowflake", {
+      includeHiddenElements: true,
+    }),
+  ).toHaveLength(0);
+});
+
+test("gathering visibly confirms wood and stone and preserves Glimmers and the deal", async () => {
+  const initial = setProfile(fresh("gather", "en"), "Gather Native", "p");
+  initial.economy.wallet.glimmers = 75;
+  await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(initial));
+  await renderAsync(<App />);
+  await screen.findByTestId("main-tabs");
+  press("Gather supplies");
+  expect(screen.getByTestId("compact-tooltip")).toHaveTextContent(
+    "Gathered: +1 wood · +1 stone",
+  );
+  await waitFor(async () => {
+    const saved = await stored();
+    expect(saved.economy.wallet.wood).toBe(1);
+    expect(saved.economy.wallet.stone).toBe(1);
+    expect(saved.economy.wallet.glimmers).toBe(75);
+    expect(saved.counters.gather).toBe(1);
+    expect(saved.game).toEqual(initial.game);
+  });
 });

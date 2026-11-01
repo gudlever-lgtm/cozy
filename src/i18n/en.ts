@@ -83,6 +83,7 @@ export const en = {
   millieHello: "Hello, {{username}}! Shall we make something bloom?",
   marmaladeHello: "A cup of tea and a comfortable corner. That is all we need.",
   pipHello: "There are little treasures along every path. Come and see!",
+  gatheredMaterials: "Gathered: +1 wood · +1 stone",
   gather: "Gather supplies",
   gatherHint:
     "Explore the path to collect one wood and one stone. No waiting needed.",

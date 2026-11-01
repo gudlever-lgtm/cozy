@@ -61,6 +61,8 @@ const empty = (): Game => ({
 test("deal has 52 unique cards, seven columns, 24 stock, exposed tops", () => {
   for (let i = 0; i < 20; i++) {
     const g = newGame("a");
+    assert.equal(g.draw, 3);
+    assert.equal(drawCards(g).waste.length, 3);
     const all = [...g.stock, ...g.tableau.flat()];
     assert.equal(new Set(all.map((c) => c.id)).size, 52);
     assert.equal(g.stock.length, 24);
@@ -72,6 +74,7 @@ test("deal has 52 unique cards, seven columns, 24 stock, exposed tops", () => {
   }
 });
 test("draw three, recycle, undo and restart conserve the exact deal", () => {
+  assert.equal(drawCards(newGame("one", 1)).waste.length, 1);
   const g = newGame("a", 3);
   const d = drawCards(g);
   assert.equal(d.waste.length, 3);

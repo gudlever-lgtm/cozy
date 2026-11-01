@@ -32,3 +32,7 @@ Persisted DA/EN controls: Animations On/Off, Animation quality Low/Medium/High, 
 Automated tests cover seasonal plans/density, finite cubic curves, source provenance and all native densities, layer order, no touch interception, background/resume, reduced motion, settings persistence and game/profile preservation. Existing game/economy regressions remain required. React Native tests use mocked Reanimated/platform modules: they verify integration and policy, **not** real animation timing or FPS.
 
 Actual hardware frame rate, GPU/memory behavior, image edge quality at all device scales and physical drag/touch interactions remain unverified until device testing. Native bundle exports and local Gradle APK compilation are reported separately from EAS jobs; neither implies an App Store build. See `TEST_RESULTS.md` for the latest executed outcomes.
+
+## Board surface added in 1.7.7
+
+At the user's request, a separate clipped particle layer now renders inside the Solitaire felt **under** all card piles. This is not an overlay over ranks/suits. Board mode excludes wildlife/vegetation and caps density at 2/4/6 objects, follows all existing motion preferences and uses pointerEvents none. Card/control rows have higher drawing order. See PLAY_DEFAULTS_1.7.7.md for validation and hardware limits.

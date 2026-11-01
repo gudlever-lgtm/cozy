@@ -1,6 +1,6 @@
 # Implementation status — development toward V2.0
 
-Baseline: `35a3e91`, Android/iOS only. The approved ambient artwork through `19aa34b` was preserved and integrated. Public app version is 1.7.6; this is a development increment, not a completed V2.0 release.
+Baseline: `35a3e91`, Android/iOS only. The approved ambient artwork through `19aa34b` was preserved and integrated. Public app version is 1.7.7; this is a development increment, not a completed V2.0 release.
 
 | Milestone / feature | Actual status | Remaining acceptance work | Dependencies / tests | Acceptance |
 |---|---|---|---|---|
@@ -19,7 +19,7 @@ Baseline: `35a3e91`, Android/iOS only. The approved ambient artwork through `19a
 ## Verified checks
 
 - 45 engine/localization/asset/progression/presentation tests, no skips.
-- 68 React Native component test runs across iOS and Android Jest Expo presets, no skips.
+- 72 React Native component test runs across iOS and Android Jest Expo presets, no skips.
 - TypeScript and formatting pass.
 - Native JS/Hermes exports include all seven ambient sprites at all three densities. These are not signed native app builds.
 - Existing Solitaire move rules and reward values remain unchanged; only optional challenge metadata was added to the game type.
@@ -39,3 +39,5 @@ Latest usability acceptance: original icon/resource atlases integrated, native m
 1.7.5 adds local cascade animation with stable piece identities and interruption-safe input recovery. Decorations and Statistics now use fixed viewport pages without scrolling. See `GARDEN_MATCH_MOTION_1.7.5.md`. Device acceptance is still outstanding.
 
 1.7.6 replaces the clipped stack list with measured full-card pages, compacts the world map, gives exact unlock guidance and exposes card design/season/motion previews. System reduced motion is now live policy rather than copied into the saved manual flag. See `WORLD_CLARITY_1.7.6.md`; device verification remains required.
+
+1.7.7 defaults new free deals to draw-three, adds a sparse particle surface below cards and confirms gathering gains. Existing deals and explicit draw-one remain supported. See `PLAY_DEFAULTS_1.7.7.md`.

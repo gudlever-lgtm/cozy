@@ -44,3 +44,7 @@ TypeScript and formatting passed; 37 engine/presentation tests and 36 Android/iO
 45 engine/presentation tests and 68 Android/iOS native component tests pass. The supplied phone screenshots informed the layout correction, but physical-device validation of the replacement remains outstanding. See [WORLD_CLARITY_1.7.6.md](WORLD_CLARITY_1.7.6.md) for exact scope, motion-policy correction, theme/season verification and device limits.
 
 1.7.6 native evidence: Android and iOS JS/Hermes exports passed; the local ARM64 Android APK compiled successfully in 59 seconds. This is build evidence, not physical-device visual or animation verification.
+
+## 1.7.7 defaults, board ambience and gathering feedback
+
+45 engine/presentation and 72 Android/iOS native component tests pass, with TypeScript/formatting, both native JS exports and the local APK build (55 seconds). See [PLAY_DEFAULTS_1.7.7.md](PLAY_DEFAULTS_1.7.7.md). This does not claim physical-device animation or touch validation.

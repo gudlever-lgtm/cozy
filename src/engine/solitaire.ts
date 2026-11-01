@@ -31,7 +31,7 @@ export const snapshot = (g: Board): Board =>
   );
 export function newGame(
   id: string,
-  draw: 1 | 3 = 1,
+  draw: 1 | 3 = 3,
   random = Math.random,
 ): Game {
   const deck: Card[] = suits.flatMap((suit) =>

@@ -215,6 +215,7 @@ const WarmLights = memo(function WarmLights({
 });
 export type LivingWorldProps = {
   preview?: boolean;
+  surface?: "world" | "board";
   season: LivingSeason;
   enabled: boolean;
   quality: AnimationQuality;
@@ -225,7 +226,7 @@ export type LivingWorldProps = {
   time?: string;
   cottageLights?: boolean;
 };
-/** Presentation only. Place above a static scene and below controls; never mount over the card board. */
+/** Presentation only. Always behind interactive cards/controls; board mode limits particles and omits vegetation. */
 export function LivingWorldAnimationEngine({
   season,
   enabled,
@@ -237,11 +238,12 @@ export function LivingWorldAnimationEngine({
   time = "afternoon",
   cottageLights = true,
   preview = false,
+  surface = "world",
 }: LivingWorldProps) {
   const active = useMotionPolicy(enabled, reducedMotion);
-  const objects = useMemo(
-    () =>
-      createAmbientObjects(season, quality, intensity).map((object, index) =>
+  const objects = useMemo(() => {
+    const all = createAmbientObjects(season, quality, intensity).map(
+      (object, index) =>
         preview
           ? {
               ...object,
@@ -252,12 +254,16 @@ export function LivingWorldAnimationEngine({
               opacity: 1,
             }
           : object,
-      ),
-    [season, quality, intensity, preview],
-  );
+    );
+    if (surface !== "board") return all;
+    const limit = quality === "low" ? 2 : quality === "medium" ? 4 : 6;
+    return all
+      .filter((object) => object.kind !== "bird" && object.kind !== "butterfly")
+      .slice(0, limit);
+  }, [season, quality, intensity, preview, surface]);
   return (
     <View
-      testID="living-world"
+      testID={surface === "board" ? "living-world-board" : "living-world"}
       pointerEvents="none"
       accessible={false}
       accessibilityElementsHidden
@@ -286,23 +292,27 @@ export function LivingWorldAnimationEngine({
         pointerEvents="none"
         style={StyleSheet.absoluteFill}
       >
-        {(["left", "right"] as const).map((side) => (
-          <Vegetation
-            key={side}
-            moving={active}
-            kind="branch"
-            side={side}
-            width={width}
-            height={height}
-          />
-        ))}
-        <Vegetation
-          moving={active}
-          kind="flower"
-          side="left"
-          width={width}
-          height={height}
-        />
+        {surface !== "board" && (
+          <>
+            {(["left", "right"] as const).map((side) => (
+              <Vegetation
+                key={side}
+                moving={active}
+                kind="branch"
+                side={side}
+                width={width}
+                height={height}
+              />
+            ))}
+            <Vegetation
+              moving={active}
+              kind="flower"
+              side="left"
+              width={width}
+              height={height}
+            />
+          </>
+        )}
       </View>
       <View
         testID="living-ambient"

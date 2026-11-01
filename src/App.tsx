@@ -172,7 +172,7 @@ export default function App() {
     [help, setHelp] = useState(false),
     [npc, setNpc] = useState<"millie" | "marmalade" | "pip" | null>(null),
     [placing, setPlacing] = useState<UpgradeId | null>(null),
-    [nextDraw, setNextDraw] = useState<1 | 3>(1);
+    [nextDraw, setNextDraw] = useState<1 | 3>(3);
   useEffect(() => {
     if (!npc) return;
     const timer = setTimeout(() => setNpc(null), 2500);
@@ -1042,7 +1042,7 @@ export default function App() {
                     <View style={{ gap: 8 }}>
                       {button(
                         tt("gather"),
-                        () =>
+                        () => {
                           act((v) => ({
                             ...v,
                             counters: {
@@ -1053,7 +1053,9 @@ export default function App() {
                               wood: 1,
                               stone: 1,
                             }),
-                          })),
+                          }));
+                          setTip(tt("gatheredMaterials"));
+                        },
                         false,
                         true,
                       )}
@@ -1112,12 +1114,40 @@ export default function App() {
                   >
                     <View style={st.board} testID="solitaire-board">
                       <View
+                        testID="board-ambience"
+                        pointerEvents="none"
+                        style={[
+                          StyleSheet.absoluteFill,
+                          { borderRadius: 16, overflow: "hidden", zIndex: 0 },
+                        ]}
+                      >
+                        <LivingWorldAnimationEngine
+                          surface="board"
+                          season={season}
+                          enabled={s.preferences.animations}
+                          quality={s.preferences.animationQuality}
+                          reducedMotion={s.preferences.reducedMotion}
+                          intensity={s.preferences.weather}
+                          width={
+                            boardSize.width ||
+                            width - insets.left - insets.right - railWidth - 24
+                          }
+                          height={
+                            boardSize.height ||
+                            height - insets.top - insets.bottom - 98
+                          }
+                          time={s.preferences.time}
+                          cottageLights={false}
+                        />
+                      </View>
+                      <View
                         style={[
                           st.row,
                           {
                             justifyContent: "space-between",
                             alignItems: "flex-start",
                             flexWrap: "nowrap",
+                            zIndex: 1,
                           },
                         ]}
                       >
@@ -1191,6 +1221,7 @@ export default function App() {
                         style={{
                           flexDirection: "row",
                           justifyContent: "space-between",
+                          zIndex: 2,
                           marginTop: boardLayout.gap,
                           height: tableauHeight,
                         }}
