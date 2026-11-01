@@ -308,11 +308,9 @@ test("a lost release event expires the idle drag lock", async () => {
   jest.useFakeTimers();
   try {
     act(() =>
-      screen
-        .getByTestId("garden-match-board")
-        .props.onResponderGrant({
-          nativeEvent: { locationX: 80, locationY: 30, pageX: 100, pageY: 100 },
-        }),
+      screen.getByTestId("garden-match-board").props.onResponderGrant({
+        nativeEvent: { locationX: 80, locationY: 30, pageX: 100, pageY: 100 },
+      }),
     );
     expect(
       screen
