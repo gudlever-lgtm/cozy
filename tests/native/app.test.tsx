@@ -573,3 +573,62 @@ test("inventory shows five compact resource fields using original light Glimmer 
   fireEvent.press(within(inventory).getAllByRole("button")[0]);
   expect(screen.getByTestId("compact-tooltip")).toBeOnTheScreen();
 });
+
+test("Decorations and Statistics use bounded pages with no scroll and retain purchases", async () => {
+  const initial = setProfile(fresh("paged", "en"), "Pages Native", "p");
+  initial.economy.wallet.glimmers = 200;
+  initial.economy.wallet.wood = 10;
+  await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(initial));
+  await renderAsync(<App />);
+  await screen.findByTestId("main-tabs");
+  press("❀ Decorations");
+  const pager = screen.getByTestId("decorations-pages");
+  fireEvent(pager, "layout", {
+    nativeEvent: { layout: { width: 568, height: 262 } },
+  });
+  expect(screen.queryByTestId("screen-scroll")).toBeNull();
+  let parent = pager.parent;
+  while (parent) {
+    expect(["ScrollView", "RCTScrollView"]).not.toContain(parent.type);
+    parent = parent.parent;
+  }
+  const buy = screen
+    .getAllByRole("button")
+    .find(
+      (button) =>
+        String(button.props.accessibilityLabel).startsWith("Unlock") &&
+        String(button.props.accessibilityLabel).includes("Flower"),
+    );
+  expect(buy).toBeDefined();
+  fireEvent.press(buy!);
+  await waitFor(async () =>
+    expect((await stored()).economy.inventory).toContain("flowers"),
+  );
+  press("Place in garden: Flower garden");
+  fireEvent(screen.getByTestId("garden-scene"), "layout", {
+    nativeEvent: { layout: { width: 500, height: 250 } },
+  });
+  fireEvent(screen.getByTestId("garden-scene"), "responderRelease", {
+    nativeEvent: { locationX: 200, locationY: 150 },
+  });
+  await waitFor(async () =>
+    expect(
+      (await stored()).placements.find((p: any) => p.id === "flowers"),
+    ).toMatchObject({ x: 40, y: 60 }),
+  );
+  press("❀ Decorations");
+  fireEvent(screen.getByTestId("decorations-pages"), "layout", {
+    nativeEvent: { layout: { width: 568, height: 262 } },
+  });
+  press("Next page");
+  expect(screen.getByRole("button", { name: "Previous page" })).toBeEnabled();
+  press("↗ Statistics");
+  fireEvent(screen.getByTestId("statistics-pages"), "layout", {
+    nativeEvent: { layout: { width: 568, height: 262 } },
+  });
+  expect(screen.queryByTestId("screen-scroll")).toBeNull();
+  press("Next page");
+  expect(
+    screen.getByRole("button", { name: "Curious explorer" }),
+  ).toBeOnTheScreen();
+});

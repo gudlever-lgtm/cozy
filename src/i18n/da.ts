@@ -1,6 +1,8 @@
 import { expansionDa } from "./expansion-da";
 import type { en } from "./en";
 export const da: Record<keyof typeof en, string> = {
+  previousPage: "Forrige side",
+  nextPage: "Næste side",
   showStack: "Vis {{count}} kort i stakken",
   stackTitle: "Kort i stakken",
   stackInstructions:

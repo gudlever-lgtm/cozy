@@ -32,3 +32,7 @@ TypeScript and formatting passed; 37 engine/presentation tests and 36 Android/iO
 ## 1.7.4 usability regression
 
 42 engine/presentation and 52 Android/iOS native component tests pass, alongside TypeScript, formatting, both native JS/Hermes exports and the local Android APK build (1m 19s). See [USABILITY_1.7.4.md](USABILITY_1.7.4.md) for actual coverage, original atlas use and explicit device-testing limits.
+
+## 1.7.5 Garden Match motion and fixed pages
+
+44 engine/presentation tests and 62 native component tests pass. New coverage checks local cascade mappings, stationary identities, input recovery after interrupted/missing callbacks and lost releases, plus Decorations/Statistics page geometry/navigation and preserved purchase/placement behavior. See [GARDEN_MATCH_MOTION_1.7.5.md](GARDEN_MATCH_MOTION_1.7.5.md). Physical-device appearance, gesture feel and FPS remain unverified.

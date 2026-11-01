@@ -189,3 +189,144 @@ test("Garden Match can reach its target through sequential swipes and remains lo
     screen.getByTestId("garden-match-board").props.onStartShouldSetResponder(),
   ).toBe(false);
 }, 15000);
+
+test("unmatched stationary pieces retain identity and do not fade with the board", async () => {
+  const { planMatchSwap } = require("../../src/engine/minigames");
+  jest.spyOn(Math, "random").mockReturnValue(0.17);
+  const plan = planMatchSwap(game, 1, 7, () => 0.17);
+  let origins: (number | null)[] = Array.from({ length: 36 }, (_, i) => i);
+  [origins[1], origins[7]] = [origins[7], origins[1]];
+  for (const stage of plan.cascades) {
+    const next: (number | null)[] = Array(36).fill(null);
+    for (const fall of stage.falls)
+      next[fall.to] = fall.from === null ? null : origins[fall.from];
+    origins = next;
+  }
+  const stationary = origins.findIndex(
+    (from, i) => from === i && i !== 1 && i !== 7,
+  );
+  expect(stationary).toBeGreaterThanOrEqual(0);
+  const onChange = jest.fn();
+  await renderAsync(
+    <GardenMatch
+      game={game}
+      size={300}
+      disabled={false}
+      reducedMotion
+      onChange={onChange}
+    />,
+  );
+  const id = screen.getByTestId(`match-cell-${stationary}`).props.nativeID;
+  gesture(1, 0, 50);
+  await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
+  expect(screen.getByTestId(`match-cell-${stationary}`).props.nativeID).toBe(
+    id,
+  );
+  expect(screen.getByTestId(`match-cell-${stationary}`)).toHaveStyle({
+    opacity: 1,
+  });
+});
+
+test("a missing native completion callback releases input without committing a partial move", async () => {
+  jest.spyOn(Animated, "parallel").mockImplementation(() => ({
+    start: () => {},
+    stop: () => {},
+    reset: () => {},
+  }));
+  const onChange = jest.fn(),
+    onBusyChange = jest.fn();
+  await renderAsync(
+    <GardenMatch
+      game={game}
+      size={300}
+      disabled={false}
+      reducedMotion={false}
+      onChange={onChange}
+      onBusyChange={onBusyChange}
+    />,
+  );
+  gesture(1, 0, 50);
+  await waitFor(
+    () =>
+      expect(
+        screen
+          .getByTestId("garden-match-board")
+          .props.onStartShouldSetResponder(),
+      ).toBe(true),
+    { timeout: 2000 },
+  );
+  expect(onBusyChange).toHaveBeenLastCalledWith(false);
+  expect(onChange).not.toHaveBeenCalled();
+});
+
+test("backgrounding during a drag releases input and restores the authoritative board", async () => {
+  const { AppState } = require("react-native");
+  let listener: (state: string) => void = () => {};
+  jest
+    .spyOn(AppState, "addEventListener")
+    .mockImplementation((_: unknown, callback: unknown) => {
+      listener = callback as typeof listener;
+      return { remove: jest.fn() };
+    });
+  const onChange = jest.fn();
+  await renderAsync(
+    <GardenMatch
+      game={game}
+      size={300}
+      disabled={false}
+      reducedMotion
+      onChange={onChange}
+    />,
+  );
+  const board = screen.getByTestId("garden-match-board");
+  act(() =>
+    board.props.onResponderGrant({
+      nativeEvent: { locationX: 80, locationY: 30, pageX: 100, pageY: 100 },
+    }),
+  );
+  act(() => listener("background"));
+  act(() => listener("active"));
+  expect(
+    screen.getByTestId("garden-match-board").props.onStartShouldSetResponder(),
+  ).toBe(true);
+  expect(onChange).not.toHaveBeenCalled();
+  gesture(1, 0, 50);
+  await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
+});
+
+test("a lost release event expires the idle drag lock", async () => {
+  const onChange = jest.fn();
+  await renderAsync(
+    <GardenMatch
+      game={game}
+      size={300}
+      disabled={false}
+      reducedMotion
+      onChange={onChange}
+    />,
+  );
+  jest.useFakeTimers();
+  try {
+    act(() =>
+      screen
+        .getByTestId("garden-match-board")
+        .props.onResponderGrant({
+          nativeEvent: { locationX: 80, locationY: 30, pageX: 100, pageY: 100 },
+        }),
+    );
+    expect(
+      screen
+        .getByTestId("garden-match-board")
+        .props.onStartShouldSetResponder(),
+    ).toBe(false);
+    act(() => jest.advanceTimersByTime(8001));
+    expect(
+      screen
+        .getByTestId("garden-match-board")
+        .props.onStartShouldSetResponder(),
+    ).toBe(true);
+    expect(onChange).not.toHaveBeenCalled();
+  } finally {
+    jest.useRealTimers();
+  }
+});

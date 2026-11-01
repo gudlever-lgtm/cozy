@@ -24,6 +24,7 @@ import {
   dropDestination,
   type DropRegion,
 } from "./presentation/board";
+import { ScreenPager } from "./ScreenPager";
 import { GardenMatch } from "./GardenMatch";
 import { MiniArtwork } from "./MiniArtwork";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -194,7 +195,11 @@ export default function App() {
     [found, setFound] = useState<string[]>([]);
   const activeMini = miniHub ? null : mini;
   const focused =
-    playing || screen === "garden" || (screen === "mini" && !!activeMini);
+    playing ||
+    screen === "garden" ||
+    screen === "decorations" ||
+    screen === "statistics" ||
+    (screen === "mini" && !!activeMini);
   const lastCardTap = useRef<{ id: string; time: number } | null>(null);
   const dropTargets = useRef<Record<string, { node: View; place: Place }>>({});
   const update = useCallback(
@@ -739,6 +744,7 @@ export default function App() {
   );
   const gardenScene = (hidden = false) => (
     <View
+      testID="garden-scene"
       style={[
         st.scene,
         hidden ? { height: Math.max(230, height - 70) } : { flex: 1 },
@@ -1669,75 +1675,125 @@ export default function App() {
               </>
             )}
             {screen === "decorations" && (
-              <>
-                {heading(tt("decorations"), tt("currencyHint"))}
-                {placing && (
-                  <>
-                    <Text style={st.label}>{tt("placing")}</Text>
-                    {gardenScene()}
-                  </>
-                )}
-                <View style={st.tiles}>
-                  {upgrades.map((u) => {
-                    const owned = s.economy.inventory.includes(u.id);
-                    return (
-                      <View key={u.id} style={st.npc}>
-                        <Text style={{ fontSize: 48 }}>{u.icon}</Text>
-                        <Text style={st.sectionTitle}>{tt(u.id)}</Text>
-                        {owned ? (
-                          <>
-                            {button(tt("owned"), () => {}, true, true)}
-                            {u.id !== "cards" &&
-                              button(
-                                tt("place"),
-                                () => {
-                                  setLocation("cottage");
-                                  setPlacing(u.id);
-                                },
-                                false,
-                                true,
-                              )}
-                          </>
-                        ) : (
-                          button(
-                            tt("buy", { cost: u.cost, wood: u.wood }),
-                            () =>
-                              act((v) => {
-                                const economy = transact(
-                                  v.economy,
-                                  "buy:" + u.id,
-                                  { glimmers: -u.cost, wood: -u.wood },
-                                  u.id,
-                                );
-                                return {
-                                  ...v,
-                                  economy,
-                                  world: {
-                                    ...v.world,
-                                    theme:
-                                      u.id === "cards"
-                                        ? "botanical"
-                                        : v.world.theme,
-                                  },
-                                  placements:
-                                    u.id === "cards"
-                                      ? v.placements
-                                      : place(economy.inventory, v.placements, {
-                                          id: u.id,
-                                          x: u.x,
-                                          y: u.y,
-                                        }),
-                                };
+              <ScreenPager
+                id="decorations"
+                title={tt("decorations")}
+                items={upgrades.map((u) => {
+                  const owned = s.economy.inventory.includes(u.id),
+                    affordable =
+                      s.economy.wallet.glimmers >= u.cost &&
+                      s.economy.wallet.wood >= u.wood;
+                  const buy = () =>
+                    act((v) => {
+                      const economy = transact(
+                        v.economy,
+                        "buy:" + u.id,
+                        { glimmers: -u.cost, wood: -u.wood },
+                        u.id,
+                      );
+                      return {
+                        ...v,
+                        economy,
+                        world: {
+                          ...v.world,
+                          theme: u.id === "cards" ? "botanical" : v.world.theme,
+                        },
+                        placements:
+                          u.id === "cards"
+                            ? v.placements
+                            : place(economy.inventory, v.placements, {
+                                id: u.id,
+                                x: u.x,
+                                y: u.y,
                               }),
-                            false,
-                            true,
-                          )
+                      };
+                    });
+                  return (
+                    <View key={u.id} style={st.fittedTile}>
+                      <GameIcon
+                        name={
+                          u.id === "cards"
+                            ? "play"
+                            : u.id === "lantern"
+                              ? "glimmer"
+                              : u.id === "forest"
+                                ? "world"
+                                : u.id === "flowers"
+                                  ? "decorations"
+                                  : "garden"
+                        }
+                        size={36}
+                      />
+                      <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
+                        <Text style={st.fittedName} numberOfLines={2}>
+                          {tt(u.id)}
+                        </Text>
+                        {owned ? (
+                          <Text style={st.small}>{tt("owned")}</Text>
+                        ) : (
+                          <View
+                            style={{
+                              flexDirection: "row",
+                              gap: 4,
+                              alignItems: "center",
+                            }}
+                          >
+                            <GameIcon name="glimmer" size={16} />
+                            <Text style={st.small}>
+                              {number(u.cost, language)}
+                            </Text>
+                            {u.wood > 0 && (
+                              <>
+                                <GameIcon name="wood" size={16} />
+                                <Text style={st.small}>
+                                  {number(u.wood, language)}
+                                </Text>
+                              </>
+                            )}
+                          </View>
                         )}
                       </View>
-                    );
-                  })}
-                </View>
-              </>
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={
+                          owned
+                            ? tt("place") + ": " + tt(u.id)
+                            : tt("buy", { cost: u.cost, wood: u.wood }) +
+                              ": " +
+                              tt(u.id)
+                        }
+                        disabled={owned ? u.id === "cards" : !affordable}
+                        accessibilityState={{
+                          disabled: owned ? u.id === "cards" : !affordable,
+                        }}
+                        style={[
+                          st.iconButton,
+                          (owned ? u.id === "cards" : !affordable) &&
+                            st.disabled,
+                        ]}
+                        onPress={
+                          owned
+                            ? () => {
+                                setLocation("cottage");
+                                go("garden");
+                                setPlacing(u.id);
+                                setTip(tt("placing"));
+                              }
+                            : buy
+                        }
+                      >
+                        {owned ? (
+                          <GameIcon name="garden" size={28} />
+                        ) : (
+                          <Text style={{ fontSize: 25, color: "#345b49" }}>
+                            +
+                          </Text>
+                        )}
+                      </Pressable>
+                    </View>
+                  );
+                })}
+              />
             )}
             {screen === "inventory" && (
               <>
@@ -1848,38 +1904,67 @@ export default function App() {
               </>
             )}
             {screen === "statistics" && (
-              <>
-                {heading(tt("statsTitle"))}
-                <View style={st.tiles}>
-                  {[
-                    ["wins", s.counters.solitaire],
-                    ["played", s.attempts],
+              <ScreenPager
+                id="statistics"
+                title={tt("statsTitle")}
+                items={[
+                  ...(
                     [
-                      "miniWins",
-                      s.counters.match + s.counters.hidden + s.counters.tea,
-                    ],
-                    ["questsDone", s.completed.length],
-                  ].map(([key, value]) => (
-                    <View key={key} style={st.npc}>
-                      <Text style={st.title}>
-                        {number(Number(value), language)}
+                      ["wins", s.counters.solitaire, "play"],
+                      ["played", s.attempts, "play"],
+                      [
+                        "miniWins",
+                        s.counters.match + s.counters.hidden + s.counters.tea,
+                        "mini",
+                      ],
+                      ["questsDone", s.completed.length, "quests"],
+                    ] as const
+                  ).map(([key, value, icon]) => (
+                    <Pressable
+                      key={key}
+                      style={st.fittedTile}
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        tt(key) + ": " + number(value, language)
+                      }
+                      onPress={() =>
+                        setTip(tt(key) + ": " + number(value, language))
+                      }
+                    >
+                      <GameIcon name={icon} size={38} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={st.resourceAmount}>
+                          {number(value, language)}
+                        </Text>
+                        <Text style={st.fittedName} numberOfLines={2}>
+                          {tt(key)}
+                        </Text>
+                      </View>
+                    </Pressable>
+                  )),
+                  <Pressable
+                    key="achievement"
+                    style={st.fittedTile}
+                    accessibilityRole="button"
+                    accessibilityLabel={tt("achievement")}
+                    onPress={() => setMessage(tt("achievementText"))}
+                  >
+                    <GameIcon name="challenge" size={38} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={st.fittedName} numberOfLines={2}>
+                        {tt("achievement")}
                       </Text>
-                      <Text style={st.small}>{tt(key as Key)}</Text>
+                      <Text style={st.small}>
+                        {tt(
+                          s.economy.receipts.includes("achievement:explorer")
+                            ? "earned"
+                            : "notYet",
+                        )}
+                      </Text>
                     </View>
-                  ))}
-                </View>
-                <View style={st.panel}>
-                  <Text style={st.sectionTitle}>✦ {tt("achievement")}</Text>
-                  <Text style={st.subtitle}>{tt("achievementText")}</Text>
-                  <Text style={st.label}>
-                    {tt(
-                      s.economy.receipts.includes("achievement:explorer")
-                        ? "earned"
-                        : "notYet",
-                    )}
-                  </Text>
-                </View>
-              </>
+                  </Pressable>,
+                ]}
+              />
             )}
             {screen === "settings" && (
               <>
@@ -2371,6 +2456,23 @@ function Draggable({
 }
 const st = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#f6f2e8" },
+  fittedTile: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    padding: 10,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#d2c295",
+    backgroundColor: "#fff8e9ed",
+  },
+  fittedName: {
+    fontSize: 13,
+    lineHeight: 16,
+    fontWeight: "600",
+    color: "#345b49",
+  },
   inventoryGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   resourceTile: {
     width: 88,

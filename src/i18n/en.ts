@@ -1,5 +1,7 @@
 import { expansionEn } from "./expansion-en";
 export const en = {
+  previousPage: "Previous page",
+  nextPage: "Next page",
   showStack: "Show {{count}} stacked cards",
   stackTitle: "Stacked cards",
   stackInstructions:

@@ -54,12 +54,31 @@ export function newMatch(random = Math.random): Match {
   }
   return { cells, score: 0, turns: 18, target: 30 };
 }
-export function swapMatch(
+export type MatchFall = {
+  from: number | null;
+  to: number;
+  value: number;
+  spawnRow?: number;
+};
+export type MatchCascade = {
+  before: number[];
+  after: number[];
+  removed: number[];
+  falls: MatchFall[];
+};
+export type MatchSwapPlan = {
+  next: Match;
+  swapped: number[];
+  cascades: MatchCascade[];
+};
+/** A move is resolved once; the renderer follows these local clear/gravity/refill stages. */
+export function planMatchSwap(
   g: Match,
   a: number,
   b: number,
   random = Math.random,
-): Match {
+): MatchSwapPlan {
+  const invalid = { next: g, swapped: g.cells, cascades: [] };
   if (
     g.turns <= 0 ||
     g.score >= g.target ||
@@ -71,24 +90,53 @@ export function swapMatch(
       Math.abs(Math.floor(a / 6) - Math.floor(b / 6)) !==
       1
   )
-    return g;
-  const cells = [...g.cells];
+    return invalid;
+  let cells = [...g.cells];
   [cells[a], cells[b]] = [cells[b], cells[a]];
+  const swapped = [...cells];
   let hit = matches(cells);
-  if (!hit.length) return g;
+  if (!hit.length) return { ...invalid, swapped };
   let score = g.score;
+  const cascades: MatchCascade[] = [];
   for (let n = 0; hit.length && n < 20; n++) {
+    const before = [...cells],
+      removed = [...hit],
+      gone = new Set(hit),
+      falls: MatchFall[] = [];
     score += hit.length;
     for (let x = 0; x < 6; x++) {
-      const col = Array.from({ length: 6 }, (_, y) => y * 6 + x)
-        .filter((i) => !hit.includes(i))
-        .map((i) => cells[i]);
-      while (col.length < 6) col.unshift(Math.floor(random() * 5));
-      col.forEach((v, y) => (cells[y * 6 + x] = v));
+      const survivors = Array.from({ length: 6 }, (_, y) => y * 6 + x).filter(
+        (i) => !gone.has(i),
+      );
+      const holes = 6 - survivors.length;
+      for (let y = holes - 1; y >= 0; y--) {
+        const value = Math.floor(random() * 5),
+          to = y * 6 + x;
+        cells[to] = value;
+        falls.push({ from: null, to, value, spawnRow: y - holes });
+      }
+      survivors.forEach((from, j) => {
+        const to = (holes + j) * 6 + x;
+        cells[to] = before[from];
+        falls.push({ from, to, value: before[from] });
+      });
     }
+    cascades.push({ before, after: [...cells], removed, falls });
     hit = matches(cells);
   }
-  return { ...g, cells, score, turns: g.turns - 1 };
+  return {
+    next: { ...g, cells, score, turns: g.turns - 1 },
+    swapped,
+    cascades,
+  };
+}
+export function swapMatch(
+  g: Match,
+  a: number,
+  b: number,
+  random = Math.random,
+): Match {
+  return planMatchSwap(g, a, b, random).next;
 }
 export type Tea = number[][];
 export const newTea = (): Tea => [[0, 1, 2], [1, 2, 0], [2, 0, 1], [], []];

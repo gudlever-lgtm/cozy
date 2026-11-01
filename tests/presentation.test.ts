@@ -185,3 +185,74 @@ test("fresh Garden Match boards always start with a legal swipe and no free matc
     assert.equal(hasMatchMove(board.cells), true);
   }
 });
+
+test("match motion plan preserves every survivor and refills only holes in the same column", async () => {
+  const { newMatch, planMatchSwap, swapMatch, matches } =
+    await import("../src/engine/minigames");
+  const cells = Array.from(
+    { length: 36 },
+    (_, i) => ((i % 6) + Math.floor(i / 6)) % 5,
+  );
+  cells[0] = 0;
+  cells[1] = 1;
+  cells[2] = 0;
+  cells[7] = 0;
+  const game = { ...newMatch(), cells };
+  const snapshot = JSON.stringify(game);
+  const plan = planMatchSwap(game, 1, 7, () => 0.17);
+  assert.ok(plan.cascades.length > 0);
+  assert.equal(JSON.stringify(game), snapshot);
+  assert.deepEqual(
+    plan.next,
+    swapMatch(game, 1, 7, () => 0.17),
+  );
+  let score = 0,
+    previous = plan.swapped;
+  for (const stage of plan.cascades) {
+    assert.deepEqual(stage.before, previous);
+    assert.deepEqual(new Set(stage.removed), new Set(matches(stage.before)));
+    score += stage.removed.length;
+    assert.equal(stage.falls.length, 36);
+    assert.equal(new Set(stage.falls.map((f) => f.to)).size, 36);
+    for (const fall of stage.falls) {
+      assert.equal(stage.after[fall.to], fall.value);
+      if (fall.from !== null) {
+        assert.ok(!stage.removed.includes(fall.from));
+        assert.equal(fall.from % 6, fall.to % 6);
+        assert.ok(fall.to >= fall.from);
+        assert.equal(stage.before[fall.from], fall.value);
+      } else assert.ok(fall.spawnRow! < 0);
+    }
+    for (let x = 0; x < 6; x++) {
+      const survivors = Array.from({ length: 6 }, (_, y) => y * 6 + x).filter(
+        (i) => !stage.removed.includes(i),
+      );
+      assert.deepEqual(
+        stage.falls
+          .filter((f) => f.from !== null && f.to % 6 === x)
+          .map((f) => f.from),
+        survivors,
+      );
+    }
+    previous = stage.after;
+  }
+  assert.equal(plan.next.score, game.score + score);
+  assert.equal(plan.next.turns, game.turns - 1);
+  assert.deepEqual(plan.next.cells, previous);
+});
+
+test("fixed decoration/statistic pages fit their viewport without overflow", async () => {
+  const { pageGeometry } = await import("../src/presentation/paging");
+  for (const [w, h] of [
+    [414, 190],
+    [480, 220],
+    [568, 262],
+    [740, 302],
+    [1000, 600],
+  ]) {
+    const g = pageGeometry(w, h);
+    assert.ok(16 + 30 + 44 + 16 + g.gridHeight <= h);
+    assert.ok(g.cardHeight >= 64);
+    assert.ok(g.perPage >= 1 && g.perPage <= 4);
+  }
+});
