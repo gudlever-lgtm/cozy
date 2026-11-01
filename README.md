@@ -4,12 +4,12 @@
 
 ![Download QR](cozy-solitaire-qr.png)
 
-Current app: **1.7.4**, Android versionCode **5**. Permanent filename and QR URL stay unchanged.
+Current app: **1.7.5**, Android versionCode **6**. Filename and QR URL remain unchanged.
 
-Original illustrated icon/resource sheets, luminous Glimmers, compact inventory with persistent overflow indicator, native popup/modal layer, a single Garden Match swipe surface and one large central suit per playing card. Card drops account for the dragged card footprint.
+Garden Match uses stable pieces, local clears, falling survivors and refill from above. Input recovers from missing completion callbacks, interruption, backgrounding and lost finger releases. Decorations and Statistics use screen-sized pages without scrolling. Original illustrated artwork remains integrated.
 
-ARM64 Android 7.0+, test-signed with the same package/certificate as earlier previews. Install as an update without uninstalling to retain progress.
+ARM64 Android 7.0+, same test-signing certificate/package as earlier previews. Install as an update without uninstalling.
 
-42 engine/presentation and 52 native component tests passed, Android/iOS native JS exports passed, local Android APK signature/integrity/alignment/version/bundle verified. Physical-device touch feel, rendered appearance, OEM safe areas and FPS remain unverified.
+44 engine/presentation tests and 62 native component tests pass. Android/iOS JS exports and the local Android APK build pass; signature, ZIP integrity, 16KB alignment, version and standalone bundle verified. Physical-device gesture feel, native rendering and FPS remain unverified.
 
-Source on main: [ea07e85](https://github.com/gudlever-lgtm/cozy/commit/ea07e85). See BUILD_INFO.json and SHA256SUMS.txt.
+Source on main: [9e57c17](https://github.com/gudlever-lgtm/cozy/commit/9e57c17). See BUILD_INFO.json and SHA256SUMS.txt.

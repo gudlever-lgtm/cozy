@@ -1,2 +1,2 @@
-7bf29c60d40ed8db2423df930acfd19c6e36a47c5c8ae89b832f516f2ed76282  cozy-solitaire.apk
+249a0cb3f359e2f4acdb20edb30632f242852c2d9c5fc6a527e926c39a9ccab7  cozy-solitaire.apk
 693842da54ac06224d0f2fdc4d4192258fe06fdc6c233c955d1643380699b80c  cozy-solitaire-qr.png
