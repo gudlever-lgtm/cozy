@@ -65,3 +65,9 @@ Seasonal picture puzzles, date-seeded daily challenges, stone-wall grid puzzles,
 Native gestures, audio and performance have **not** been tested on a device. Jest mocks native bindings/layout/motion; JS exports and an Android build are build evidence, not actual phone/iPhone touch, audio, appearance or FPS evidence. Production signing/store release gates remain unchanged.
 
 Step 7 final checks on version 1.7.14: **76 engine tests / 164 native runs**, TypeScript and formatting pass, no skips. Existing dependencies and lockfile resolutions are unchanged.
+
+## Step 8 — optional App extraction (bounded scope)
+
+After steps 1–7 passed and were pushed, the unchanged stylesheet was moved into `src/App.styles.ts`. Every style value is compared byte-for-byte with the preceding commit, and native tests rerun after extraction. Screen components and closure-bound helpers were not split: their dependencies on shared game/world/menu state would require broad prop/callback plumbing. This increment stops at the safe stylesheet boundary; no gesture or screen behavior is changed.
+
+Step 8 checks: **164 native runs** pass after extraction, alongside TypeScript/formatting and the runtime import-graph check. The final full engine suite remains **76 passed**; no engine behavior changed during stylesheet extraction. Android/iOS offline JS/Hermes exports pass.
