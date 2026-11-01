@@ -4,12 +4,12 @@
 
 ![Download QR](cozy-solitaire-qr.png)
 
-Current app: **1.7.10**, Android versionCode **11**. Filename and QR URL are unchanged.
+Current app: **1.7.11**, Android versionCode **12**. Filename and QR URL are unchanged.
 
-An original illustrated firefly demonstrates a legal move after 12 idle seconds in Solitaire and all three mini-games, once per pause. It clears on input and pauses for gameplay gestures, dialogs and background state. Animation-off disables it; reduced motion uses a stationary outline. Existing deals, rules, resources and progression are preserved.
+Original painterly decorations replace emoji and are placed automatically once on fixed ground anchors. Owned items cannot be reapplied. Four seasonal forest scenes include clear next-story objectives and illustrated purchased structures. Found treasures turn into butterflies; completion celebrates with seasonal petals, leaves or snow. New mini-game rounds remain repeatable and show their useful Glimmer/material rewards. Existing deals, purchases, progression and reward values are preserved.
 
 ARM64 Android 7.0+, same test-signing certificate/package as earlier previews. Install as an update without uninstalling.
 
-49 engine/presentation and 112 native component tests pass. Native JS exports and local APK build passed; signature, ZIP integrity, 16KB alignment, version and standalone bundle verified. Physical-device rendering, touch and FPS remain unverified.
+51 engine/presentation/asset and 142 native component test runs pass. Native JS exports and local APK build passed; signature, ZIP integrity, 16KB alignment, version and standalone bundle verified. Physical-device compositing, touch and FPS remain unverified.
 
-Source on main: [d8ab1ca](https://github.com/gudlever-lgtm/cozy/commit/d8ab1ca). See BUILD_INFO.json and SHA256SUMS.txt.
+Source on main: [0cdfa5e](https://github.com/gudlever-lgtm/cozy/commit/0cdfa5e49c2599dba109886bab4d9cc5ebdf1cd5). See BUILD_INFO.json and SHA256SUMS.txt.
