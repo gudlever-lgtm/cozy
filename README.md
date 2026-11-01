@@ -78,3 +78,5 @@ Full-screen landscape with the seasonal scene throughout, a central Solitaire bo
 Preview 1.7.2 adds a compact native icon tab dock, timed/tap-dismissable labels, icon actions around the game, and fixes overflow scrolling by bounding each landscape panel. See [scroll validation](docs/SCROLL_FIX_1.7.2.md).
 
 Preview 1.7.3 fits Solitaire to the measured board viewport and collapses each exposed run to its first and last cards. Tap +count to select an intermediate card when moving part of a run. See [compact column validation](docs/COMPACT_COLUMNS_1.7.3.md).
+
+Preview 1.7.4 restores original illustrated icons/resource pieces, uses a native modal/HUD above the board, gives Garden Match one dedicated swipe surface, simplifies card faces to one large suit, improves card-footprint drop handling and compacts inventory with a persistent overflow scrollbar. See [usability validation](docs/USABILITY_1.7.4.md).

@@ -1,16 +1,54 @@
 import React from "react";
+import { View } from "react-native";
+import { ArtIcon } from "./ArtIcon";
+import { CardArtwork } from "./CardArtwork";
 import Svg, { Path, Rect, Circle, G } from "react-native-svg";
 /** Consistent native line icons for the compact game dock and contextual controls. */
 export function GameIcon({
   name,
-  size = 25,
+  size = 32,
   color = "#345b49",
 }: {
   name: string;
   size?: number;
   color?: string;
 }) {
+  const original: Record<string, string> = {
+    glimmer: "glimmer",
+    wood: "wood",
+    stone: "stone",
+    seeds: "seeds",
+    garden: "garden",
+    world: "world",
+    mini: "flowers",
+    quests: "quests",
+    inventory: "seeds",
+    decorations: "flowers",
+    statistics: "star",
+    settings: "settings",
+    undo: "undo",
+    hint: "hint",
+    help: "quests",
+    auto: "shuffle",
+    restart: "undo",
+    gather: "wood",
+    gift: "star",
+    challenge: "star",
+  };
+  if (original[name]) return <ArtIcon name={original[name]} size={size} />;
+  if (name === "play" || name === "newGame")
+    return (
+      <View pointerEvents="none" style={{ width: size, height: size * 1.15 }}>
+        <CardArtwork
+          card={{ id: "icon", rank: 1, suit: "♠", up: true }}
+          theme="botanical"
+        />
+      </View>
+    );
   const paths: Record<string, string> = {
+    wood: "M5 5h14v14H5zM8 5v14M13 5v14M17 5v14",
+    stone: "M3 16l4-11 11-2 4 13-7 5-12-5",
+    seeds: "M12 21V8M12 12Q1 10 5 3q9 0 7 9M12 16Q23 14 19 7q-9 0-7 9",
     garden: "M3 11L12 3l9 8M5 10v11h14V10M9 21v-7h6v7",
     world: "M3 5l6-2 6 3 6-2v15l-6 2-6-3-6 2V5M9 3v15M15 6v15",
     play: "M9 3h10v15H9zM5 7H3v14h11v-2M14 6l-3 5 3 3 3-3-3-5",

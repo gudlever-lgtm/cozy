@@ -436,6 +436,11 @@ test("game panels scroll in a bounded viewport; oversized menu screens retain th
   fireEvent.press(screen.getAllByRole("button", { name: "Continue" })[0]);
   expectBoundedGame();
   expect(screen.getByTestId("garden-match-board")).toBeOnTheScreen();
+  let boardParent = screen.getByTestId("garden-match-board").parent;
+  while (boardParent) {
+    expect(["ScrollView", "RCTScrollView"]).not.toContain(boardParent.type);
+    boardParent = boardParent.parent;
+  }
 });
 
 test("compact tabs navigate with localized accessible names and dismissible timed labels", async () => {
@@ -523,4 +528,48 @@ test("Solitaire responds to the real board viewport and keeps a long column's bo
   await waitFor(async () =>
     expect((await stored()).game.tableau[6]).toHaveLength(19),
   );
+});
+
+test("hints use a root HUD above cards and dialogs use one native modal with Back dismissal", async () => {
+  const { Modal } = require("react-native");
+  await AsyncStorage.setItem(
+    SAVE_KEY,
+    JSON.stringify(setProfile(fresh("hud", "en"), "HUD Native", "p")),
+  );
+  await renderAsync(<App />);
+  await screen.findByTestId("main-tabs");
+  press("♠ Play Solitaire");
+  press("Hint");
+  expect(screen.getByTestId("game-overlay-layer")).toHaveStyle({
+    zIndex: 2000,
+    elevation: 30,
+  });
+  expect(
+    within(screen.getByTestId("game-viewport")).queryByTestId("game-notice"),
+  ).toBeNull();
+  expect(screen.getByTestId("game-notice")).toBeOnTheScreen();
+  expect(screen.queryByTestId("compact-tooltip")).toBeNull();
+  press("Close");
+  press("How to play");
+  const modal = screen.UNSAFE_getByType(Modal);
+  expect(modal.props.visible).toBe(true);
+  fireEvent(modal, "requestClose");
+  expect(screen.UNSAFE_getByType(Modal).props.visible).toBe(false);
+});
+
+test("inventory shows five compact resource fields using original light Glimmer artwork", async () => {
+  await AsyncStorage.setItem(
+    SAVE_KEY,
+    JSON.stringify(
+      setProfile(fresh("inventory", "en"), "Inventory Native", "p"),
+    ),
+  );
+  await renderAsync(<App />);
+  await screen.findByTestId("main-tabs");
+  press("▧ Inventory");
+  const inventory = screen.getByTestId("compact-inventory");
+  expect(within(inventory).getAllByRole("button")).toHaveLength(5);
+  expect(within(inventory).getByTestId("art-icon-glimmer")).toBeOnTheScreen();
+  fireEvent.press(within(inventory).getAllByRole("button")[0]);
+  expect(screen.getByTestId("compact-tooltip")).toBeOnTheScreen();
 });

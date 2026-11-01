@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   View,
+  Modal,
   Image,
   Text,
   Pressable,
-  ScrollView,
   TextInput,
   StyleSheet,
   useWindowDimensions,
@@ -97,6 +97,8 @@ import {
   treasuresForLevel,
   type MiniLevel,
 } from "./engine/session";
+import { StrongScrollView as ScrollView } from "./StrongScrollView";
+import type { LayoutChangeEvent } from "react-native";
 import { GameIcon } from "./GameIcon";
 import { Audio } from "./Audio";
 import { cozyImages } from "./assets/images";
@@ -147,6 +149,8 @@ export default function App() {
     height - insets.top - insets.bottom - 58,
   );
   const railWidth = metrics.rail;
+  const [inventoryPage, setInventoryPage] = useState(0);
+  const [miniBounds, setMiniBounds] = useState({ width: 0, height: 0 });
   const [stackPile, setStackPile] = useState<number | null>(null);
   const [boardSize, setBoardSize] = useState({ width: 0, height: 0 });
   const [dragging, setDragging] = useState<Place | null>(null);
@@ -494,7 +498,13 @@ export default function App() {
     }
     setSelected(card?.up ? place : null);
   }
-  async function drop(from: Place, x: number, y: number) {
+  async function drop(
+    from: Place,
+    x: number,
+    y: number,
+    dx: number,
+    dy: number,
+  ) {
     const regions = await Promise.all(
       Object.values(dropTargets.current).map(
         (target) =>
@@ -506,6 +516,14 @@ export default function App() {
                 y: ty,
                 width: w,
                 height: h,
+                cardHeight,
+                landingY:
+                  target.place.kind === "tableau"
+                    ? ty +
+                      (boardLayout.columns[target.place.pile].offsets[
+                        s!.game.tableau[target.place.pile].length - 1
+                      ] ?? 0)
+                    : ty,
               }),
             );
           }),
@@ -513,8 +531,30 @@ export default function App() {
     );
     // Measurement completes asynchronously; resolve against the latest saved game exactly once.
     update((v) => {
-      if (v.game.id !== s!.game.id) return v;
-      const to = dropDestination(v.game, from, x, y, regions);
+      if (v.game.id !== s!.game.id || v.game.moves !== s!.game.moves) return v;
+      const source = regions.find(
+        (r) =>
+          r.place.kind === from.kind &&
+          (from.kind === "waste" ||
+            (r.place.kind !== "waste" && r.place.pile === from.pile)),
+      );
+      const originY = source
+        ? source.y +
+          (from.kind === "tableau"
+            ? (boardLayout.columns[from.pile].offsets[
+                from.index ?? s!.game.tableau[from.pile].length - 1
+              ] ?? 0)
+            : 0)
+        : 0;
+      const bounds = source
+        ? {
+            x: source.x + dx,
+            y: originY + dy,
+            width: cardWidth,
+            height: cardHeight,
+          }
+        : undefined;
+      const to = dropDestination(v.game, from, x, y, regions, bounds);
       return to ? { ...v, game: move(v.game, from, to) } : v;
     });
     setSelected(null);
@@ -538,7 +578,7 @@ export default function App() {
       testID={`playing-card-${c.id}`}
       enabled={c.up}
       onTap={() => tap(p)}
-      onDrop={(x, y) => drop(p, x, y)}
+      onDrop={(x, y, dx, dy) => drop(p, x, y, dx, dy)}
       onDragStart={() => {
         setDragging(p);
       }}
@@ -636,7 +676,7 @@ export default function App() {
                 <Text
                   allowFontScaling={false}
                   style={{
-                    color: red(c) ? "#a35556" : "#345b49",
+                    color: red(c) ? "#b53d4d" : "#18392f",
                     fontWeight: "700",
                     fontSize: Math.min(13, Math.max(5, strip - 1)),
                     lineHeight: Math.max(5, strip),
@@ -1100,7 +1140,18 @@ export default function App() {
                               {s.game.stock.length}
                             </Text>
                           </Pressable>
-                          <View style={{ width: cardWidth }}>
+                          <View
+                            collapsable={false}
+                            ref={(node) => {
+                              if (node)
+                                dropTargets.current.waste = {
+                                  node,
+                                  place: { kind: "waste" },
+                                };
+                              else delete dropTargets.current.waste;
+                            }}
+                            style={{ width: cardWidth }}
+                          >
                             {s.game.waste.at(-1) ? (
                               renderCard(s.game.waste.at(-1)!, {
                                 kind: "waste",
@@ -1447,13 +1498,15 @@ export default function App() {
                       {button(tt("play"), () => go("play"), false, true)}
                       {button(tt("garden"), () => go("garden"), false, true)}
                     </ScrollView>
-                    <ScrollView
-                      nestedScrollEnabled
-                      style={st.playCenter}
-                      contentContainerStyle={{
-                        padding: 8,
-                        flexGrow: 1,
-                        justifyContent: "center",
+                    <MiniPlayArea
+                      swipeBoard={activeMini === "match"}
+                      onLayout={(event) => {
+                        const { width, height } = event.nativeEvent.layout;
+                        setMiniBounds((old) =>
+                          old.width === width && old.height === height
+                            ? old
+                            : { width, height },
+                        );
                       }}
                     >
                       {activeMini === "match" && (
@@ -1462,7 +1515,10 @@ export default function App() {
                             game={match}
                             size={Math.min(
                               336,
-                              height - insets.top - insets.bottom - 82,
+                              (miniBounds.width ||
+                                width - (width < 800 ? 174 : 220) - 32) - 16,
+                              (miniBounds.height ||
+                                height - insets.top - insets.bottom - 74) - 16,
                             )}
                             disabled={miniDone || match.turns === 0}
                             reducedMotion={s.preferences.reducedMotion}
@@ -1553,7 +1609,7 @@ export default function App() {
                           ))}
                         </View>
                       )}
-                    </ScrollView>
+                    </MiniPlayArea>
                   </View>
                 )}
               </>
@@ -1685,33 +1741,110 @@ export default function App() {
             )}
             {screen === "inventory" && (
               <>
-                {heading(tt("inventory"), tt("emptyInventory"))}
-                <View style={st.tiles}>
+                {heading(tt("inventory"))}
+                <View testID="compact-inventory" style={st.inventoryGrid}>
                   {(
                     Object.keys(
                       s.economy.wallet,
                     ) as (keyof typeof s.economy.wallet)[]
-                  ).map((r, i) => (
-                    <View key={r} style={st.npc}>
-                      <Text style={{ fontSize: 40 }}>
-                        {["✦", "🪵", "🪨", "🌸", "🌱"][i]}
-                      </Text>
-                      <Text style={st.sectionTitle}>
+                  ).map((r) => (
+                    <Pressable
+                      key={r}
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        tt(r === "flowers" ? "flowersResource" : r) +
+                        ": " +
+                        number(s.economy.wallet[r], language)
+                      }
+                      onPress={() =>
+                        setTip(tt(r === "flowers" ? "flowersResource" : r))
+                      }
+                      style={st.resourceTile}
+                    >
+                      <GameIcon
+                        name={
+                          r === "glimmers"
+                            ? "glimmer"
+                            : r === "wood"
+                              ? "wood"
+                              : r === "stone"
+                                ? "stone"
+                                : r === "seeds"
+                                  ? "seeds"
+                                  : "decorations"
+                        }
+                        size={32}
+                      />
+                      <Text style={st.resourceAmount}>
                         {number(s.economy.wallet[r], language)}
                       </Text>
-                      <Text style={st.small}>
-                        {tt(r === "flowers" ? "flowersResource" : r)}
-                      </Text>
-                    </View>
+                    </Pressable>
                   ))}
                 </View>
-                <View style={st.row}>
-                  {s.economy.inventory.map((id) => (
-                    <Text key={id} style={st.chip}>
-                      {tt(id as Key)}
+                {s.economy.inventory.length > 0 && (
+                  <View style={{ gap: 8 }}>
+                    <Text style={st.small}>
+                      {tt("owned")} · {s.economy.inventory.length}
                     </Text>
-                  ))}
-                </View>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        gap: 6,
+                        alignItems: "center",
+                      }}
+                    >
+                      {s.economy.inventory
+                        .slice(inventoryPage * 6, inventoryPage * 6 + 6)
+                        .map((id) => (
+                          <Pressable
+                            key={id}
+                            accessibilityRole="button"
+                            accessibilityLabel={
+                              i18n.exists(id) ? tt(id as Key) : tt("owned")
+                            }
+                            onPress={() =>
+                              setTip(
+                                i18n.exists(id) ? tt(id as Key) : tt("owned"),
+                              )
+                            }
+                            style={st.iconButton}
+                          >
+                            <GameIcon
+                              name={
+                                id.includes("card")
+                                  ? "play"
+                                  : id.includes("forest")
+                                    ? "world"
+                                    : id.includes("lantern")
+                                      ? "glimmer"
+                                      : "decorations"
+                              }
+                            />
+                          </Pressable>
+                        ))}
+                    </View>
+                    {s.economy.inventory.length > 6 && (
+                      <View style={st.row}>
+                        {iconButton(
+                          "undo",
+                          tt("back"),
+                          () => setInventoryPage((n) => Math.max(0, n - 1)),
+                          inventoryPage === 0,
+                        )}
+                        <Text style={st.small}>
+                          {inventoryPage + 1}/
+                          {Math.ceil(s.economy.inventory.length / 6)}
+                        </Text>
+                        {iconButton(
+                          "world",
+                          tt("continue"),
+                          () => setInventoryPage((n) => n + 1),
+                          (inventoryPage + 1) * 6 >= s.economy.inventory.length,
+                        )}
+                      </View>
+                    )}
+                  </View>
+                )}
               </>
             )}
             {screen === "statistics" && (
@@ -1878,23 +2011,6 @@ export default function App() {
                 <Text style={st.small}>{tt("privacy")}</Text>
               </>
             )}
-            {message && (
-              <View
-                accessibilityRole="alert"
-                style={[
-                  st.notice,
-                  playing && {
-                    position: "absolute",
-                    right: railWidth + 24,
-                    bottom: 12,
-                    left: railWidth + 24,
-                  },
-                ]}
-              >
-                <Text style={st.subtitle}>{message}</Text>
-                {button(tt("close"), () => setMessage(""), false, true)}
-              </View>
-            )}
           </ScreenViewport>
         </View>
       </View>
@@ -1919,133 +2035,216 @@ export default function App() {
           </Pressable>
         ))}
       </View>
-      {tip && (
-        <Pressable
-          testID="compact-tooltip"
-          accessibilityRole="alert"
-          onPress={() => setTip(null)}
-          style={st.tooltip}
-        >
-          <Text style={st.subtitle}>{tip}</Text>
-        </Pressable>
-      )}
-      {stackPile !== null && (
-        <View style={st.overlay}>
-          <View style={[st.modal, { maxHeight: "85%" }]}>
-            <Text style={st.sectionTitle}>{tt("stackTitle")}</Text>
-            <Text style={st.small}>{tt("stackInstructions")}</Text>
-            <ScrollView
-              nestedScrollEnabled
-              contentContainerStyle={{ gap: 8, padding: 8 }}
-            >
-              {boardLayout.columns[stackPile].hiddenIndices.map((index) => {
-                const card = s.game.tableau[stackPile][index];
-                return (
-                  <Pressable
-                    key={card.id}
-                    accessibilityRole="button"
-                    accessibilityLabel={cardName(card)}
-                    onPress={() => {
-                      setSelected({ kind: "tableau", pile: stackPile, index });
-                      setStackPile(null);
-                      setTip(cardName(card));
-                    }}
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: 12,
-                      minHeight: 44,
-                      padding: 6,
-                    }}
-                  >
-                    <View style={{ width: 36, height: 52 }}>
-                      <CardArtwork card={card} theme={s.world.theme} />
-                    </View>
-                    <Text style={st.subtitle}>{cardName(card)}</Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-            {button(tt("close"), () => setStackPile(null), false, true)}
-          </View>
-        </View>
-      )}
-      {(help || challengeOpen) && (
-        <View style={st.overlay}>
-          <View style={[st.modal, { maxHeight: "85%" }]}>
-            <ScrollView
-              nestedScrollEnabled
-              contentContainerStyle={{ gap: 12, padding: 12 }}
-            >
-              {help ? (
-                <Text style={st.rules}>{tt("solitaireRules")}</Text>
-              ) : (
-                <View style={st.panel}>
-                  <Text style={st.sectionTitle}>{tt("challengeTitle")}</Text>
-                  <Text style={st.small}>{tt("challengeIntro")}</Text>
-                  {challenges.map((c) => (
-                    <View key={c.id} style={st.row}>
-                      {button(
-                        tt(("challenge_" + c.id) as Key),
-                        () => {
-                          setPendingChallenge(c.id);
-                          setDialog("new");
-                        },
-                        false,
-                        true,
-                      )}
-                      {s.world.challenges.includes(c.id) && (
-                        <Text style={st.small}>{tt("challengeCompleted")}</Text>
-                      )}
-                    </View>
-                  ))}
-                </View>
-              )}
-              {button(
-                tt("close"),
-                () => {
-                  setHelp(false);
-                  setChallengeOpen(false);
-                },
-                false,
-                true,
-              )}
+      <View
+        testID="game-overlay-layer"
+        pointerEvents="box-none"
+        style={st.hudLayer}
+      >
+        {message && (
+          <View
+            testID="game-notice"
+            accessibilityRole="alert"
+            style={[st.notice, st.floatingNotice, { maxHeight: height * 0.55 }]}
+          >
+            <ScrollView nestedScrollEnabled contentContainerStyle={{ gap: 8 }}>
+              <Text style={st.subtitle}>{message}</Text>
+              {button(tt("close"), () => setMessage(""), false, true)}
             </ScrollView>
           </View>
-        </View>
-      )}
-      {dialog && (
-        <View style={st.overlay}>
-          <View style={st.modal}>
-            <Text style={st.sectionTitle}>
-              {tt(
-                dialog === "new"
-                  ? pendingChallenge
-                    ? "challengeReplace"
-                    : "confirmDeal"
-                  : "confirmRestart",
-              )}
-            </Text>
-            <View style={st.row}>
-              {button(tt("cancel"), () => setDialog(null), false, true)}
-              {button(tt("confirm"), () => {
-                if (dialog === "new")
-                  update((v) => ({
-                    ...v,
-                    game: pendingChallenge
-                      ? challengeGame(uuid(), pendingChallenge)
-                      : newGame(uuid(), nextDraw),
-                    attempts: v.attempts + 1,
-                  }));
-                else applyGame(restart);
-                setDialog(null);
-                setSelected(null);
-              })}
+        )}
+        {tip && !message && (
+          <Pressable
+            testID="compact-tooltip"
+            accessibilityRole="alert"
+            onPress={() => setTip(null)}
+            style={st.tooltip}
+          >
+            <Text style={st.subtitle}>{tip}</Text>
+          </Pressable>
+        )}
+      </View>
+      <Modal
+        testID="game-dialog"
+        transparent
+        visible={!!(dialog || help || challengeOpen || stackPile !== null)}
+        statusBarTranslucent
+        navigationBarTranslucent
+        animationType="fade"
+        onRequestClose={() => {
+          if (dialog) setDialog(null);
+          else if (stackPile !== null) setStackPile(null);
+          else {
+            setHelp(false);
+            setChallengeOpen(false);
+          }
+        }}
+      >
+        {!dialog && !help && !challengeOpen && stackPile !== null && (
+          <View accessibilityViewIsModal style={st.overlay}>
+            <View style={[st.modal, { height: "80%", maxHeight: "85%" }]}>
+              <Text style={st.sectionTitle}>{tt("stackTitle")}</Text>
+              <Text style={st.small}>{tt("stackInstructions")}</Text>
+              <ScrollView
+                nestedScrollEnabled
+                contentContainerStyle={{ gap: 8, padding: 8 }}
+              >
+                {boardLayout.columns[stackPile].hiddenIndices.map((index) => {
+                  const card = s.game.tableau[stackPile][index];
+                  return (
+                    <Pressable
+                      key={card.id}
+                      accessibilityRole="button"
+                      accessibilityLabel={cardName(card)}
+                      onPress={() => {
+                        setSelected({
+                          kind: "tableau",
+                          pile: stackPile,
+                          index,
+                        });
+                        setStackPile(null);
+                        setTip(cardName(card));
+                      }}
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 12,
+                        minHeight: 44,
+                        padding: 6,
+                      }}
+                    >
+                      <View style={{ width: 36, height: 52 }}>
+                        <CardArtwork card={card} theme={s.world.theme} />
+                      </View>
+                      <Text style={st.subtitle}>{cardName(card)}</Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+              {button(tt("close"), () => setStackPile(null), false, true)}
             </View>
           </View>
-        </View>
-      )}
+        )}
+        {!dialog && (help || challengeOpen) && (
+          <View accessibilityViewIsModal style={st.overlay}>
+            <View style={[st.modal, { height: "80%", maxHeight: "85%" }]}>
+              <ScrollView
+                nestedScrollEnabled
+                contentContainerStyle={{ gap: 12, padding: 12 }}
+              >
+                {help ? (
+                  <Text style={st.rules}>{tt("solitaireRules")}</Text>
+                ) : (
+                  <View style={st.panel}>
+                    <Text style={st.sectionTitle}>{tt("challengeTitle")}</Text>
+                    <Text style={st.small}>{tt("challengeIntro")}</Text>
+                    {challenges.map((c) => (
+                      <View key={c.id} style={st.row}>
+                        {button(
+                          tt(("challenge_" + c.id) as Key),
+                          () => {
+                            setPendingChallenge(c.id);
+                            setChallengeOpen(false);
+                            setDialog("new");
+                          },
+                          false,
+                          true,
+                        )}
+                        {s.world.challenges.includes(c.id) && (
+                          <Text style={st.small}>
+                            {tt("challengeCompleted")}
+                          </Text>
+                        )}
+                      </View>
+                    ))}
+                  </View>
+                )}
+                {button(
+                  tt("close"),
+                  () => {
+                    setHelp(false);
+                    setChallengeOpen(false);
+                  },
+                  false,
+                  true,
+                )}
+              </ScrollView>
+            </View>
+          </View>
+        )}
+        {dialog && (
+          <View accessibilityViewIsModal style={st.overlay}>
+            <View style={st.modal}>
+              <Text style={st.sectionTitle}>
+                {tt(
+                  dialog === "new"
+                    ? pendingChallenge
+                      ? "challengeReplace"
+                      : "confirmDeal"
+                    : "confirmRestart",
+                )}
+              </Text>
+              <View style={st.row}>
+                {button(tt("cancel"), () => setDialog(null), false, true)}
+                {button(tt("confirm"), () => {
+                  if (dialog === "new")
+                    update((v) => ({
+                      ...v,
+                      game: pendingChallenge
+                        ? challengeGame(uuid(), pendingChallenge)
+                        : newGame(uuid(), nextDraw),
+                      attempts: v.attempts + 1,
+                    }));
+                  else applyGame(restart);
+                  setDialog(null);
+                  setSelected(null);
+                })}
+              </View>
+            </View>
+          </View>
+        )}
+      </Modal>
     </SafeAreaView>
+  );
+}
+function MiniPlayArea({
+  swipeBoard,
+  onLayout,
+  children,
+}: {
+  swipeBoard: boolean;
+  onLayout: (event: LayoutChangeEvent) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <View
+      testID="mini-play-area"
+      onLayout={onLayout}
+      style={{ flex: 1, minHeight: 0, minWidth: 0 }}
+    >
+      {swipeBoard ? (
+        <View
+          style={{
+            flex: 1,
+            minHeight: 0,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {children}
+        </View>
+      ) : (
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{
+            padding: 8,
+            flexGrow: 1,
+            justifyContent: "center",
+          }}
+        >
+          {children}
+        </ScrollView>
+      )}
+    </View>
   );
 }
 /** Bound game scroll areas to the viewport; never nest them inside a disabled ScrollView. */
@@ -2091,7 +2290,7 @@ function Draggable({
   testID: string;
   enabled: boolean;
   onTap: () => void;
-  onDrop: (x: number, y: number) => Promise<void>;
+  onDrop: (x: number, y: number, dx: number, dy: number) => Promise<void>;
   onDragStart: () => void;
   onDragEnd: () => void;
   tail: React.ReactNode;
@@ -2101,12 +2300,14 @@ function Draggable({
   const [lifted, setLifted] = useState(false);
   const callbacks = useRef({ onDrop, enabled, onDragStart, onDragEnd });
   callbacks.current = { onDrop, enabled, onDragStart, onDragEnd };
+  const activeGesture = useRef(callbacks.current);
   const pan = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => false,
       onMoveShouldSetPanResponderCapture: (_, g) =>
         callbacks.current.enabled && (Math.abs(g.dx) > 6 || Math.abs(g.dy) > 6),
       onPanResponderGrant: () => {
+        activeGesture.current = callbacks.current;
         setLifted(true);
         callbacks.current.onDragStart();
       },
@@ -2114,14 +2315,27 @@ function Draggable({
       onMoveShouldSetPanResponder: (_, g) =>
         callbacks.current.enabled && (Math.abs(g.dx) > 5 || Math.abs(g.dy) > 5),
       onPanResponderMove: (_, g) => position.setValue({ x: g.dx, y: g.dy }),
-      onPanResponderRelease: (_, g) => {
-        void callbacks.current.onDrop(g.moveX, g.moveY).finally(() => {
-          requestAnimationFrame(() => {
-            position.setValue({ x: 0, y: 0 });
-            setLifted(false);
-            callbacks.current.onDragEnd();
+      onPanResponderRelease: (event, g) => {
+        const x = Number.isFinite(event.nativeEvent.pageX)
+          ? event.nativeEvent.pageX
+          : g.moveX;
+        const y = Number.isFinite(event.nativeEvent.pageY)
+          ? event.nativeEvent.pageY
+          : g.moveY;
+        void activeGesture.current
+          .onDrop(
+            x,
+            y,
+            Number.isFinite(g.x0) ? x - g.x0 : g.dx,
+            Number.isFinite(g.y0) ? y - g.y0 : g.dy,
+          )
+          .finally(() => {
+            requestAnimationFrame(() => {
+              position.setValue({ x: 0, y: 0 });
+              setLifted(false);
+              callbacks.current.onDragEnd();
+            });
           });
-        });
       },
       onPanResponderTerminate: () => {
         position.setValue({ x: 0, y: 0 });
@@ -2157,6 +2371,19 @@ function Draggable({
 }
 const st = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#f6f2e8" },
+  inventoryGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  resourceTile: {
+    width: 88,
+    height: 72,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#d2c295",
+    backgroundColor: "#fff7df",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 2,
+  },
+  resourceAmount: { fontSize: 18, fontWeight: "700", color: "#345b49" },
   iconButton: {
     width: 44,
     height: 44,
@@ -2187,6 +2414,16 @@ const st = StyleSheet.create({
     borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
+  },
+  hudLayer: { ...StyleSheet.absoluteFillObject, zIndex: 2000, elevation: 30 },
+  floatingNotice: {
+    position: "absolute",
+    bottom: 66,
+    alignSelf: "center",
+    width: "85%",
+    maxWidth: 520,
+    zIndex: 1,
+    elevation: 1,
   },
   tooltip: {
     position: "absolute",
@@ -2413,6 +2650,8 @@ const st = StyleSheet.create({
     justifyContent: "space-between",
   },
   dialogue: {
+    zIndex: 20,
+    elevation: 16,
     position: "absolute",
     bottom: 12,
     left: 8,

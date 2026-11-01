@@ -120,3 +120,68 @@ test("collapsed runs show the first exposed card and outermost card while keepin
   assert.deepEqual(pair.visibleIndices, [0, 1]);
   assert.deepEqual(pair.hiddenIndices, []);
 });
+
+test("a legal foundation drop accepts card overlap when the final finger is outside the slot", () => {
+  const g = newGame("overlap");
+  g.waste = [{ id: "ace", rank: 1, suit: "♥", up: true }];
+  g.foundations = [[], [], [], []];
+  const regions = [
+    {
+      place: { kind: "foundations" as const, pile: 0 },
+      x: 100,
+      y: 10,
+      width: 50,
+      height: 70,
+    },
+    {
+      place: { kind: "foundations" as const, pile: 1 },
+      x: 170,
+      y: 10,
+      width: 50,
+      height: 70,
+    },
+  ];
+  assert.deepEqual(
+    dropDestination(g, { kind: "waste" }, 60, 100, regions, {
+      x: 95,
+      y: 15,
+      width: 50,
+      height: 70,
+    }),
+    { kind: "foundations", pile: 0 },
+  );
+  assert.deepEqual(
+    dropDestination(g, { kind: "waste" }, 155, 20, regions, {
+      x: 168,
+      y: 15,
+      width: 50,
+      height: 70,
+    }),
+    { kind: "foundations", pile: 1 },
+  );
+  g.waste[0].rank = 2;
+  assert.equal(
+    dropDestination(g, { kind: "waste" }, 60, 100, regions, {
+      x: 95,
+      y: 15,
+      width: 50,
+      height: 70,
+    }),
+    undefined,
+  );
+});
+
+test("fresh Garden Match boards always start with a legal swipe and no free match", async () => {
+  const { newMatch, hasMatchMove, matches } =
+    await import("../src/engine/minigames");
+  for (let seed = 0; seed < 100; seed++) {
+    let state = seed + 1;
+    const random = () => {
+      state = (state * 1664525 + 1013904223) >>> 0;
+      return state / 4294967296;
+    };
+    const board = newMatch(random);
+    assert.deepEqual(matches(board.cells), []);
+    assert.equal(hasMatchMove(board.cells), true);
+  }
+});

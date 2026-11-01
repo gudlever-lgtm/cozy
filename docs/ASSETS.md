@@ -17,3 +17,7 @@ Assets were generated for Cozy Solitaire. The four season backgrounds are indepe
 ## 1.7.1 presentation assets
 
 The user requested a more polished rabbit logo. `assets/icon.png` and `assets/splash.png` use a generated Millie-derived storybook portrait (rabbit, original gardening hat/ribbon, botanical medallion and playing cards). Reference: the existing `public/assets/characters/millie_rabbit.png`, preserved unchanged. New source-level native vector mini-game pieces are in `src/MiniArtwork.tsx`. See `LANDSCAPE_GAMEPLAY.md` for integration and device-review limits.
+
+## Original atlas integration in 1.7.4
+
+`src/ArtIcon.tsx` uses reviewed isolated icon cells from the original 1254×1254 UI and resource sheets through native clipping and static cached image references. The source sheets remain unchanged. Updated buttons, wallet icons and Garden Match pieces use the supplied artwork, including the luminous Glimmer fairy. No composite mockup or its text/cards is extracted. See USABILITY_1.7.4.md for source rectangle/provenance details and device-review limits.

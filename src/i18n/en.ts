@@ -138,8 +138,8 @@ export const en = {
   confirm: "Continue",
   match: "Garden Match",
   matchRules:
-    "Slide a flower towards a neighbour to match three or more. Gather 30 blooms in 18 moves. Invalid swaps cost nothing.",
-  matchProgress: "{{score}} / {{target}} blooms · {{turns}} moves left",
+    "Slide a piece towards a neighbour to match three or more. Reach the target before your moves run out. Invalid swaps cost nothing.",
+  matchProgress: "{{score}} / {{target}} pieces · {{turns}} moves left",
   hidden: "Hidden Treasures",
   hiddenRules:
     "Explore the cottage scene. Find the five little treasures in the list.",

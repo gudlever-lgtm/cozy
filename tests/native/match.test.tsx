@@ -56,20 +56,23 @@ afterEach(async () => {
   jest.restoreAllMocks();
 });
 function gesture(index: number, dx: number, dy: number) {
-  const cell = screen.getByTestId(`match-cell-${index}`);
-  if (!cell.props.onStartShouldSetResponder()) return;
-  // Once granted, native keeps delivering this responder's move/release events.
-  // fireEvent rechecks start eligibility after the busy lock, so invoke retained callbacks in act.
+  const board = screen.getByTestId("garden-match-board");
+  if (!board.props.onStartShouldSetResponder()) return;
+  const cell = (300 - 18) / 6,
+    locationX = 9 + (index % 6) * cell + cell / 2,
+    locationY = 9 + Math.floor(index / 6) * cell + cell / 2;
   act(() =>
-    cell.props.onResponderGrant({ nativeEvent: { pageX: 100, pageY: 100 } }),
+    board.props.onResponderGrant({
+      nativeEvent: { locationX, locationY, pageX: 100, pageY: 100 },
+    }),
   );
   act(() =>
-    cell.props.onResponderMove({
+    board.props.onResponderMove({
       nativeEvent: { pageX: 100 + dx, pageY: 100 + dy },
     }),
   );
   act(() =>
-    cell.props.onResponderRelease({
+    board.props.onResponderRelease({
       nativeEvent: { pageX: 100 + dx, pageY: 100 + dy },
     }),
   );
@@ -123,7 +126,9 @@ test("invalid adjacent swap slides back without consuming a turn", async () => {
   gesture(34, 50, 0);
   await waitFor(() =>
     expect(
-      screen.getByTestId("match-cell-34").props.onStartShouldSetResponder(),
+      screen
+        .getByTestId("garden-match-board")
+        .props.onStartShouldSetResponder(),
     ).toBe(true),
   );
   expect(onChange).not.toHaveBeenCalled();
@@ -170,7 +175,9 @@ test("Garden Match can reach its target through sequential swipes and remains lo
     await waitFor(() => expect(onChange).toHaveBeenCalledTimes(before + 1));
     await waitFor(() =>
       expect(
-        screen.getByTestId("match-cell-0").props.onStartShouldSetResponder(),
+        screen
+          .getByTestId("garden-match-board")
+          .props.onStartShouldSetResponder(),
       ).toBe(true),
     );
     await rendered.rerenderAsync(<GardenMatch {...props()} />);
@@ -179,6 +186,6 @@ test("Garden Match can reach its target through sequential swipes and remains lo
   expect(current.score).toBeGreaterThanOrEqual(current.target);
   expect(count).toBeLessThanOrEqual(18);
   expect(
-    screen.getByTestId("match-cell-0").props.onStartShouldSetResponder(),
+    screen.getByTestId("garden-match-board").props.onStartShouldSetResponder(),
   ).toBe(false);
 }, 15000);

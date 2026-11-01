@@ -8,6 +8,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { swapMatch, type Match } from "./engine/minigames";
 import { swipeNeighbour } from "./presentation/matchGesture";
+import Svg, { Defs, LinearGradient, Stop, Rect } from "react-native-svg";
 import { MiniArtwork } from "./MiniArtwork";
 
 /** A swipe owns one swap through slide, resolve and refill. No React updates per animation frame. */
@@ -27,7 +28,8 @@ export function GardenMatch({
   onBusyChange?: (busy: boolean) => void;
 }) {
   const { t } = useTranslation();
-  const cell = size / 6;
+  const inset = 9;
+  const cell = (size - inset * 2) / 6;
   const offsets = useRef(
     Array.from({ length: 36 }, () => new Animated.ValueXY()),
   ).current;
@@ -123,8 +125,85 @@ export function GardenMatch({
   return (
     <View
       testID="garden-match-board"
-      style={{ width: size, height: size, alignSelf: "center" }}
+      style={{
+        width: size,
+        height: size,
+        alignSelf: "center",
+        borderRadius: 20,
+        backgroundColor: "#355e47",
+        borderWidth: 2,
+        borderColor: "#d1bb7f",
+        shadowColor: "#152c21",
+        shadowOpacity: 0.25,
+        shadowRadius: 8,
+        elevation: 4,
+      }}
+      onStartShouldSetResponderCapture={() =>
+        !busy.current && !latest.current.disabled
+      }
+      onStartShouldSetResponder={() =>
+        !busy.current && !latest.current.disabled
+      }
+      onResponderGrant={(e) => {
+        if (busy.current || latest.current.disabled) return;
+        const { locationX, locationY, pageX, pageY } = e.nativeEvent;
+        const col = Math.floor((locationX - inset) / cell),
+          row = Math.floor((locationY - inset) / cell);
+        if (col < 0 || col >= 6 || row < 0 || row >= 6) return;
+        busy.current = true;
+        onBusyChange?.(true);
+        origin.current = { x: pageX, y: pageY, index: row * 6 + col };
+        setLifted(row * 6 + col);
+      }}
+      onResponderMove={(e) => {
+        const i = origin.current.index;
+        if (i < 0) return;
+        const dx = e.nativeEvent.pageX - origin.current.x,
+          dy = e.nativeEvent.pageY - origin.current.y;
+        offsets[i].setValue(
+          Math.abs(dx) >= Math.abs(dy)
+            ? { x: Math.max(-cell, Math.min(cell, dx)), y: 0 }
+            : { x: 0, y: Math.max(-cell, Math.min(cell, dy)) },
+        );
+      }}
+      onResponderRelease={(e) => {
+        if (origin.current.index >= 0) release(origin.current.index, e);
+      }}
+      onResponderTerminate={() => {
+        origin.current.index = -1;
+        reset();
+      }}
+      onResponderTerminationRequest={() => false}
     >
+      <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+        <Svg width="100%" height="100%" viewBox="0 0 300 300">
+          <Defs>
+            <LinearGradient id="gardenFelt" x1="0" y1="0" x2="1" y2="1">
+              <Stop offset="0" stopColor="#507c57" />
+              <Stop offset="1" stopColor="#254c3b" />
+            </LinearGradient>
+          </Defs>
+          <Rect
+            x="2"
+            y="2"
+            width="296"
+            height="296"
+            rx="19"
+            fill="url(#gardenFelt)"
+          />
+          <Rect
+            x="6"
+            y="6"
+            width="288"
+            height="288"
+            rx="15"
+            stroke="#e0c78b"
+            strokeWidth="1"
+            opacity=".65"
+            fill="none"
+          />
+        </Svg>
+      </View>
       {game.cells.map((value, i) => (
         <Animated.View
           key={i}
@@ -149,43 +228,14 @@ export function GardenMatch({
             );
             if (to !== null) void swap(i, to);
           }}
-          onStartShouldSetResponder={() =>
-            !busy.current && !latest.current.disabled
-          }
-          onResponderGrant={(e) => {
-            if (busy.current) return;
-            busy.current = true;
-            onBusyChange?.(true);
-            origin.current = {
-              x: e.nativeEvent.pageX,
-              y: e.nativeEvent.pageY,
-              index: i,
-            };
-            setLifted(i);
-          }}
-          onResponderMove={(e) => {
-            if (origin.current.index !== i) return;
-            const dx = e.nativeEvent.pageX - origin.current.x,
-              dy = e.nativeEvent.pageY - origin.current.y;
-            offsets[i].setValue(
-              Math.abs(dx) >= Math.abs(dy)
-                ? { x: Math.max(-cell, Math.min(cell, dx)), y: 0 }
-                : { x: 0, y: Math.max(-cell, Math.min(cell, dy)) },
-            );
-          }}
-          onResponderRelease={(e) => release(i, e)}
-          onResponderTerminate={() => {
-            origin.current.index = -1;
-            reset();
-          }}
-          onResponderTerminationRequest={() => false}
+          pointerEvents="none"
           style={[
             styles.tile,
             {
-              left: (i % 6) * cell,
-              top: Math.floor(i / 6) * cell,
-              width: cell - 3,
-              height: cell - 3,
+              left: inset + (i % 6) * cell,
+              top: inset + Math.floor(i / 6) * cell,
+              width: cell - 4,
+              height: cell - 4,
               opacity: fade,
               zIndex: lifted === i ? 10 : 1,
               transform: offsets[i].getTranslateTransform(),
@@ -201,10 +251,14 @@ export function GardenMatch({
 const styles = StyleSheet.create({
   tile: {
     position: "absolute",
-    backgroundColor: "#fff9e9",
-    borderColor: "#b0c4a0",
+    backgroundColor: "#fff6df",
+    borderColor: "#d6c28c",
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: 12,
+    shadowColor: "#163c29",
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 2 },
     alignItems: "center",
     justifyContent: "center",
   },

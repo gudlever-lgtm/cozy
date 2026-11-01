@@ -24,6 +24,16 @@ export function matches(cells: number[]): number[] {
       }
   return [...hit];
 }
+export function hasMatchMove(cells: number[]): boolean {
+  for (let a = 0; a < 36; a++)
+    for (const b of [a % 6 < 5 ? a + 1 : -1, a < 30 ? a + 6 : -1]) {
+      if (b < 0) continue;
+      const next = [...cells];
+      [next[a], next[b]] = [next[b], next[a]];
+      if (matches(next).length) return true;
+    }
+  return false;
+}
 export function newMatch(random = Math.random): Match {
   const cells: number[] = [];
   for (let i = 0; i < 36; i++) {
@@ -34,6 +44,13 @@ export function newMatch(random = Math.random): Match {
     )
       v = (v + 1) % 5;
     cells.push(v);
+  }
+  if (!hasMatchMove(cells)) {
+    for (let i = 0; i < 36; i++) cells[i] = ((i % 6) + Math.floor(i / 6)) % 5;
+    cells[0] = 0;
+    cells[1] = 1;
+    cells[2] = 0;
+    cells[7] = 0;
   }
   return { cells, score: 0, turns: 18, target: 30 };
 }

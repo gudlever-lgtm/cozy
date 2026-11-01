@@ -140,8 +140,8 @@ export const da: Record<keyof typeof en, string> = {
   confirm: "Fortsæt",
   match: "Blomstermatch",
   matchRules:
-    "Skub en blomst mod nabobrikken, og saml mindst tre ens. Saml 30 blomster på 18 træk. Ugyldige byt koster intet.",
-  matchProgress: "{{score}} / {{target}} blomster · {{turns}} træk tilbage",
+    "Skub en brik mod nabobrikken, og saml mindst tre ens. Nå målet, inden du løber tør for træk. Ugyldige byt koster intet.",
+  matchProgress: "{{score}} / {{target}} brikker · {{turns}} træk tilbage",
   hidden: "Skjulte skatte",
   hiddenRules: "Udforsk sommerhuset. Find de fem små skatte på listen.",
   key: "Nøgle",

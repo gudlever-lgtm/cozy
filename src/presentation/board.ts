@@ -5,31 +5,61 @@ export type DropRegion = {
   y: number;
   width: number;
   height: number;
+  landingY?: number;
+  cardHeight?: number;
 };
-/** Resolve one legal destination, with a forgiving touch margin; never apply several measured callbacks. */
+export type DragBounds = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+/** Resolve one legal destination using the dragged card footprint and the final finger position. */
 export function dropDestination(
   game: Game,
   from: Place,
   x: number,
   y: number,
   regions: DropRegion[],
+  drag?: DragBounds,
 ): Place | undefined {
-  return regions
-    .filter(
-      (r) =>
-        r.width > 0 &&
-        r.height > 0 &&
-        x >= r.x - 14 &&
+  const overlap = (r: DropRegion) => {
+    if (!drag) return 0;
+    const top = r.landingY ?? r.y,
+      height = r.cardHeight ?? r.height;
+    const w = Math.max(
+      0,
+      Math.min(drag.x + drag.width, r.x + r.width) - Math.max(drag.x, r.x),
+    );
+    const h = Math.max(
+      0,
+      Math.min(drag.y + drag.height, top + height) - Math.max(drag.y, top),
+    );
+    return w * h;
+  };
+  const candidates = regions.filter(
+    (r) =>
+      r.width > 0 &&
+      r.height > 0 &&
+      canMove(game, from, r.place) &&
+      ((x >= r.x - 14 &&
         x <= r.x + r.width + 14 &&
         y >= r.y - 14 &&
-        y <= r.y + r.height + 14 &&
-        canMove(game, from, r.place),
-    )
-    .sort(
-      (a, b) =>
-        Math.hypot(x - a.x - a.width / 2, y - a.y - a.height / 2) -
-        Math.hypot(x - b.x - b.width / 2, y - b.y - b.height / 2),
-    )[0]?.place;
+        y <= r.y + r.height + 14) ||
+        overlap(r) > 0),
+  );
+  return candidates.sort(
+    (a, b) =>
+      overlap(b) - overlap(a) ||
+      Math.hypot(
+        x - a.x - a.width / 2,
+        y - (a.landingY ?? a.y) - (a.cardHeight ?? a.height) / 2,
+      ) -
+        Math.hypot(
+          x - b.x - b.width / 2,
+          y - (b.landingY ?? b.y) - (b.cardHeight ?? b.height) / 2,
+        ),
+  )[0]?.place;
 }
 export function boardMetrics(width: number, height: number) {
   const rail = 104;

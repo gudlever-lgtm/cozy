@@ -41,7 +41,7 @@ export const CardArtwork = memo(function CardArtwork({
 }) {
   const p = palette[theme],
     red = card.suit === "♥" || card.suit === "♦",
-    ink = red ? "#a35556" : p.ink,
+    ink = red ? "#b53d4d" : "#18392f",
     label =
       card.rank === 1
         ? "A"
@@ -109,23 +109,6 @@ export const CardArtwork = memo(function CardArtwork({
         )}
       </Svg>
     );
-  const positions: [number, number][] = [];
-  if (card.rank === 1) positions.push([32, 51]);
-  else if (card.rank <= 3) {
-    positions.push([39, 25], [39, 92]);
-    if (card.rank === 3) positions.push([39, 58]);
-  } else if (card.rank <= 10) {
-    const rows =
-      card.rank >= 9
-        ? [25, 47, 70, 92]
-        : card.rank >= 6
-          ? [25, 58, 92]
-          : [25, 92];
-    for (const y of rows) positions.push([22, y], [56, y]);
-    if ([5, 7, 9].includes(card.rank))
-      positions.push([39, card.rank === 7 ? 41 : 58]);
-    if (card.rank === 8 || card.rank === 10) positions.push([39, 41], [39, 76]);
-  }
   return (
     <Svg width="100%" height="100%" viewBox="0 0 90 130">
       <Rect width="90" height="130" rx="6" fill={p.paper} />
@@ -149,32 +132,7 @@ export const CardArtwork = memo(function CardArtwork({
         </SvgText>
         {pip(43, 10, 15)}
       </G>
-      {positions.map(([x, y], i) =>
-        pip(
-          x,
-          card.rank === 1 ? y : 43 + ((y - 25) * 45) / 67,
-          card.rank === 1 ? 25 : 12,
-          i,
-        ),
-      )}
-      {card.rank > 10 && (
-        <G>
-          <Path
-            d="M23 49L29 35L39 45L45 29L51 45L62 35L68 49L62 60H29Z"
-            stroke={ink}
-            fill={p.gold}
-            strokeWidth="1.5"
-          />
-          <Path
-            d="M28 64Q45 52 63 64V87Q45 105 28 87Z"
-            stroke={ink}
-            fill="none"
-            strokeWidth="1.3"
-          />
-          {pip(37, 68, 17)}
-          <Circle cx="45" cy="112" r="2" fill={p.gold} />
-        </G>
-      )}
+      <G testID="card-center-suit">{pip(23, 43, 44)}</G>
     </Svg>
   );
 });

@@ -1,4 +1,5 @@
 import React from "react";
+import { ArtIcon } from "./ArtIcon";
 import Svg, { Circle, Ellipse, Path, Rect, G } from "react-native-svg";
 /** Original native vector game pieces; no platform-dependent emoji glyphs. */
 export function MiniArtwork({
@@ -10,67 +11,16 @@ export function MiniArtwork({
   value: number;
   size?: number;
 }) {
-  const colors = ["#d99baf", "#759b67", "#8b8dbb", "#dfbd69", "#bf89b1"];
+  if (kind === "match")
+    return (
+      <ArtIcon
+        name={["flowers", "leaves", "stone", "glimmer", "seeds"][value]}
+        size={size}
+      />
+    );
   return (
     <Svg width={size} height={size} viewBox="0 0 64 64">
-      {kind === "match" ? (
-        value === 1 ? (
-          <G>
-            <Path
-              d="M16 52Q26 30 47 12"
-              stroke="#5d8055"
-              strokeWidth="3"
-              fill="none"
-            />
-            <Ellipse
-              cx="24"
-              cy="30"
-              rx="8"
-              ry="16"
-              fill="#8fae77"
-              transform="rotate(-30 24 30)"
-            />
-            <Ellipse
-              cx="41"
-              cy="34"
-              rx="8"
-              ry="16"
-              fill="#6d965f"
-              transform="rotate(40 41 34)"
-            />
-          </G>
-        ) : value === 2 ? (
-          <G>
-            {[
-              [22, 24],
-              [40, 23],
-              [31, 40],
-            ].map(([x, y]) => (
-              <G key={x}>
-                <Circle cx={x} cy={y} r="12" fill="#8588ad" />
-                <Circle cx={x - 3} cy={y - 4} r="3" fill="#b3b6d0" />
-              </G>
-            ))}
-            <Path d="M27 13l5-7 4 8" stroke="#779565" strokeWidth="4" />
-          </G>
-        ) : (
-          <G>
-            {[0, 60, 120, 180, 240, 300].map((a) => (
-              <Ellipse
-                key={a}
-                cx="32"
-                cy="18"
-                rx="9"
-                ry="14"
-                fill={colors[value]}
-                transform={`rotate(${a} 32 32)`}
-              />
-            ))}
-            <Circle cx="32" cy="32" r="9" fill="#f0d88c" />
-            <Circle cx="29" cy="29" r="2" fill="#fff3bc" />
-          </G>
-        )
-      ) : kind === "tea" ? (
+      {kind === "tea" ? (
         <G>
           <Ellipse cx="30" cy="52" rx="25" ry="5" fill="#d7c39d" />
           {value === 0 ? (

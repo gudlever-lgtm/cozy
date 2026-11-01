@@ -28,3 +28,7 @@ TypeScript and formatting passed; 37 engine/presentation tests and 36 Android/iO
 ## 1.7.3 measured board and collapsed columns
 
 40 engine/presentation tests and 38 native component tests passed across Android/iOS presets. The board uses measured dimensions, shows only the first/last exposed cards per column and offers a picker for intermediate cards. New native coverage selects a hidden queen from a 19-card column, moves its suffix onto a king and undoes the move. Geometry covers complete initial/long columns in small measured viewports. Physical-device rendering and gesture comfort remain unverified. See [COMPACT_COLUMNS_1.7.3.md](COMPACT_COLUMNS_1.7.3.md).
+
+## 1.7.4 usability regression
+
+42 engine/presentation and 52 Android/iOS native component tests pass, alongside TypeScript, formatting, both native JS/Hermes exports and the local Android APK build (1m 19s). See [USABILITY_1.7.4.md](USABILITY_1.7.4.md) for actual coverage, original atlas use and explicit device-testing limits.
