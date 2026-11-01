@@ -15,6 +15,15 @@ export const REWARDS = {
   achievement: 40,
   daily: 10,
 } as const;
+export type GameRewardKind = "solitaire" | "match" | "hidden" | "tea";
+/** Repeatable round rewards contain useful resources, never duplicate unique unlocks. */
+export function gameReward(type: GameRewardKind): Partial<Wallet> {
+  return {
+    glimmers: REWARDS[type],
+    ...(type === "hidden" ? { wood: 2, stone: 1 } : {}),
+    ...(type === "match" ? { flowers: 2, seeds: 1 } : {}),
+  };
+}
 export function transact(
   e: Economy,
   id: string,

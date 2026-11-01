@@ -36,6 +36,10 @@ import {
   type IdleGuideSettings,
 } from "./living/IdleFirefly";
 import { solitaireIdleHint } from "./presentation/idleHints";
+import { GameRewardLine } from "./GameRewardLine";
+import { ForestGuide } from "./ForestGuide";
+import { HiddenTreasureEffects } from "./HiddenTreasureEffects";
+import { GardenDecorations, DecorationArtwork } from "./GardenDecorations";
 import { TeaTime } from "./TeaTime";
 import { GardenMatch } from "./GardenMatch";
 import { MiniArtwork } from "./MiniArtwork";
@@ -76,7 +80,6 @@ import {
   transact,
   place,
   seasonAt,
-  type UpgradeId,
   type Season,
 } from "./engine/world";
 import {
@@ -162,6 +165,10 @@ export default function App() {
   const [settingsTab, setSettingsTab] = useState<
     "profile" | "appearance" | "audio" | "rules"
   >("profile");
+  const [worldManagement, setWorldManagement] = useState<{
+    serial: number;
+    section: "buildings" | "storyJournal";
+  } | null>(null);
   const [miniHelp, setMiniHelp] = useState(false);
   const [questRequest, setQuestRequest] = useState(0);
   const [appearanceRequest, setAppearanceRequest] = useState(0);
@@ -190,7 +197,6 @@ export default function App() {
     [dialog, setDialog] = useState<"new" | "restart" | null>(null),
     [help, setHelp] = useState(false),
     [npc, setNpc] = useState<"millie" | "marmalade" | "pip" | null>(null),
-    [placing, setPlacing] = useState<UpgradeId | null>(null),
     [nextDraw, setNextDraw] = useState<1 | 3>(3);
   useEffect(() => {
     if (!npc) return;
@@ -479,7 +485,10 @@ export default function App() {
   const language = s.preferences.language;
   const go = (id: Screen) => {
     if (id !== "quests") setQuestFocus(null);
-    if (id !== "world") setAppearanceRequest(0);
+    if (id !== "world") {
+      setAppearanceRequest(0);
+      setWorldManagement(null);
+    }
     if (id !== "mini") setMiniTarget(null);
     setMiniHelp(false);
     if (id !== "decorations") setDecorationFocus(undefined);
@@ -490,7 +499,6 @@ export default function App() {
     setMessage("");
     setHelp(false);
     setNpc(null);
-    setPlacing(null);
     setSelected(null);
     setHint(null);
   };
@@ -554,6 +562,14 @@ export default function App() {
       sourcePoint,
       { x: destination.x + destination.width - 3, y: destination.y + toY },
     ];
+  };
+  const gatherResources = () => {
+    act((v) => ({
+      ...v,
+      counters: { ...v.counters, gather: v.counters.gather + 1 },
+      economy: transact(v.economy, "gather:" + uuid(), { wood: 1, stone: 1 }),
+    }));
+    setTip(tt("gatheredMaterials"));
   };
   const pref = <K extends keyof Save["preferences"]>(
     key: K,
@@ -839,20 +855,6 @@ export default function App() {
       testID="garden-scene"
       style={[st.scene, { flex: 1, minHeight: 0 }]}
       onLayout={(e) => setSceneSize(e.nativeEvent.layout)}
-      onStartShouldSetResponder={() => !hidden && !!placing}
-      onResponderRelease={(e) => {
-        if (hidden || !placing) return;
-        const { locationX, locationY } = e.nativeEvent;
-        act((v) => ({
-          ...v,
-          placements: place(v.economy.inventory, v.placements, {
-            id: placing,
-            x: Math.max(5, Math.min(95, (locationX / sceneSize.width) * 100)),
-            y: Math.max(10, Math.min(90, (locationY / sceneSize.height) * 100)),
-          }),
-        }));
-        setPlacing(null);
-      }}
     >
       {location !== "cottage" ? (
         <WorldArt season={season} area={location} levels={s.world.buildings} />
@@ -862,6 +864,15 @@ export default function App() {
           style={StyleSheet.absoluteFill}
           resizeMode="cover"
           accessibilityIgnoresInvertColors
+        />
+      )}
+      {!hidden && location === "cottage" && (
+        <GardenDecorations
+          owned={s.economy.inventory}
+          width={sceneSize.width}
+          height={sceneSize.height}
+          enabled={s.preferences.animations}
+          reducedMotion={s.preferences.reducedMotion}
         />
       )}
       <View
@@ -919,22 +930,21 @@ export default function App() {
           }}
         />
       )}
+      {hidden && (
+        <HiddenTreasureEffects
+          key={miniId}
+          found={found}
+          level={miniLevel}
+          width={sceneSize.width}
+          height={sceneSize.height}
+          season={season}
+          quality={s.preferences.animationQuality}
+          enabled={s.preferences.animations}
+          reducedMotion={s.preferences.reducedMotion}
+        />
+      )}
       {!hidden && <FestivalDecorations events={s.world.events} />}
-      {!hidden &&
-        location === "cottage" &&
-        s.placements.map((p) => (
-          <Text
-            key={p.id}
-            style={{
-              position: "absolute",
-              left: `${p.x}%`,
-              top: `${p.y}%`,
-              fontSize: 30,
-            }}
-          >
-            {upgrades.find((u) => u.id === p.id)?.icon}
-          </Text>
-        ))}
+
       {hidden
         ? treasuresForLevel(miniLevel)
             .filter((o) => !found.includes(o.id))
@@ -1102,6 +1112,7 @@ export default function App() {
                 onUpdate={act}
                 onNavigate={go}
                 appearanceRequest={appearanceRequest}
+                managementRequest={worldManagement}
                 onQuest={(id) => {
                   setQuestFocus(id);
                   setQuestRequest((n) => n + 1);
@@ -1116,11 +1127,17 @@ export default function App() {
                   <View style={st.gardenHud}>
                     <Pressable
                       accessibilityRole="button"
-                      accessibilityLabel={tt("welcome", {
-                        username: s.profile.username,
-                      })}
+                      accessibilityLabel={
+                        location === "cottage"
+                          ? tt("millie")
+                          : tt("welcome", { username: s.profile.username })
+                      }
                       onPress={() =>
-                        setTip(tt("welcome", { username: s.profile!.username }))
+                        location === "cottage"
+                          ? setNpc("millie")
+                          : setTip(
+                              tt("welcome", { username: s.profile!.username }),
+                            )
                       }
                     >
                       <Image
@@ -1128,6 +1145,30 @@ export default function App() {
                         style={{ width: 44, height: 44, borderRadius: 14 }}
                       />
                     </Pressable>
+                    {location === "cottage" && (
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={tt("marmalade")}
+                        onPress={() => setNpc("marmalade")}
+                        style={{
+                          width: 48,
+                          height: 48,
+                          borderRadius: 24,
+                          backgroundColor: "#fff7e6e6",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          borderWidth: 1,
+                          borderColor: "#d2bd8d",
+                        }}
+                      >
+                        <CharacterIdle
+                          character="marmalade"
+                          enabled={s.preferences.animations}
+                          reducedMotion={s.preferences.reducedMotion}
+                          size={42}
+                        />
+                      </Pressable>
+                    )}
                     <View
                       accessible
                       accessibilityLabel={
@@ -1144,23 +1185,27 @@ export default function App() {
                       </Text>
                     </View>
                   </View>
-                  <View style={st.gardenFriends}>
-                    {(["millie", "marmalade"] as const).map((n) => (
-                      <Pressable
-                        key={n}
-                        accessibilityRole="button"
-                        accessibilityLabel={tt(n)}
-                        onPress={() => setNpc(n)}
-                      >
-                        <CharacterIdle
-                          character={n}
-                          enabled={s.preferences.animations}
-                          reducedMotion={s.preferences.reducedMotion}
-                          size={Math.min(128, (height - 58) * 0.32)}
-                        />
-                      </Pressable>
-                    ))}
-                  </View>
+                  {location === "forest" && (
+                    <ForestGuide
+                      save={s}
+                      onUpdate={act}
+                      onGather={gatherResources}
+                      onGame={(kind) => {
+                        setMiniTarget(kind);
+                        setMiniHub(true);
+                        go("mini");
+                      }}
+                      onManage={() => {
+                        setWorldManagement({
+                          serial: Date.now(),
+                          section: "buildings",
+                        });
+                        go("world");
+                      }}
+                      onNext={() => go("world")}
+                      onToast={setTip}
+                    />
+                  )}
                   {npc && (
                     <Pressable onPress={() => setNpc(null)} style={st.dialogue}>
                       <Text style={st.label}>{tt(npc)}</Text>
@@ -1200,25 +1245,7 @@ export default function App() {
                   {button(tt("pip"), () => setNpc("pip"), false, true)}
                   <View style={{ gap: 8 }}>
                     <View style={{ gap: 8 }}>
-                      {button(
-                        tt("gather"),
-                        () => {
-                          act((v) => ({
-                            ...v,
-                            counters: {
-                              ...v.counters,
-                              gather: v.counters.gather + 1,
-                            },
-                            economy: transact(v.economy, "gather:" + uuid(), {
-                              wood: 1,
-                              stone: 1,
-                            }),
-                          }));
-                          setTip(tt("gatheredMaterials"));
-                        },
-                        false,
-                        true,
-                      )}
+                      {button(tt("gather"), gatherResources, false, true)}
                       {button(
                         tt(
                           s.economy.receipts.includes(
@@ -1670,6 +1697,11 @@ export default function App() {
                                 : tt("teaGoal")}
                         </Text>
                       </View>
+                      {miniDone && (
+                        <View style={{ paddingHorizontal: 10 }}>
+                          <GameRewardLine kind={activeMini} />
+                        </View>
+                      )}
                       <MiniPlayArea
                         onLayout={(event) => {
                           const { width, height } = event.nativeEvent.layout;
@@ -1827,20 +1859,12 @@ export default function App() {
                       testID={`decoration-${u.id}`}
                       style={st.fittedTile}
                     >
-                      <GameIcon
-                        name={
-                          u.id === "cards"
-                            ? "play"
-                            : u.id === "lantern"
-                              ? "glimmer"
-                              : u.id === "forest"
-                                ? "world"
-                                : u.id === "flowers"
-                                  ? "decorations"
-                                  : "garden"
-                        }
-                        size={36}
-                      />
+                      {u.id === "cards" ? (
+                        <GameIcon name="play" size={40} />
+                      ) : (
+                        <DecorationArtwork id={u.id} size={48} />
+                      )}
+
                       <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
                         <Text style={st.fittedName} numberOfLines={2}>
                           {tt(u.id)}
@@ -1874,38 +1898,22 @@ export default function App() {
                         accessibilityRole="button"
                         accessibilityLabel={
                           owned
-                            ? tt("place") + ": " + tt(u.id)
+                            ? tt("owned") + ": " + tt(u.id)
                             : tt("buy", { cost: u.cost, wood: u.wood }) +
                               ": " +
                               tt(u.id)
                         }
-                        disabled={owned ? u.id === "cards" : !affordable}
-                        accessibilityState={{
-                          disabled: owned ? u.id === "cards" : !affordable,
-                        }}
+                        disabled={owned || !affordable}
+                        accessibilityState={{ disabled: owned || !affordable }}
                         style={[
                           st.iconButton,
-                          (owned ? u.id === "cards" : !affordable) &&
-                            st.disabled,
+                          (owned || !affordable) && st.disabled,
                         ]}
-                        onPress={
-                          owned
-                            ? () => {
-                                setLocation("cottage");
-                                go("garden");
-                                setPlacing(u.id);
-                                setTip(tt("placing"));
-                              }
-                            : buy
-                        }
+                        onPress={buy}
                       >
-                        {owned ? (
-                          <GameIcon name="garden" size={28} />
-                        ) : (
-                          <Text style={{ fontSize: 25, color: "#345b49" }}>
-                            +
-                          </Text>
-                        )}
+                        <Text style={{ fontSize: 25, color: "#345b49" }}>
+                          {owned ? "✓" : "+"}
+                        </Text>
                       </Pressable>
                     </View>
                   );

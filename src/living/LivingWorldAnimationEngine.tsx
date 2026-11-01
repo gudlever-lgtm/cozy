@@ -306,16 +306,6 @@ export function LivingWorldAnimationEngine({
       >
         {surface !== "board" && (
           <>
-            {(["left", "right"] as const).map((side) => (
-              <Vegetation
-                key={side}
-                moving={active}
-                kind="branch"
-                side={side}
-                width={width}
-                height={height}
-              />
-            ))}
             <Vegetation
               moving={active}
               kind="flower"

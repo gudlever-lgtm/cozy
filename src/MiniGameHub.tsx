@@ -3,6 +3,7 @@ import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
 import { ScreenPager } from "./ScreenPager";
 import { MiniArtwork } from "./MiniArtwork";
+import { GameRewardLine } from "./GameRewardLine";
 import { GameIcon } from "./GameIcon";
 import type { MiniKind, MiniLevel } from "./engine/session";
 export function MiniGameHub({
@@ -82,6 +83,7 @@ export function MiniGameHub({
               {String(t("level", { number: level }))} ·{" "}
               {medals.filter((id) => id.startsWith(kind + ":")).length}/3
             </Text>
+            <GameRewardLine kind={kind} />
           </View>
           <Pressable
             testID={`mini-start-${kind}`}

@@ -134,5 +134,93 @@
       "scales": [1, 2, 3],
       "logical_size": [48, 48]
     }
+  ],
+  "garden_decorations": [
+    {
+      "id": "bench",
+      "native_path": "assets/decorations/bench.png",
+      "sha256": "31c108ef9cb8028bc75fe49c6c4eadb6d7b2c1220309e93f96be50c6a2cb4e1c",
+      "dimensions": [1536, 1024],
+      "kind": "decoration",
+      "fully_transparent_pixels": 751719
+    },
+    {
+      "id": "bridge",
+      "native_path": "assets/decorations/bridge.png",
+      "sha256": "2d2157fb51b5a0107503f308def2ee59e36d9f33a3318ea33833cfcdbd1fcefe",
+      "dimensions": [1536, 1024],
+      "kind": "decoration",
+      "fully_transparent_pixels": 621428
+    },
+    {
+      "id": "flowers",
+      "native_path": "assets/decorations/flowers.png",
+      "sha256": "340d4aa821d2928476930fcfa0b9e79aa1f77dbcfb545a219a02c6dac7a51ce2",
+      "dimensions": [1312, 1199],
+      "kind": "decoration",
+      "fully_transparent_pixels": 555668
+    },
+    {
+      "id": "forest",
+      "native_path": "assets/decorations/forest.png",
+      "sha256": "374baba74b293260b1bd20a87286f834d51beaa012198b2303826ab22c792b7a",
+      "dimensions": [1374, 1145],
+      "kind": "decoration",
+      "fully_transparent_pixels": 724537
+    },
+    {
+      "id": "lantern",
+      "native_path": "assets/decorations/lantern.png",
+      "sha256": "5107349fcb5ac51581e9f8776df38fdce06e563087623cca82ff2601994cc8dc",
+      "dimensions": [1024, 1536],
+      "kind": "decoration",
+      "fully_transparent_pixels": 1133564
+    }
+  ],
+  "forest_illustrations": [
+    {
+      "id": "autumn",
+      "native_path": "assets/world/forest/autumn.png",
+      "sha256": "170347f3f0024bb1681251c6911ea50129a08fa489f69441680a193cc6121419",
+      "dimensions": [1672, 941],
+      "kind": "forest_background"
+    },
+    {
+      "id": "greenhouse",
+      "native_path": "assets/world/forest/greenhouse.png",
+      "sha256": "bb591749d12329a1eb4d2ad576281656bd0804f8769baa88ba2f714fe6a52ef3",
+      "dimensions": [1536, 1024],
+      "kind": "forest_structure",
+      "fully_transparent_pixels": 667487
+    },
+    {
+      "id": "lookout",
+      "native_path": "assets/world/forest/lookout.png",
+      "sha256": "643ccf4a0f3aee8d7dd996fa2b003d0fd15e53a3dad57f3e7e0d502074d3c52f",
+      "dimensions": [1312, 1199],
+      "kind": "forest_structure",
+      "fully_transparent_pixels": 549389
+    },
+    {
+      "id": "spring",
+      "native_path": "assets/world/forest/spring.png",
+      "sha256": "c003e87a6f9b013b44bb1c1e0b3a56204a4909165d8d9ccc6d35608f1ed4eb67",
+      "dimensions": [1672, 941],
+      "kind": "forest_background"
+    },
+    {
+      "id": "summer",
+      "native_path": "assets/world/forest/summer.png",
+      "sha256": "204f2173df9212fe6eb75d0e2bb2d43e881de410461e040b75c77d20c61bc471",
+      "dimensions": [1675, 939],
+      "kind": "forest_background"
+    },
+    {
+      "id": "winter",
+      "native_path": "assets/world/forest/winter.png",
+      "sha256": "42925ed57571966a042033a12fc09bef192de8c240a53cb78ba7b4b3e5ac7d38",
+      "dimensions": [1672, 941],
+      "kind": "forest_background"
+    }
   ]
 }

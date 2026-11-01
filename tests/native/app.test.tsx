@@ -14,6 +14,7 @@ import { pour, teaWon, hasMatchMove } from "../../src/engine/minigames";
 import { teaForLevel, type MiniLevel } from "../../src/engine/session";
 import App from "../../src/App";
 import { IdleFirefly, IDLE_HINT_DELAY } from "../../src/living/IdleFirefly";
+import { newGame } from "../../src/engine/solitaire";
 import { solitaireIdleHint } from "../../src/presentation/idleHints";
 import i18n from "../../src/i18n";
 import { fresh, setProfile, SAVE_KEY } from "../../src/engine/save";
@@ -598,7 +599,7 @@ test("inventory shows five compact resource fields using original light Glimmer 
   expect(screen.getByTestId("compact-tooltip")).toBeOnTheScreen();
 });
 
-test("Decorations and Statistics use bounded pages with no scroll and retain purchases", async () => {
+test("Decorations and Statistics use bounded pages; unique purchases are placed automatically only once", async () => {
   const initial = setProfile(fresh("paged", "en"), "Pages Native", "p");
   initial.economy.wallet.glimmers = 200;
   initial.economy.wallet.wood = 10;
@@ -628,18 +629,22 @@ test("Decorations and Statistics use bounded pages with no scroll and retain pur
   await waitFor(async () =>
     expect((await stored()).economy.inventory).toContain("flowers"),
   );
-  press("Place in garden: Flower garden");
-  fireEvent(screen.getByTestId("garden-scene"), "layout", {
-    nativeEvent: { layout: { width: 500, height: 250 } },
-  });
-  fireEvent(screen.getByTestId("garden-scene"), "responderRelease", {
-    nativeEvent: { locationX: 200, locationY: 150 },
-  });
-  await waitFor(async () =>
-    expect(
-      (await stored()).placements.find((p: any) => p.id === "flowers"),
-    ).toMatchObject({ x: 40, y: 60 }),
-  );
+  expect(
+    screen.getByRole("button", { name: "Unlocked: Flower garden" }),
+  ).toBeDisabled();
+  const purchased = (await stored()).economy.wallet.glimmers;
+  expect(
+    screen.queryByRole("button", { name: "Place in garden: Flower garden" }),
+  ).toBeNull();
+  press("⌂ My Garden");
+  const scene = screen.getByTestId("garden-scene");
+  expect(scene.props.onResponderRelease).toBeUndefined();
+  expect(
+    screen.getByTestId("garden-decoration-flowers", {
+      includeHiddenElements: true,
+    }),
+  ).toBeOnTheScreen();
+  expect((await stored()).economy.wallet.glimmers).toBe(purchased);
   press("❀ Decorations");
   fireEvent(screen.getByTestId("decorations-pages"), "layout", {
     nativeEvent: { layout: { width: 568, height: 262 } },
@@ -1111,6 +1116,7 @@ test("idle guide in Tea Time resets on actual touch lifecycle and moves without 
 
 test("Solitaire idle guide resolves actual registered card/target anchors without moving the deal", async () => {
   const original = setProfile(fresh("idle-card", "en"), "Idle Cards", "p");
+  original.game = newGame("idle-card", 3, () => 0.3);
   expect(solitaireIdleHint(original.game)).not.toBeNull();
   await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(original));
   await renderAsync(<App />);
@@ -1141,4 +1147,81 @@ test("Solitaire idle guide resolves actual registered card/target anchors withou
   ).toBe(true);
   expect(guide.props.absolute).toBe(true);
   expect((await stored()).game).toEqual(original.game);
+});
+
+test("forest illustration explains its next objective and gathering/claim lead to the next chapter and building", async () => {
+  const original = setProfile(
+    fresh("forest-guide", "en"),
+    "Forest Native",
+    "p",
+  );
+  original.economy.inventory = ["forest"];
+  original.world.areas.push("forest");
+  original.world.area = "forest";
+  original.counters.hidden = 2;
+  original.preferences.season = "autumn";
+  await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(original));
+  await renderAsync(<App />);
+  await screen.findByTestId("main-tabs");
+  expect(screen.getByTestId("forest-guide")).toHaveTextContent(
+    "Gather supplies: 0/4",
+    { exact: false },
+  );
+  expect(screen.getByTestId("forest-art-autumn")).toBeOnTheScreen();
+  expect(screen.queryByRole("button", { name: "Marmalade" })).toBeNull();
+  for (let i = 0; i < 4; i++)
+    fireEvent.press(screen.getByTestId("forest-next-action"));
+  expect(screen.getByTestId("forest-guide")).toHaveTextContent(
+    "Gather supplies: 4/4",
+    { exact: false },
+  );
+  fireEvent.press(screen.getByTestId("forest-next-action"));
+  await waitFor(async () => {
+    const saved = await stored();
+    expect(saved.world.stories).toContain("forest1");
+    expect(saved.economy.wallet.glimmers).toBe(35);
+    expect(saved.economy.wallet.wood).toBe(7);
+    expect(saved.game).toEqual(original.game);
+  });
+  expect(screen.getByTestId("forest-guide")).toHaveTextContent(
+    "Forest greenhouse: level 0/1",
+    { exact: false },
+  );
+  fireEvent.press(screen.getByTestId("forest-next-action"));
+  expect(screen.getByTestId("world-building-greenhouse")).toBeOnTheScreen();
+});
+
+test("repeat hunts give useful resources for each new round, retain unique unlocks and cannot reapply them", async () => {
+  const original = setProfile(fresh("repeat-hunt", "en"), "Repeat Native", "p");
+  original.economy.inventory = ["flowers"];
+  original.placements = [{ id: "flowers", x: 8, y: 12 }];
+  await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(original));
+  await renderAsync(<App />);
+  await screen.findByTestId("main-tabs");
+  press("✿ Mini-games");
+  expect(
+    screen.getByTestId("repeat-rewards-hidden").props.accessibilityLabel,
+  ).toContain("+2 Wood");
+  fireEvent.press(screen.getByTestId("mini-start-hidden"));
+  for (let round = 0; round < 2; round++) {
+    for (const name of ["Key", "Acorn", "Ribbon", "Spoon", "Button"])
+      press(name);
+    await waitFor(async () =>
+      expect((await stored()).counters.hidden).toBe(round + 1),
+    );
+    if (round === 0) press("Play again");
+  }
+  await waitFor(async () => {
+    const saved = await stored();
+    expect(saved.economy.wallet.glimmers).toBe(40);
+    expect(saved.economy.wallet.wood).toBe(4);
+    expect(saved.economy.wallet.stone).toBe(2);
+    expect(saved.economy.inventory).toEqual(["flowers"]);
+    expect(saved.placements).toEqual(original.placements);
+    expect(saved.game).toEqual(original.game);
+  });
+  press("❀ Decorations");
+  expect(
+    screen.getByRole("button", { name: "Unlocked: Flower garden" }),
+  ).toBeDisabled();
 });

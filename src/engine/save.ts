@@ -8,6 +8,7 @@ import {
   type Season,
   transact,
   REWARDS,
+  gameReward,
   upgrades,
 } from "./world";
 export type Language = "da" | "en";
@@ -289,11 +290,7 @@ export function reward(
 ): Save {
   const receipt = `${type}:${id}`;
   if (s.economy.receipts.includes(receipt)) return s;
-  let economy = transact(s.economy, receipt, {
-    glimmers: REWARDS[type],
-    ...(type === "hidden" ? { wood: 2, stone: 1 } : {}),
-    ...(type === "match" ? { flowers: 2, seeds: 1 } : {}),
-  });
+  let economy = transact(s.economy, receipt, gameReward(type));
   const counters = { ...s.counters, [type]: s.counters[type] + 1 };
   if (
     Object.values(counters)

@@ -382,3 +382,58 @@ test("Tea Time idle suggestions lead to a solution at every difficulty and respe
     assert.equal(teaIdleHint(game), null);
   }
 });
+
+import {
+  DECORATION_ANCHORS,
+  decorationLayout,
+} from "../src/presentation/decorations";
+test("authored decorations stay grounded and inside wide/narrow native scene bounds", () => {
+  for (const [width, height] of [
+    [360, 220],
+    [600, 250],
+    [950, 320],
+    [1024, 680],
+  ]) {
+    for (const id of Object.keys(
+      DECORATION_ANCHORS,
+    ) as (keyof typeof DECORATION_ANCHORS)[]) {
+      const box = decorationLayout(id, width, height);
+      assert.ok(box.left >= 0 && box.top >= 0);
+      assert.ok(box.left + box.width <= width);
+      assert.ok(box.top + box.height <= height);
+      assert.ok(box.height <= height * 0.32 + 0.01);
+    }
+  }
+});
+
+test("new decoration and forest artwork is bundled PNG with verified provenance and transparent decoration edges", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const { createHash } = await import("node:crypto");
+  const provenance = JSON.parse(
+    await readFile("assets/illustration-provenance.json", "utf8"),
+  );
+  assert.equal(provenance.assets.length, 11);
+  for (const asset of provenance.assets) {
+    const data = await readFile(asset.native_path);
+    assert.equal(data.subarray(1, 4).toString(), "PNG");
+    assert.equal(createHash("sha256").update(data).digest("hex"), asset.sha256);
+    assert.deepEqual(
+      [data.readUInt32BE(16), data.readUInt32BE(20)],
+      asset.dimensions,
+    );
+    if (asset.kind === "decoration" || asset.kind === "forest_structure") {
+      assert.equal(data[25], 6);
+      assert.ok(
+        asset.fully_transparent_pixels >
+          asset.dimensions[0] * asset.dimensions[1] * 0.1,
+      );
+    }
+    const catalog = await readFile(
+      asset.kind === "decoration"
+        ? "src/assets/decorations.ts"
+        : "src/assets/forest.ts",
+      "utf8",
+    );
+    assert.ok(catalog.includes(`require("../../${asset.native_path}")`));
+  }
+});

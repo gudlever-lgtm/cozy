@@ -92,3 +92,5 @@ Preview 1.7.8 adds illustrated quest details and objective shortcuts, a shared p
 Preview 1.7.9 makes Tea Time selections, legal destinations and invalid moves explicit, adds undo, fits Hidden Treasures and its checklist in the game viewport, and keeps all three boards outside scrolling gesture containers. Garden Match explains dead-board recovery without losing score or turns. See [mini-game validation](docs/MINIGAME_USABILITY_1.7.9.md).
 
 Preview 1.7.10 adds a quiet illustrated firefly guide after 12 seconds of inactivity in Solitaire and all three mini-games. It demonstrates a legal source/destination once per pause, clears on input and respects animation/reduced-motion/background settings. See [idle guidance validation](docs/IDLE_FIREFLY_1.7.10.md).
+
+Preview 1.7.11 replaces emoji decor with original painterly illustrations on fixed automatic ground anchors, adds four seasonal forest scenes with actionable story objectives, and animates found treasures into butterflies followed by a seasonal celebration. Unique unlocks cannot be reapplied; repeat mini-game round rewards are shown explicitly. See [natural-world validation](docs/NATURAL_WORLD_1.7.11.md).

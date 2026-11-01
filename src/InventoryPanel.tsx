@@ -3,6 +3,8 @@ import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
 import type { Save } from "./engine/save";
 import { number, type Key } from "./i18n";
+import { DecorationArtwork } from "./GardenDecorations";
+import { decorationImages, type DecorationId } from "./assets/decorations";
 import { GameIcon } from "./GameIcon";
 export function InventoryPanel({
   save,
@@ -86,7 +88,11 @@ export function InventoryPanel({
                 onPress={() => onInfo(String(t(id)))}
                 style={s.button}
               >
-                <GameIcon name={icon(id)} size={30} />
+                {id in decorationImages ? (
+                  <DecorationArtwork id={id as DecorationId} size={40} />
+                ) : (
+                  <GameIcon name={icon(id)} size={30} />
+                )}
               </Pressable>
             ))}
             <Pressable

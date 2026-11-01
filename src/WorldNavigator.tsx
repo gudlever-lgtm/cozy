@@ -31,10 +31,15 @@ export function WorldNavigator({
   onNavigate,
   onQuest,
   appearanceRequest = 0,
+  managementRequest,
 }: {
   save: Save;
   onQuest?: (id: string) => void;
   appearanceRequest?: number;
+  managementRequest?: {
+    serial: number;
+    section: "buildings" | "storyJournal";
+  } | null;
   onUpdate: (fn: (save: Save) => Save) => void;
   onNavigate: (screen: "garden" | "quests" | "play" | "mini") => void;
 }) {
@@ -48,6 +53,12 @@ export function WorldNavigator({
   const [manage, setManage] = useState(false),
     [section, setSection] = useState<Section>("buildings"),
     [inspect, setInspect] = useState<AreaId | null>(null);
+  useEffect(() => {
+    if (managementRequest) {
+      setSection(managementRequest.section);
+      setManage(true);
+    }
+  }, [managementRequest]);
   const selected = areas.find((a) => a.id === inspect);
   const afford = (cost: Partial<Wallet>) =>
     Object.entries(cost).every(

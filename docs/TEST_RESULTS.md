@@ -60,3 +60,7 @@ TypeScript and formatting passed; 37 engine/presentation tests and 36 Android/iO
 ## 1.7.10 quiet idle guidance
 
 49 engine/presentation tests and 112 Android/iOS component test runs pass, with TypeScript/formatting, native JS exports and the local ARM64 APK build. See [IDLE_FIREFLY_1.7.10.md](IDLE_FIREFLY_1.7.10.md) for actual coverage and physical-device limitations.
+
+## 1.7.11 natural world and treasure celebrations
+
+51 engine/presentation/asset checks and 142 Android/iOS component test runs pass, plus TypeScript, formatting, native JS exports and local ARM64 APK compilation. See [NATURAL_WORLD_1.7.11.md](NATURAL_WORLD_1.7.11.md) for the exact graphics, one-time unlock, forest, animation and repeat-reward coverage and physical-device limits.
