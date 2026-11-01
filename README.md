@@ -4,14 +4,12 @@
 
 ![Download QR](cozy-solitaire-qr.png)
 
-Current app: **1.7.13**, Android versionCode **14**. Filename and QR URL are unchanged.
+Current app: **1.7.14**, Android versionCode **15**, save schema **4**. Filename and QR URL are unchanged.
 
-Both winter scenes and the remaining regional backgrounds use cohesive painterly illustrations. Materials come from game wins, with x1/x2/x3 mini-game difficulty scaling and x1/x2 Solitaire draw-mode scaling. No instant collection/free daily gift button remains. Three main controls lead to grouped submenus. Labeled balances and persistent recent gains clarify rewards. Existing deals, unlocks, materials and prior objective progress remain intact; concurrent save-recovery/write-debounce changes from main were retained.
-
-Tea Time now increases in difficulty (minimum 3/6/7 moves for new levels). Unreadable saved data is archived before a clearly labeled fresh start; valid backup recovery and main’s economy-history validation are retained.
+Compact inverse-delta Solitaire undo reduces a fresh 200-action save to about 12.5 KB. Duplicate saves are skipped and safe backups use a 30-second interval. Blocked stock cycles offer Undo/New game. New game can choose among 100 verified winnable deals per draw mode; the offline solver is not bundled. Tea Time uses varied BFS-verified minimum 6/7/8-pour layouts, and treasures/hints/butterfly departures share stable round-seeded authored positions. Existing progression, artwork, economy and saved mini-game layouts are preserved; versions 1–3 migrate to schema 4.
 
 ARM64 Android 7.0+, same test-signing certificate/package as earlier previews. Install as an update without uninstalling.
 
-57 engine/presentation/asset and 158 Android/iOS native component test runs pass after integration with main. Native JS exports and APK build passed; signature, ZIP integrity, 16KB alignment, version, standalone bundle and regional resources verified. Physical-device appearance, touch and FPS remain unverified.
+76 engine/presentation/asset tests and 164 Android/iOS component runs pass. TypeScript, formatting and offline native JS/Hermes exports pass. The local Android release build succeeded in 5m 3s after clean dependency installation. Signature continuity, ZIP integrity, 16KB alignment, package/version, standalone bundle and regional resources are verified. Physical-device gestures, audio, appearance and performance remain unverified. This is a test-signed preview, not a production store release.
 
-Source on main: [26f9814](https://github.com/gudlever-lgtm/cozy/commit/26f9814ec48174d52c5015f89f018e92e5810663). See BUILD_INFO.json and SHA256SUMS.txt.
+Source: [8fa5e87](https://github.com/gudlever-lgtm/cozy/commit/8fa5e87e4c575d589b562e97519289ac7353d716). [Per-task report](https://github.com/gudlever-lgtm/cozy/blob/main/docs/OPTIMIZATION_REPORT.md). Original challenge seeds 17017/23111 remain unknown at 150,000 nodes; 98173 is solved. No seeds were replaced. See BUILD_INFO.json and SHA256SUMS.txt for this binary.

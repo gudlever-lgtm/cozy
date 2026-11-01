@@ -1,21 +1,21 @@
 {
-  "source_commit": "26f9814ec48174d52c5015f89f018e92e5810663",
-  "version": "1.7.13",
-  "version_code": 14,
+  "source_commit": "8fa5e87e4c575d589b562e97519289ac7353d716",
+  "version": "1.7.14",
+  "version_code": 15,
   "package": "com.gudlever.cozy",
   "architectures": [
     "arm64-v8a"
   ],
   "minimum_android": "7.0",
-  "sha256": "48e4b93205efc78ac37ebfce8b50355ac22a36e98f8016f2fc4313e4d1e53f27",
-  "size_bytes": 97613217,
+  "sha256": "e0866c7cfe9a3f861235ee5bd11ccb9ea07ebbc7d1cd5a7009570c88913b78f3",
+  "size_bytes": 97622221,
   "signature_verified": true,
   "same_test_certificate_as_previous": true,
   "zip_integrity_verified": true,
   "alignment_16k_verified": true,
   "standalone_bundle_verified": true,
-  "engine_tests_passed": 57,
-  "native_component_tests_passed": 158,
+  "engine_tests_passed": 76,
+  "native_component_tests_passed": 164,
   "native_js_exports": [
     "android",
     "ios"
@@ -23,5 +23,6 @@
   "physical_device_tested": false,
   "filename": "cozy-solitaire.apk",
   "download_url": "https://raw.githubusercontent.com/gudlever-lgtm/cozy/android-download/cozy-solitaire.apk",
-  "publicly_published": true
+  "publicly_published": true,
+  "save_schema": 4
 }
