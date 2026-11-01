@@ -1,6 +1,12 @@
 import { expansionDa } from "./expansion-da";
 import type { en } from "./en";
 export const da: Record<keyof typeof en, string> = {
+  matchTile: "Brik {{number}}",
+  matchSwipeHint: "Skub en brik mod nabobrikken for at lave tre på stribe.",
+  swipe_left: "Skub til venstre",
+  swipe_right: "Skub til højre",
+  swipe_up: "Skub op",
+  swipe_down: "Skub ned",
   ...expansionDa,
   animations: "Animationer",
   animationQuality: "Animationskvalitet",
@@ -130,7 +136,7 @@ export const da: Record<keyof typeof en, string> = {
   confirm: "Fortsæt",
   match: "Blomstermatch",
   matchRules:
-    "Byt naboblomster, og saml mindst tre ens. Saml 30 blomster på 18 træk. Ugyldige byt koster intet.",
+    "Skub en blomst mod nabobrikken, og saml mindst tre ens. Saml 30 blomster på 18 træk. Ugyldige byt koster intet.",
   matchProgress: "{{score}} / {{target}} blomster · {{turns}} træk tilbage",
   hidden: "Skjulte skatte",
   hiddenRules: "Udforsk sommerhuset. Find de fem små skatte på listen.",

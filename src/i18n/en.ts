@@ -1,5 +1,11 @@
 import { expansionEn } from "./expansion-en";
 export const en = {
+  matchTile: "Tile {{number}}",
+  matchSwipeHint: "Slide a tile towards a neighbour to match three.",
+  swipe_left: "Slide left",
+  swipe_right: "Slide right",
+  swipe_up: "Slide up",
+  swipe_down: "Slide down",
   ...expansionEn,
   animations: "Animations",
   animationQuality: "Animation quality",
@@ -116,7 +122,7 @@ export const en = {
   moves_one: "{{count}} move",
   moves_other: "{{count}} moves",
   solitaireRules:
-    "Build foundations from Ace to King by suit. Stack alternating colors downward; only Kings fill empty columns. Tap a card, then its destination, or drag it. Tap the stock to draw.",
+    "Build foundations from Ace to King by suit. Stack alternating colors downward; only Kings fill empty columns. Tap a card, then its destination, or drag it. Double tap a card to move it to a foundation when legal. Tap the stock to draw.",
   noHint: "No tableau moves found. Try drawing from the stock.",
   hintText: "Try {{card}} → {{destination}}.",
   victory: "A lovely win!",
@@ -128,7 +134,7 @@ export const en = {
   confirm: "Continue",
   match: "Garden Match",
   matchRules:
-    "Swap neighboring flowers to match three or more. Gather 30 blooms in 18 moves. Invalid swaps cost nothing.",
+    "Slide a flower towards a neighbour to match three or more. Gather 30 blooms in 18 moves. Invalid swaps cost nothing.",
   matchProgress: "{{score}} / {{target}} blooms · {{turns}} moves left",
   hidden: "Hidden Treasures",
   hiddenRules:

@@ -1,19 +1,22 @@
-# Executed validation — Living World V1 and world progression
+# Executed validation — 1.7.1 landscape preview
 
-Baseline gameplay is preserved. The living-world change adds the approved seven-sprite native catalog, Reanimated scheduling/layers, portrait idle behavior and persisted DA/EN motion controls.
+2026-11-01. User-requested landscape/full-screen presentation, Millie-derived logo, integrated garden/game panels, card interaction fixes and swipe-controlled Garden Match. Details: [LANDSCAPE_GAMEPLAY.md](LANDSCAPE_GAMEPLAY.md).
 
 | Check | Result | Evidence / limit |
 |---|---|---|
-| TypeScript | Passed | Full application and test sources |
-| Engine/localization/assets | 34 passed, 0 skipped | Gameplay regressions, source/density/motion policy, full area/story progression through earned resources, festivals, themes, seeded challenges, puzzle solvability, schema migration and backup recovery |
-| React Native integration | 20 passed, 0 skipped | iOS and Android Jest Expo presets: game/profile flows, settings persistence, layer order/no input capture, background/resume, reduced motion, partial puzzle restore, world area/build/story purchases and victory idempotency |
-| Native JS/Hermes exports | Passed for Android and iOS | Includes the seven ambient sprites at all three native densities; no browser bundle |
-| Sprite generation | Passed | CairoSVG 2.8.2/Pillow 13.0.0, supersampling; RGBA transparency checked during generation; source SHA-256 recorded |
-| Local Android APK compilation | Blocked | SDK 36, NDK 27.1, CMake, verified Gradle 8.14.3 and verified Java 17 installed. React Native/Hermes AAR downloads redirect to `repo.reactnative.dev`, denied by current policy (403). No APK has been produced |
-| EAS Android / iOS cloud jobs | Not run | No authenticated Expo session/project/signing credentials are configured |
-| Real device FPS, memory and touch | Unverified | Mocked Reanimated tests establish policy/integration, not frame-rate or actual gestures |
-| Store submission | Not performed | No publication or paid services authorized |
+| TypeScript and formatting | Passed | Full application and test sources; `git diff --check` clean |
+| Engine/localization/assets/presentation | 37 passed, 0 skipped | Existing game/progression/migration coverage plus phone/tablet geometry, swipe boundary/threshold and single legal forgiving drop selection |
+| Native component integration | 32 passed, 0 skipped across Android/iOS | Six suites; includes double-tap ace/two promotion and undo, Garden Match responder swipes, animation locking, tap/boundary rejection, invalid return, sequential swipes to victory, native Tea Time solution and existing hidden-object/reward/resume tests |
+| Native JS/Hermes exports | Passed for Android and iOS | Both native bundles and offline assets exported with Expo; no browser target |
+| Local Android APK | Passed | Gradle `:app:assembleRelease -PreactNativeArchitectures=arm64-v8a`, final build 1m 5s; Java 17, SDK/target 36, min SDK 24, NDK 27.1, Gradle 8.14.3 |
+| APK metadata | Verified | `com.gudlever.cozy`, version 1.7.1 / code 2, ARM64, compiled manifest requests landscape |
+| APK integrity and signing | Verified | ZIP integrity, APK v2 signing, 16 KB alignment, embedded Hermes JS, all seven compiled ambient sprite resources |
+| APK upgrade signing | Same certificate as 1.7.0 | Android test certificate SHA256 `fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c`; not production signing |
+| APK SHA256 | `b1508f50ea5b40e270a38f1a12105b101cbffb2e3e2d8e5de20f6435ecff91c7` | 56,092,933 bytes |
+| EAS Android/iOS jobs, iOS IPA | Not run | No Expo project/account or production signing configured |
+| Physical device appearance/touch/system bars/FPS | Unverified | Jest invokes responder callbacks with a timed animation-driver substitute. This does not establish actual touchscreen feel, rendered native screenshots, full-screen behavior on OEM devices or frame rate |
+| Store submission | Not performed | Preview distribution only |
 
-Only `repo.reactnative.dev` was added to the environment configuration **draft** to unblock the local APK download dependency. Saving that draft does not apply the running policy or publish it. The user must review/save the environment settings and publish the environment before the affected build can be retried. No network protections, TLS checks or artifact checksums were bypassed.
+The previous dependency-host network blocker was resolved when the user published the environment configuration. The 1.7.0 APK was already distributed on a separate Git download branch. 1.7.1 remains a test-signed native preview for device review, not a claim of production readiness or completed visual approval.
 
-Remaining scope from the V2.0 execution roadmap is in `IMPLEMENTATION_STATUS.md`; these results do not imply V2.0 or either store release is complete.
+Public download branch: `android-download-1.7.1`. Binary and QR verification metadata accompany the download. Source and main branches do not contain the APK.

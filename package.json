@@ -1,6 +1,6 @@
 {
   "name": "cozy-solitaire",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "private": true,
   "main": "expo-router/entry",
   "scripts": {
@@ -10,8 +10,8 @@
     "build:android": "eas build --platform android --profile production",
     "build:ios": "eas build --platform ios --profile production",
     "format:check": "prettier --check src app tests *.json *.js",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "export:native": "expo export --platform all --output-dir dist --max-workers 2",
     "test:native": "jest --runInBand"
   },
@@ -24,6 +24,7 @@
     "expo-crypto": "~15.0.9",
     "expo-linking": "~8.0.12",
     "expo-localization": "~17.0.9",
+    "expo-navigation-bar": "~5.0.10",
     "expo-router": "~6.0.24",
     "expo-status-bar": "~3.0.9",
     "i18next": "^25.6.0",

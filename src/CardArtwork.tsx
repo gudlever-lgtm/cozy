@@ -142,12 +142,12 @@ export const CardArtwork = memo(function CardArtwork({
       <SvgText x="8" y="26" fontSize="28" fontWeight="700" fill={ink}>
         {label}
       </SvgText>
-      {pip(8, 29, 12)}
+      {pip(43, 10, 15)}
       <G transform="translate(90 130) rotate(180)">
         <SvgText x="8" y="26" fontSize="28" fontWeight="700" fill={ink}>
           {label}
         </SvgText>
-        {pip(8, 29, 12)}
+        {pip(43, 10, 15)}
       </G>
       {positions.map(([x, y], i) =>
         pip(

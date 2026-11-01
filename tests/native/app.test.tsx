@@ -9,6 +9,8 @@ import {
   cleanupAsync,
 } from "@testing-library/react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { pour, teaWon } from "../../src/engine/minigames";
+import { teaForLevel } from "../../src/engine/session";
 import App from "../../src/App";
 import i18n from "../../src/i18n";
 import { fresh, setProfile, SAVE_KEY } from "../../src/engine/save";
@@ -296,4 +298,94 @@ test("native illustrated card deal safely completes and pays a victory once acro
   press("Safe finish");
   await screen.findByText("A lovely win!");
   expect((await stored()).counters.solitaire).toBe(1);
+});
+
+test("double tap promotes exposed ace and two to foundations; undo retains the original deal", async () => {
+  const initial = setProfile(fresh("double-tap", "en"), "Cozy Native", "p");
+  function expose(rank: number) {
+    for (const pile of [
+      initial.game.stock,
+      initial.game.waste,
+      ...initial.game.tableau,
+      ...initial.game.foundations,
+    ]) {
+      const i = pile.findIndex((c) => c.rank === rank && c.suit === "♥");
+      if (i >= 0) {
+        const [c] = pile.splice(i, 1);
+        initial.game.waste.push({ ...c, up: true });
+        return;
+      }
+    }
+  }
+  expose(2);
+  expose(1);
+  await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(initial));
+  await renderAsync(<App />);
+  await screen.findByText("Welcome to Cozy Solitaire, Cozy Native!");
+  press("♠ Play Solitaire");
+  const board = screen.getByTestId("solitaire-board");
+  expect(within(board).queryByRole("button", { name: "Undo" })).toBeNull();
+  press("Ace of hearts");
+  await waitFor(async () => expect((await stored()).game.moves).toBe(0));
+  press("Ace of hearts");
+  await waitFor(async () =>
+    expect(
+      (await stored()).game.foundations.some(
+        (p: any[]) => p.at(-1)?.rank === 1,
+      ),
+    ).toBe(true),
+  );
+  press("2 of hearts");
+  press("2 of hearts");
+  await waitFor(async () =>
+    expect(
+      (await stored()).game.foundations.some(
+        (p: any[]) => p.at(-1)?.rank === 2,
+      ),
+    ).toBe(true),
+  );
+  press("Undo");
+  press("Undo");
+  await waitFor(async () =>
+    expect((await stored()).game.waste).toEqual(initial.game.waste),
+  );
+});
+
+test("Tea Time can be started and completed entirely through native controls", async () => {
+  const queue: { cups: number[][]; path: number[][] }[] = [
+    { cups: teaForLevel(1), path: [] },
+  ];
+  const seen = new Set<string>();
+  let path: number[][] = [];
+  while (queue.length) {
+    const node = queue.shift()!;
+    if (teaWon(node.cups)) {
+      path = node.path;
+      break;
+    }
+    for (let a = 0; a < 5; a++)
+      for (let b = 0; b < 5; b++) {
+        const next = pour(node.cups, a, b),
+          key = JSON.stringify(next);
+        if (next !== node.cups && !seen.has(key)) {
+          seen.add(key);
+          queue.push({ cups: next, path: [...node.path, [a, b]] });
+        }
+      }
+  }
+  expect(path.length).toBeGreaterThan(0);
+  await AsyncStorage.setItem(
+    SAVE_KEY,
+    JSON.stringify(setProfile(fresh("tea-native", "en"), "Tea Native", "p")),
+  );
+  await renderAsync(<App />);
+  await screen.findByText("Welcome to Cozy Solitaire, Tea Native!");
+  press("✿ Mini-games");
+  fireEvent.press(screen.getAllByRole("button", { name: "Continue" })[2]);
+  for (const [a, b] of path) {
+    press(`Tray ${a + 1}`);
+    press(`Tray ${b + 1}`);
+  }
+  await screen.findByText("Beautifully done! +20 Glimmers");
+  await waitFor(async () => expect((await stored()).counters.tea).toBe(1));
 });

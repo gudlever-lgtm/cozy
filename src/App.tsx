@@ -14,13 +14,24 @@ import {
   PanResponder,
   Animated,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+import {
+  boardMetrics,
+  dropDestination,
+  type DropRegion,
+} from "./presentation/board";
+import { GardenMatch } from "./GardenMatch";
+import { MiniArtwork } from "./MiniArtwork";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getLocales } from "expo-localization";
 import { randomUUID } from "expo-crypto";
 import { useTranslation } from "react-i18next";
 import i18n, { type Key, number, date } from "./i18n";
 import {
+  canMove,
   newGame,
   drawCards,
   move,
@@ -59,7 +70,6 @@ import {
 } from "./engine/world";
 import {
   newMatch,
-  swapMatch,
   newTea,
   pour,
   teaWon,
@@ -87,7 +97,6 @@ import {
   type MiniLevel,
 } from "./engine/session";
 import { Audio } from "./Audio";
-import { symbols } from "./assets";
 import { cozyImages } from "./assets/images";
 
 type Screen =
@@ -122,12 +131,22 @@ const suitKeys = {
 const rankKeys = { 1: "ace", 11: "jack", 12: "queen", 13: "king" } as const;
 export default function App() {
   const { t } = useTranslation();
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+
   const wide = width >= 900;
   const [s, setS] = useState<Save | null>(null),
     [loadError, setLoadError] = useState(false),
     [writeError, setWriteError] = useState(false),
     [screen, setScreen] = useState<Screen>("garden");
+  const playing = screen === "play";
+  const metrics = boardMetrics(
+    width - insets.left - insets.right,
+    height - insets.top - insets.bottom,
+  );
+  const railWidth = metrics.rail;
+  const [dragging, setDragging] = useState<Place | null>(null);
+
   const [pendingChallenge, setPendingChallenge] = useState<ChallengeId | null>(
     null,
   );
@@ -143,17 +162,20 @@ export default function App() {
   const [miniLevel, setMiniLevel] = useState<MiniLevel>(1);
   const [nextMiniLevel, setNextMiniLevel] = useState<MiniLevel>(1);
   const [miniHub, setMiniHub] = useState(false);
+  const [matchBusy, setMatchBusy] = useState(false);
   const [sceneSize, setSceneSize] = useState({ width: 700, height: 410 });
   const [selected, setSelected] = useState<Place | null>(null),
     [hint, setHint] = useState<ReturnType<typeof hints>[number] | null>(null);
   const [mini, setMini] = useState<"match" | "hidden" | "tea" | null>(null),
     [miniId, setMiniId] = useState(uuid),
     [match, setMatch] = useState(newMatch),
-    [matchSelected, setMatchSelected] = useState<number | null>(null),
     [tea, setTea] = useState(newTea),
     [teaSelected, setTeaSelected] = useState<number | null>(null),
     [found, setFound] = useState<string[]>([]);
   const activeMini = miniHub ? null : mini;
+  const focused =
+    playing || screen === "garden" || (screen === "mini" && !!activeMini);
+  const lastCardTap = useRef<{ id: string; time: number } | null>(null);
   const dropTargets = useRef<Record<string, { node: View; place: Place }>>({});
   const update = useCallback(
     (fn: (v: Save) => Save) => setS((v) => (v ? fn(v) : v)),
@@ -354,6 +376,7 @@ export default function App() {
       : s.preferences.season;
   const language = s.preferences.language;
   const go = (id: Screen) => {
+    setMatchBusy(false);
     setScreen(id);
     setMessage("");
     setHelp(false);
@@ -373,28 +396,70 @@ export default function App() {
     setHint(null);
   };
   function tap(place: Place) {
+    const now = Date.now();
+    const card = cardsAt(s!.game, place)[0];
+    const doubleTap =
+      !!card &&
+      lastCardTap.current?.id === card.id &&
+      now - lastCardTap.current.time <= 350;
+    lastCardTap.current = card ? { id: card.id, time: now } : null;
+    if (doubleTap && place.kind !== "foundations") {
+      const pile = s!.game.foundations.findIndex((_, pile) =>
+        canMove(s!.game, place, { kind: "foundations", pile }),
+      );
+      if (pile >= 0) {
+        lastCardTap.current = null;
+        applyGame((g) => move(g, place, { kind: "foundations", pile }));
+        return;
+      }
+    }
     if (selected) {
       const next = move(s!.game, selected, place);
       if (next !== s!.game) {
+        lastCardTap.current = null;
         applyGame(() => next);
         return;
       }
     }
-    const c = cardsAt(s!.game, place);
-    setSelected(c[0]?.up ? place : null);
+    setSelected(card?.up ? place : null);
   }
-  function drop(from: Place, x: number, y: number) {
-    for (const target of Object.values(dropTargets.current))
-      target.node.measureInWindow((tx, ty, w, h) => {
-        if (x >= tx && x <= tx + w && y >= ty && y <= ty + h)
-          applyGame((g) => move(g, from, target.place));
-      });
+  async function drop(from: Place, x: number, y: number) {
+    const regions = await Promise.all(
+      Object.values(dropTargets.current).map(
+        (target) =>
+          new Promise<DropRegion>((resolve) => {
+            target.node.measureInWindow((tx, ty, w, h) =>
+              resolve({
+                place: target.place,
+                x: tx,
+                y: ty,
+                width: w,
+                height: h,
+              }),
+            );
+          }),
+      ),
+    );
+    // Measurement completes asynchronously; resolve against the latest saved game exactly once.
+    update((v) => {
+      if (v.game.id !== s!.game.id) return v;
+      const to = dropDestination(v.game, from, x, y, regions);
+      return to ? { ...v, game: move(v.game, from, to) } : v;
+    });
+    setSelected(null);
+    setHint(null);
   }
-  const cardWidth = Math.min(
-    88,
-    Math.floor((Math.min(width - (wide ? 302 : 32), 1036) - 24) / 7),
-  );
-  const cardHeight = cardWidth * 1.44;
+  const { cardWidth, cardHeight, step: cardStep } = metrics;
+  const tableauHeight =
+    cardHeight +
+    Math.max(
+      ...s.game.tableau.map((p) =>
+        p
+          .slice(0, -1)
+          .reduce((height, c) => height + (c.up ? cardStep : 10), 0),
+      ),
+      0,
+    );
   const isSelected = (p: Place) =>
     selected?.kind === p.kind &&
     (p.kind === "waste" ||
@@ -407,14 +472,47 @@ export default function App() {
       enabled={c.up}
       onTap={() => tap(p)}
       onDrop={(x, y) => drop(p, x, y)}
+      onDragStart={() => {
+        setDragging(p);
+      }}
+      onDragEnd={() => {
+        setDragging(null);
+      }}
+      tail={
+        p.kind === "tableau"
+          ? s.game.tableau[p.pile].slice((p.index ?? 0) + 1).map((card, i) => (
+              <View
+                pointerEvents="none"
+                key={card.id}
+                style={[
+                  st.card,
+                  {
+                    position: "absolute",
+                    top: (i + 1) * cardStep,
+                    width: cardWidth,
+                    height: cardHeight,
+                  },
+                ]}
+              >
+                <CardArtwork card={card} theme={s.world.theme} />
+              </View>
+            ))
+          : null
+      }
       label={c.up ? cardName(c) : tt("faceDown")}
       style={{
         width: cardWidth,
         height: cardHeight,
-        marginBottom: overlap
-          ? -(cardHeight - Math.max(19, cardWidth * 0.38))
-          : 0,
-        zIndex: 1,
+        marginBottom: overlap ? -(cardHeight - (c.up ? cardStep : 10)) : 0,
+        zIndex:
+          dragging && JSON.stringify(dragging) === JSON.stringify(p) ? 100 : 1,
+        opacity:
+          dragging?.kind === "tableau" &&
+          p.kind === "tableau" &&
+          dragging.pile === p.pile &&
+          (p.index ?? 0) > (dragging.index ?? 0)
+            ? 0
+            : 1,
       }}
     >
       <View
@@ -439,8 +537,18 @@ export default function App() {
         if (node) dropTargets.current[key] = { node, place: p };
         else delete dropTargets.current[key];
       }}
-      onLayout={() => {}}
-      style={{ width: cardWidth, minHeight: cardHeight }}
+      collapsable={false}
+      style={{
+        width: cardWidth,
+        minHeight: cardHeight,
+        zIndex:
+          dragging?.kind === p.kind &&
+          dragging?.kind !== "waste" &&
+          p.kind !== "waste" &&
+          dragging?.pile === p.pile
+            ? 100
+            : 1,
+      }}
     >
       <Pressable
         accessibilityRole="button"
@@ -461,7 +569,10 @@ export default function App() {
   );
   const gardenScene = (hidden = false) => (
     <View
-      style={[st.scene, { height: wide ? 410 : 300 }]}
+      style={[
+        st.scene,
+        hidden ? { height: Math.max(230, height - 70) } : { flex: 1 },
+      ]}
       onLayout={(e) => setSceneSize(e.nativeEvent.layout)}
       onStartShouldSetResponder={() => !!placing}
       onResponderRelease={(e) => {
@@ -556,7 +667,11 @@ export default function App() {
                   justifyContent: "center",
                 }}
               >
-                <Text style={{ fontSize: 20 }}>{symbols.treasures[o.id]}</Text>
+                <MiniArtwork
+                  kind="treasure"
+                  value={treasures.findIndex((t) => t.id === o.id)}
+                  size={30}
+                />
               </Pressable>
             ))
         : null}
@@ -614,65 +729,61 @@ export default function App() {
         sound={s.preferences.sound}
         victoryId={s.game.won ? s.game.id : null}
       />
-      <View style={[st.shell, wide && { flexDirection: "row" }]}>
-        {wide && (
-          <View style={st.sidebar}>
-            <Text style={st.logo}>♧</Text>
-            <Text style={st.brand}>Cozy{"\n"}Solitaire</Text>
-            <Text style={st.sideSubtitle}>{tt("tagline")}</Text>
-            <View style={{ height: 24 }} />
+      {
+        <View
+          pointerEvents="none"
+          style={StyleSheet.absoluteFill}
+          testID="play-season-scene"
+        >
+          <Image
+            source={cozyImages.seasons[season]}
+            resizeMode="cover"
+            style={StyleSheet.absoluteFill}
+          />
+          {screen !== "garden" &&
+            !(screen === "mini" && activeMini === "hidden") && (
+              <LivingWorldAnimationEngine
+                season={season}
+                enabled={s.preferences.animations}
+                quality={s.preferences.animationQuality}
+                reducedMotion={s.preferences.reducedMotion}
+                intensity={s.preferences.weather}
+                width={width}
+                height={height}
+                time={s.preferences.time}
+                cottageLights
+              />
+            )}
+        </View>
+      }
+      <View style={[st.shell, !focused && { flexDirection: "row" }]}>
+        {!focused && (
+          <ScrollView
+            style={[st.playRail, { width: railWidth, margin: 8 }]}
+            contentContainerStyle={st.railContent}
+          >
+            <Image
+              source={require("../assets/icon.png")}
+              style={st.rabbitLogo}
+            />
+            <Text style={st.railBrand}>Cozy Solitaire</Text>
+            <Text style={st.small}>{s.profile.username}</Text>
+            <Text style={st.currencyText}>
+              ✦ {number(s.economy.wallet.glimmers, language)} {tt("glimmers")}
+            </Text>
             {nav.map((n) => (
-              <Pressable
-                key={n.id}
-                accessibilityRole="button"
-                accessibilityState={{ selected: screen === n.id }}
-                onPress={() => go(n.id)}
-                style={[st.nav, screen === n.id && st.navActive]}
-              >
-                <Text
-                  style={[st.navText, screen === n.id && { color: "#f6f2e8" }]}
-                >
-                  {n.icon} {tt(n.id)}
-                </Text>
-              </Pressable>
+              <React.Fragment key={n.id}>
+                {button(
+                  n.icon + " " + tt(n.id),
+                  () => go(n.id),
+                  false,
+                  screen !== n.id,
+                )}
+              </React.Fragment>
             ))}
-            <View style={{ flex: 1 }} />
-            <Text style={st.small}>{tt("offline")}</Text>
-          </View>
+          </ScrollView>
         )}
         <View style={st.main}>
-          <View style={st.topbar}>
-            <Text numberOfLines={1} style={st.player}>
-              ☀ {s.profile.username}
-            </Text>
-            <View style={st.currency}>
-              <Text style={st.currencyText}>
-                ✦ {number(s.economy.wallet.glimmers, language)} {tt("glimmers")}
-              </Text>
-            </View>
-          </View>
-          {!wide && (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={{ maxHeight: 60 }}
-              contentContainerStyle={{ paddingHorizontal: 12, gap: 6 }}
-            >
-              {nav.map((n) => (
-                <Pressable
-                  key={n.id}
-                  onPress={() => go(n.id)}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: screen === n.id }}
-                  style={[st.mobileNav, screen === n.id && st.navActive]}
-                >
-                  <Text style={{ color: screen === n.id ? "#fff" : "#345b49" }}>
-                    {n.icon} {tt(n.id)}
-                  </Text>
-                </Pressable>
-              ))}
-            </ScrollView>
-          )}
           {writeError && (
             <View style={st.notice}>
               <Text>{tt("writeError")}</Text>
@@ -686,333 +797,393 @@ export default function App() {
             </View>
           )}
           <ScrollView
-            contentContainerStyle={[st.content, wide && { padding: 32 }]}
+            scrollEnabled={!focused}
+            style={focused ? { flex: 1 } : undefined}
+            contentContainerStyle={
+              focused ? st.playContent : [st.content, st.menuSheet]
+            }
             keyboardShouldPersistTaps="handled"
           >
             {screen === "world" && <WorldPanel save={s} onUpdate={act} />}
             {screen === "garden" && (
-              <>
-                {heading(
-                  tt("gardenTitle"),
-                  tt("welcome", { username: s.profile.username }),
-                )}
-                {gardenScene()}
-                {s.economy.inventory.includes("forest") && (
-                  <View style={st.row}>
-                    {button(
-                      tt("cottage"),
-                      () => setLocation("cottage"),
-                      false,
-                      location !== "cottage",
-                    )}
-                    {button(
-                      tt("exploreForest"),
-                      () => setLocation("forest"),
-                      false,
-                      location !== "forest",
-                    )}
-                  </View>
-                )}
-                <View style={st.row}>
-                  {button("♠  " + tt("play"), () => go("play"))}
-                  {button("✿  " + tt("mini"), () => go("mini"), false, true)}
-                </View>
-                <Text style={st.sectionTitle}>{tt("gardenSub")}</Text>
-                <View style={st.tiles}>
-                  {(["millie", "marmalade", "pip"] as const).map((n) => (
-                    <Pressable
-                      key={n}
-                      style={st.npc}
-                      accessibilityRole="button"
-                      onPress={() => setNpc(n)}
-                    >
-                      {n === "pip" ? (
-                        <Portrait animal={n} />
-                      ) : (
+              <View style={st.playLayout}>
+                <ScrollView
+                  style={[st.playRail, { width: railWidth }]}
+                  contentContainerStyle={st.railContent}
+                >
+                  <Image
+                    source={require("../assets/icon.png")}
+                    style={st.rabbitLogo}
+                  />
+                  <Text style={st.railBrand}>Cozy Solitaire</Text>
+                  <Text style={st.small}>
+                    {tt("welcome", { username: s.profile.username })}
+                  </Text>
+                  <Text style={st.currencyText}>
+                    ✦ {number(s.economy.wallet.glimmers, language)}{" "}
+                    {tt("glimmers")}
+                  </Text>
+                  {nav.map((n) => (
+                    <React.Fragment key={n.id}>
+                      {button(
+                        n.icon + " " + tt(n.id),
+                        () => go(n.id),
+                        false,
+                        screen !== n.id,
+                      )}
+                    </React.Fragment>
+                  ))}
+                </ScrollView>
+                <View style={st.playCenter}>
+                  {gardenScene()}
+                  <View style={st.gardenFriends}>
+                    {(["millie", "marmalade"] as const).map((n) => (
+                      <Pressable
+                        key={n}
+                        accessibilityRole="button"
+                        accessibilityLabel={tt(n)}
+                        onPress={() => setNpc(n)}
+                      >
                         <CharacterIdle
                           character={n}
                           enabled={s.preferences.animations}
                           reducedMotion={s.preferences.reducedMotion}
+                          size={Math.min(160, height * 0.36)}
                         />
-                      )}
-                      <Text style={st.label}>{tt(n)}</Text>
-                      <Text style={st.small}>
-                        {tt((n + "Hello") as Key, {
-                          username: s.profile!.username,
+                      </Pressable>
+                    ))}
+                  </View>
+                  {npc && (
+                    <View style={st.dialogue}>
+                      <Text style={st.label}>{tt(npc)}</Text>
+                      <Text style={st.subtitle}>
+                        {tt((npc + "Hello") as Key, {
+                          username: s.profile.username,
                         })}
                       </Text>
-                    </Pressable>
-                  ))}
+                      <View style={st.row}>
+                        {button(tt("quests"), () => go("quests"))}
+                        {button(tt("close"), () => setNpc(null), false, true)}
+                      </View>
+                    </View>
+                  )}
                 </View>
-                {npc && (
+                <ScrollView
+                  style={[st.playRail, { width: railWidth + 24 }]}
+                  contentContainerStyle={st.railContent}
+                >
+                  {s.economy.inventory.includes("forest") && (
+                    <View style={st.row}>
+                      {button(
+                        tt("cottage"),
+                        () => setLocation("cottage"),
+                        false,
+                        location !== "cottage",
+                      )}
+                      {button(
+                        tt("exploreForest"),
+                        () => setLocation("forest"),
+                        false,
+                        location !== "forest",
+                      )}
+                    </View>
+                  )}
+                  {button(tt("pip"), () => setNpc("pip"), false, true)}
                   <View style={st.panel}>
-                    <Text style={st.label}>{tt(npc)}</Text>
-                    <Text style={st.subtitle}>
-                      {tt((npc + "Hello") as Key, {
-                        username: s.profile.username,
-                      })}
-                    </Text>
-                    {button(tt("quests"), () => go("quests"))}
+                    <Text style={st.small}>{tt("gatherHint")}</Text>
+                    <View style={st.row}>
+                      {button(
+                        tt("gather"),
+                        () =>
+                          act((v) => ({
+                            ...v,
+                            counters: {
+                              ...v.counters,
+                              gather: v.counters.gather + 1,
+                            },
+                            economy: transact(v.economy, "gather:" + uuid(), {
+                              wood: 1,
+                              stone: 1,
+                            }),
+                          })),
+                        false,
+                        true,
+                      )}
+                      {button(
+                        tt(
+                          s.economy.receipts.includes(
+                            "daily:" + new Date().toLocaleDateString("en-CA"),
+                          )
+                            ? "dailyDone"
+                            : "daily",
+                        ),
+                        () =>
+                          act((v) => ({
+                            ...v,
+                            economy: transact(
+                              v.economy,
+                              "daily:" + new Date().toLocaleDateString("en-CA"),
+                              { glimmers: 10 },
+                            ),
+                          })),
+                        s.economy.receipts.includes(
+                          "daily:" + new Date().toLocaleDateString("en-CA"),
+                        ),
+                        true,
+                      )}
+                    </View>
                   </View>
-                )}
-                <View style={st.panel}>
-                  <Text style={st.small}>{tt("gatherHint")}</Text>
+                </ScrollView>
+              </View>
+            )}
+            {screen === "play" && (
+              <View style={st.playLayout} testID="landscape-play-layout">
+                <ScrollView
+                  style={[st.playRail, { width: railWidth }]}
+                  contentContainerStyle={st.railContent}
+                >
+                  <Image
+                    source={require("../assets/icon.png")}
+                    style={st.rabbitLogo}
+                  />
+                  <Text style={st.railBrand}>Cozy Solitaire</Text>
+                  <Text style={st.small}>{s.profile.username}</Text>
+                  <Text style={st.currencyText}>
+                    ✦ {number(s.economy.wallet.glimmers, language)}{" "}
+                    {tt("glimmers")}
+                  </Text>
+                  <Text style={st.small}>
+                    {tt("moves", { count: s.game.moves })}
+                  </Text>
+                  {nav
+                    .filter((n) => n.id !== "play")
+                    .map((n) => (
+                      <React.Fragment key={n.id}>
+                        {button(
+                          n.icon + " " + tt(n.id),
+                          () => go(n.id),
+                          false,
+                          true,
+                        )}
+                      </React.Fragment>
+                    ))}
+                </ScrollView>
+                <View style={st.playCenter}>
+                  <ScrollView
+                    style={{ flex: 1 }}
+                    contentContainerStyle={{ flexGrow: 1 }}
+                    scrollEnabled={!dragging}
+                    testID="card-board-scroll"
+                  >
+                    <View style={st.board} testID="solitaire-board">
+                      <View
+                        style={[
+                          st.row,
+                          {
+                            justifyContent: "space-between",
+                            alignItems: "flex-start",
+                            flexWrap: "nowrap",
+                          },
+                        ]}
+                      >
+                        <View style={{ flexDirection: "row", gap: 5 }}>
+                          <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel={tt(
+                              s.game.stock.length ? "draw" : "recycle",
+                            )}
+                            onPress={() => applyGame(drawCards)}
+                            style={[
+                              st.cardBack,
+                              st.card,
+                              {
+                                width: cardWidth,
+                                height: cardHeight,
+                                alignItems: "center",
+                                justifyContent: "center",
+                              },
+                            ]}
+                          >
+                            <Text style={{ color: "#f0dfb8", fontSize: 25 }}>
+                              {s.game.stock.length ? "✦" : "↻"}
+                            </Text>
+                            <Text style={{ color: "#f0dfb8" }}>
+                              {s.game.stock.length}
+                            </Text>
+                          </Pressable>
+                          <View style={{ width: cardWidth }}>
+                            {s.game.waste.at(-1) ? (
+                              renderCard(s.game.waste.at(-1)!, {
+                                kind: "waste",
+                              })
+                            ) : (
+                              <View
+                                style={[
+                                  st.slot,
+                                  { width: cardWidth, height: cardHeight },
+                                ]}
+                              />
+                            )}
+                          </View>
+                        </View>
+                        <View style={{ flexDirection: "row", gap: 5 }}>
+                          {s.game.foundations.map((p, pile) =>
+                            target(
+                              { kind: "foundations", pile },
+                              "f" + pile,
+                              p.at(-1)
+                                ? renderCard(p.at(-1)!, {
+                                    kind: "foundations",
+                                    pile,
+                                  })
+                                : null,
+                            ),
+                          )}
+                        </View>
+                      </View>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          justifyContent: "space-between",
+                          marginTop: 12,
+                          minHeight: tableauHeight,
+                        }}
+                      >
+                        {s.game.tableau.map((p, pile) =>
+                          target(
+                            { kind: "tableau", pile },
+                            "t" + pile,
+                            <View
+                              pointerEvents="box-none"
+                              style={{ paddingBottom: cardHeight }}
+                            >
+                              {p.map((c, index) =>
+                                renderCard(
+                                  c,
+                                  { kind: "tableau", pile, index },
+                                  true,
+                                ),
+                              )}
+                            </View>,
+                          ),
+                        )}
+                      </View>
+                    </View>
+                  </ScrollView>
+                </View>
+                <ScrollView
+                  style={[st.playRail, { width: railWidth }]}
+                  contentContainerStyle={st.railContent}
+                >
                   <View style={st.row}>
                     {button(
-                      tt("gather"),
-                      () =>
-                        act((v) => ({
-                          ...v,
-                          counters: {
-                            ...v.counters,
-                            gather: v.counters.gather + 1,
-                          },
-                          economy: transact(v.economy, "gather:" + uuid(), {
-                            wood: 1,
-                            stone: 1,
-                          }),
-                        })),
+                      tt("undo"),
+                      () => applyGame(undo),
+                      !s.game.history.length,
+                      true,
+                    )}
+                    {button(
+                      tt("hint"),
+                      () => {
+                        const h = hints(s.game)[0];
+                        setHint(h ?? null);
+                        setSelected(h?.from ?? null);
+                        setMessage(
+                          h
+                            ? tt("hintText", {
+                                card: cardName(cardsAt(s.game, h.from)[0]),
+                                destination: tt(
+                                  h.to.kind === "foundations"
+                                    ? "foundation"
+                                    : "tableau",
+                                  {
+                                    number:
+                                      h.to.kind === "waste" ? 0 : h.to.pile + 1,
+                                  },
+                                ),
+                              })
+                            : tt("noHint"),
+                        );
+                      },
+                      false,
+                      true,
+                    )}
+                    {button(tt("help"), () => setHelp(!help), false, true)}
+                  </View>
+                  {help && <Text style={st.rules}>{tt("solitaireRules")}</Text>}
+                  {s.game.won && (
+                    <View style={st.panel}>
+                      <Text style={st.sectionTitle}>{tt("victory")}</Text>
+                      <Text style={st.subtitle}>{tt("victoryText")}</Text>
+                      <VictorySparkles
+                        enabled={s.preferences.animations}
+                        reducedMotion={s.preferences.reducedMotion}
+                      />
+                    </View>
+                  )}
+                  <View style={st.row}>
+                    {button(
+                      tt("auto"),
+                      () => applyGame(autoComplete),
                       false,
                       true,
                     )}
                     {button(
-                      tt(
-                        s.economy.receipts.includes(
-                          "daily:" + new Date().toLocaleDateString("en-CA"),
-                        )
-                          ? "dailyDone"
-                          : "daily",
-                      ),
-                      () =>
-                        act((v) => ({
-                          ...v,
-                          economy: transact(
-                            v.economy,
-                            "daily:" + new Date().toLocaleDateString("en-CA"),
-                            { glimmers: 10 },
-                          ),
-                        })),
-                      s.economy.receipts.includes(
-                        "daily:" + new Date().toLocaleDateString("en-CA"),
-                      ),
+                      tt("restart"),
+                      () => setDialog("restart"),
+                      false,
+                      true,
+                    )}
+                    {button(
+                      tt("newGame"),
+                      () => {
+                        setPendingChallenge(null);
+                        setDialog("new");
+                      },
+                      false,
+                      true,
+                    )}
+                    {button(
+                      tt("saveContinue"),
+                      () => go("garden"),
+                      false,
                       true,
                     )}
                   </View>
-                </View>
-              </>
-            )}
-            {screen === "play" && (
-              <>
-                {heading(tt("play"), tt("moves", { count: s.game.moves }))}
-                <View style={st.row}>
-                  {button(
-                    tt("undo"),
-                    () => applyGame(undo),
-                    !s.game.history.length,
-                    true,
-                  )}
-                  {button(
-                    tt("hint"),
-                    () => {
-                      const h = hints(s.game)[0];
-                      setHint(h ?? null);
-                      setSelected(h?.from ?? null);
-                      setMessage(
-                        h
-                          ? tt("hintText", {
-                              card: cardName(cardsAt(s.game, h.from)[0]),
-                              destination: tt(
-                                h.to.kind === "foundations"
-                                  ? "foundation"
-                                  : "tableau",
-                                {
-                                  number:
-                                    h.to.kind === "waste" ? 0 : h.to.pile + 1,
-                                },
-                              ),
-                            })
-                          : tt("noHint"),
-                      );
-                    },
-                    false,
-                    true,
-                  )}
-                  {button(tt("help"), () => setHelp(!help), false, true)}
-                </View>
-                {help && <Text style={st.rules}>{tt("solitaireRules")}</Text>}
-                <View style={st.board}>
-                  <Image
-                    source={
-                      season === "winter"
-                        ? cozyImages.boards.winterSnow
-                        : season === "autumn"
-                          ? cozyImages.boards.autumnRain
-                          : season === "summer"
-                            ? cozyImages.boards.summerEvening
-                            : cozyImages.seasons.spring
-                    }
-                    resizeMode="cover"
-                    style={[
-                      StyleSheet.absoluteFill,
-                      { opacity: 0.15, borderRadius: 16 },
-                    ]}
-                  />
-
-                  <View
-                    style={[
-                      st.row,
-                      {
-                        justifyContent: "space-between",
-                        alignItems: "flex-start",
-                        flexWrap: "nowrap",
-                      },
-                    ]}
-                  >
-                    <View style={{ flexDirection: "row", gap: 5 }}>
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={tt(
-                          s.game.stock.length ? "draw" : "recycle",
-                        )}
-                        onPress={() => applyGame(drawCards)}
-                        style={[
-                          st.cardBack,
-                          st.card,
-                          {
-                            width: cardWidth,
-                            height: cardHeight,
-                            alignItems: "center",
-                            justifyContent: "center",
+                  <View style={st.panel}>
+                    <Text style={st.sectionTitle}>{tt("challengeTitle")}</Text>
+                    <Text style={st.small}>{tt("challengeIntro")}</Text>
+                    {challenges.map((c) => (
+                      <View key={c.id} style={st.row}>
+                        {button(
+                          tt(("challenge_" + c.id) as Key),
+                          () => {
+                            setPendingChallenge(c.id);
+                            setDialog("new");
                           },
-                        ]}
-                      >
-                        <Text style={{ color: "#f0dfb8", fontSize: 25 }}>
-                          {s.game.stock.length ? "✦" : "↻"}
-                        </Text>
-                        <Text style={{ color: "#f0dfb8" }}>
-                          {s.game.stock.length}
-                        </Text>
-                      </Pressable>
-                      <View style={{ width: cardWidth }}>
-                        {s.game.waste.at(-1) ? (
-                          renderCard(s.game.waste.at(-1)!, { kind: "waste" })
-                        ) : (
-                          <View
-                            style={[
-                              st.slot,
-                              { width: cardWidth, height: cardHeight },
-                            ]}
-                          />
+                          false,
+                          true,
+                        )}
+                        {s.world.challenges.includes(c.id) && (
+                          <Text style={st.small}>
+                            {tt("challengeCompleted")}
+                          </Text>
                         )}
                       </View>
-                    </View>
-                    <View style={{ flexDirection: "row", gap: 5 }}>
-                      {s.game.foundations.map((p, pile) =>
-                        target(
-                          { kind: "foundations", pile },
-                          "f" + pile,
-                          p.at(-1)
-                            ? renderCard(p.at(-1)!, {
-                                kind: "foundations",
-                                pile,
-                              })
-                            : null,
-                        ),
-                      )}
-                    </View>
+                    ))}
                   </View>
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      justifyContent: "space-between",
-                      marginTop: 22,
-                      minHeight: cardHeight + 180,
-                    }}
-                  >
-                    {s.game.tableau.map((p, pile) =>
-                      target(
-                        { kind: "tableau", pile },
-                        "t" + pile,
-                        <View
-                          pointerEvents="box-none"
-                          style={{ paddingBottom: cardHeight }}
-                        >
-                          {p.map((c, index) =>
-                            renderCard(
-                              c,
-                              { kind: "tableau", pile, index },
-                              true,
-                            ),
-                          )}
-                        </View>,
-                      ),
-                    )}
-                  </View>
-                </View>
-                {s.game.won && (
-                  <View style={st.panel}>
-                    <Text style={st.sectionTitle}>{tt("victory")}</Text>
-                    <Text style={st.subtitle}>{tt("victoryText")}</Text>
-                    <VictorySparkles
-                      enabled={s.preferences.animations}
-                      reducedMotion={s.preferences.reducedMotion}
-                    />
-                  </View>
-                )}
-                <View style={st.row}>
-                  {button(
-                    tt("auto"),
-                    () => applyGame(autoComplete),
-                    false,
-                    true,
-                  )}
-                  {button(
-                    tt("restart"),
-                    () => setDialog("restart"),
-                    false,
-                    true,
-                  )}
-                  {button(
-                    tt("newGame"),
-                    () => {
-                      setPendingChallenge(null);
-                      setDialog("new");
-                    },
-                    false,
-                    true,
-                  )}
-                  {button(tt("saveContinue"), () => go("garden"), false, true)}
-                </View>
-                <View style={st.panel}>
-                  <Text style={st.sectionTitle}>{tt("challengeTitle")}</Text>
-                  <Text style={st.small}>{tt("challengeIntro")}</Text>
-                  {challenges.map((c) => (
-                    <View key={c.id} style={st.row}>
-                      {button(
-                        tt(("challenge_" + c.id) as Key),
-                        () => {
-                          setPendingChallenge(c.id);
-                          setDialog("new");
-                        },
-                        false,
-                        true,
-                      )}
-                      {s.world.challenges.includes(c.id) && (
-                        <Text style={st.small}>{tt("challengeCompleted")}</Text>
-                      )}
-                    </View>
-                  ))}
-                </View>
-              </>
+                </ScrollView>
+              </View>
             )}
             {screen === "mini" && (
               <>
-                {heading(
-                  tt(activeMini ?? "mini"),
-                  activeMini
-                    ? tt((activeMini + "Rules") as Key)
-                    : tt("currencyHint"),
-                )}
+                {!activeMini &&
+                  heading(
+                    tt(activeMini ?? "mini"),
+                    activeMini
+                      ? tt((activeMini + "Rules") as Key)
+                      : tt("currencyHint"),
+                  )}
                 {!activeMini && (
                   <>
                     <Text style={st.small}>{tt("miniLevelHint")}</Text>
@@ -1042,9 +1213,17 @@ export default function App() {
                   <View style={st.tiles}>
                     {(["match", "hidden", "tea"] as const).map((m, i) => (
                       <View key={m} style={st.npc}>
-                        <Text style={{ fontSize: 48 }}>
-                          {["🌸", "🔍", "🫖"][i]}
-                        </Text>
+                        <MiniArtwork
+                          kind={
+                            m === "match"
+                              ? "match"
+                              : m === "tea"
+                                ? "tea"
+                                : "treasure"
+                          }
+                          value={0}
+                          size={52}
+                        />
                         <Text style={st.sectionTitle}>{tt(m)}</Text>
                         <Text style={st.small}>
                           {tt("progress", {
@@ -1064,15 +1243,21 @@ export default function App() {
                           setFound([]);
                           setTea(teaForLevel(nextMiniLevel));
                           setTeaSelected(null);
-                          setMatchSelected(null);
                         })}
                       </View>
                     ))}
                   </View>
                 ) : (
-                  <>
-                    {activeMini === "match" && (
-                      <>
+                  <View style={st.playLayout} testID="mini-play-layout">
+                    <ScrollView
+                      style={[st.playRail, { width: width < 800 ? 174 : 220 }]}
+                      contentContainerStyle={st.railContent}
+                    >
+                      <Text style={st.railBrand}>{tt(activeMini)}</Text>
+                      <Text style={st.small}>
+                        {tt((activeMini + "Rules") as Key)}
+                      </Text>
+                      {activeMini === "match" && (
                         <Text style={st.label}>
                           {tt("matchProgress", {
                             score: match.score,
@@ -1080,108 +1265,10 @@ export default function App() {
                             turns: match.turns,
                           })}
                         </Text>
-                        <View style={st.matchGrid}>
-                          {match.cells.map((v, i) => (
-                            <Pressable
-                              key={i}
-                              disabled={miniDone || match.turns === 0}
-                              accessibilityRole="button"
-                              accessibilityLabel={`${symbols.match[v]} ${Math.floor(i / 6) + 1}, ${(i % 6) + 1}`}
-                              accessibilityState={{
-                                selected: matchSelected === i,
-                              }}
-                              onPress={() => {
-                                if (matchSelected === null) setMatchSelected(i);
-                                else {
-                                  setMatch(swapMatch(match, matchSelected, i));
-                                  setMatchSelected(null);
-                                }
-                              }}
-                              style={[
-                                st.matchCell,
-                                matchSelected === i && st.selected,
-                              ]}
-                            >
-                              <Text style={{ fontSize: 28 }}>
-                                {symbols.match[v]}
-                              </Text>
-                            </Pressable>
-                          ))}
-                        </View>
-                        {button(
-                          tt("shuffle"),
-                          () =>
-                            setMatch((g) => ({
-                              ...matchForLevel(miniLevel),
-                              score: g.score,
-                              turns: g.turns,
-                            })),
-                          miniDone || match.turns === 0,
-                          true,
-                        )}
-                        {!miniDone && match.turns === 0 && (
-                          <Text style={st.label}>{tt("miniLost")}</Text>
-                        )}
-                      </>
-                    )}
-                    {activeMini === "hidden" && (
-                      <>
-                        {gardenScene(true)}
-                        <View style={st.row}>
-                          {treasures.map((o) => (
-                            <Text
-                              key={o.id}
-                              style={[
-                                st.chip,
-                                found.includes(o.id) && {
-                                  textDecorationLine: "line-through",
-                                  opacity: 0.45,
-                                },
-                              ]}
-                            >
-                              {symbols.treasures[o.id]} {tt(o.id)}{" "}
-                              {found.includes(o.id) ? "✓" : ""}
-                            </Text>
-                          ))}
-                        </View>
-                      </>
-                    )}
-                    {activeMini === "tea" && (
-                      <View style={st.tiles}>
-                        {tea.map((tray, i) => (
-                          <Pressable
-                            key={i}
-                            disabled={miniDone}
-                            accessibilityRole="button"
-                            accessibilityLabel={tt("tray", { number: i + 1 })}
-                            accessibilityState={{ selected: teaSelected === i }}
-                            onPress={() => {
-                              if (teaSelected === null) setTeaSelected(i);
-                              else {
-                                setTea(pour(tea, teaSelected, i));
-                                setTeaSelected(null);
-                              }
-                            }}
-                            style={[st.tray, teaSelected === i && st.selected]}
-                          >
-                            {Array.from({ length: 3 }, (_, j) => (
-                              <Text
-                                key={j}
-                                style={{ fontSize: 36, height: 50 }}
-                              >
-                                {tray[2 - j] === undefined
-                                  ? "·"
-                                  : symbols.tea[tray[2 - j]]}
-                              </Text>
-                            ))}
-                          </Pressable>
-                        ))}
-                      </View>
-                    )}
-                    {miniDone && (
-                      <Text style={st.sectionTitle}>{tt("miniWon")}</Text>
-                    )}
-                    <View style={st.row}>
+                      )}
+                      {miniDone && (
+                        <Text style={st.sectionTitle}>{tt("miniWon")}</Text>
+                      )}
                       {button(
                         tt("replay"),
                         () => {
@@ -1190,14 +1277,140 @@ export default function App() {
                           setTea(teaForLevel(miniLevel));
                           setFound([]);
                           setTeaSelected(null);
-                          setMatchSelected(null);
                         },
                         false,
                         true,
                       )}
-                      {button(tt("back"), () => setMiniHub(true), false, true)}
-                    </View>
-                  </>
+                      {button(
+                        tt("back"),
+                        () => {
+                          setMatchBusy(false);
+                          setMiniHub(true);
+                        },
+                        false,
+                        true,
+                      )}
+                      {button(tt("play"), () => go("play"), false, true)}
+                      {button(tt("garden"), () => go("garden"), false, true)}
+                    </ScrollView>
+                    <ScrollView
+                      style={st.playCenter}
+                      contentContainerStyle={{
+                        padding: 8,
+                        flexGrow: 1,
+                        justifyContent: "center",
+                      }}
+                    >
+                      {activeMini === "match" && (
+                        <>
+                          <GardenMatch
+                            game={match}
+                            size={Math.min(
+                              336,
+                              height - insets.top - insets.bottom - 76,
+                            )}
+                            disabled={miniDone || match.turns === 0}
+                            reducedMotion={s.preferences.reducedMotion}
+                            onChange={setMatch}
+                            onBusyChange={setMatchBusy}
+                          />
+                          {button(
+                            tt("shuffle"),
+                            () =>
+                              setMatch((g) => ({
+                                ...matchForLevel(miniLevel),
+                                score: g.score,
+                                turns: g.turns,
+                              })),
+                            miniDone || match.turns === 0 || matchBusy,
+                            true,
+                          )}
+                          {!miniDone && match.turns === 0 && (
+                            <Text style={st.label}>{tt("miniLost")}</Text>
+                          )}
+                        </>
+                      )}
+                      {activeMini === "hidden" && (
+                        <>
+                          {gardenScene(true)}
+                          <View style={st.row}>
+                            {treasures.map((o) => (
+                              <Text
+                                key={o.id}
+                                style={[
+                                  st.chip,
+                                  found.includes(o.id) && {
+                                    textDecorationLine: "line-through",
+                                    opacity: 0.45,
+                                  },
+                                ]}
+                              >
+                                {tt(o.id)} {found.includes(o.id) ? "✓" : ""}
+                              </Text>
+                            ))}
+                          </View>
+                        </>
+                      )}
+                      {activeMini === "tea" && (
+                        <View style={st.tiles}>
+                          {tea.map((tray, i) => (
+                            <Pressable
+                              key={i}
+                              disabled={miniDone}
+                              accessibilityRole="button"
+                              accessibilityLabel={tt("tray", { number: i + 1 })}
+                              accessibilityState={{
+                                selected: teaSelected === i,
+                              }}
+                              onPress={() => {
+                                if (teaSelected === null) setTeaSelected(i);
+                                else {
+                                  setTea(pour(tea, teaSelected, i));
+                                  setTeaSelected(null);
+                                }
+                              }}
+                              style={[
+                                st.tray,
+                                {
+                                  width: Math.min(
+                                    95,
+                                    (width -
+                                      (width < 800 ? 174 : 220) -
+                                      insets.left -
+                                      insets.right -
+                                      100) /
+                                      5,
+                                  ),
+                                },
+                                teaSelected === i && st.selected,
+                              ]}
+                            >
+                              {Array.from({ length: 3 }, (_, j) => (
+                                <View
+                                  key={j}
+                                  style={{
+                                    height: 44,
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                  }}
+                                >
+                                  {tray[2 - j] === undefined ? (
+                                    <Text style={st.small}>·</Text>
+                                  ) : (
+                                    <MiniArtwork
+                                      kind="tea"
+                                      value={tray[2 - j]}
+                                      size={40}
+                                    />
+                                  )}
+                                </View>
+                              ))}
+                            </Pressable>
+                          ))}
+                        </View>
+                      )}
+                    </ScrollView>
+                  </View>
                 )}
               </>
             )}
@@ -1522,7 +1735,18 @@ export default function App() {
               </>
             )}
             {message && (
-              <View accessibilityRole="alert" style={st.notice}>
+              <View
+                accessibilityRole="alert"
+                style={[
+                  st.notice,
+                  playing && {
+                    position: "absolute",
+                    right: railWidth + 24,
+                    bottom: 12,
+                    left: railWidth + 24,
+                  },
+                ]}
+              >
                 <Text style={st.subtitle}>{message}</Text>
                 {button(tt("close"), () => setMessage(""), false, true)}
               </View>
@@ -1570,30 +1794,52 @@ function Draggable({
   enabled,
   onTap,
   onDrop,
+  onDragStart,
+  onDragEnd,
+  tail,
   style,
 }: {
   children: React.ReactNode;
   label: string;
   enabled: boolean;
   onTap: () => void;
-  onDrop: (x: number, y: number) => void;
+  onDrop: (x: number, y: number) => Promise<void>;
+  onDragStart: () => void;
+  onDragEnd: () => void;
+  tail: React.ReactNode;
   style: object;
 }) {
   const position = useRef(new Animated.ValueXY()).current;
-  const callbacks = useRef({ onTap, onDrop, enabled });
-  callbacks.current = { onTap, onDrop, enabled };
+  const [lifted, setLifted] = useState(false);
+  const callbacks = useRef({ onDrop, enabled, onDragStart, onDragEnd });
+  callbacks.current = { onDrop, enabled, onDragStart, onDragEnd };
   const pan = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponderCapture: () => callbacks.current.enabled,
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponderCapture: (_, g) =>
+        callbacks.current.enabled && (Math.abs(g.dx) > 6 || Math.abs(g.dy) > 6),
+      onPanResponderGrant: () => {
+        setLifted(true);
+        callbacks.current.onDragStart();
+      },
+      onPanResponderTerminationRequest: () => false,
       onMoveShouldSetPanResponder: (_, g) =>
         callbacks.current.enabled && (Math.abs(g.dx) > 5 || Math.abs(g.dy) > 5),
       onPanResponderMove: (_, g) => position.setValue({ x: g.dx, y: g.dy }),
       onPanResponderRelease: (_, g) => {
-        position.setValue({ x: 0, y: 0 });
-        if (Math.abs(g.dx) + Math.abs(g.dy) < 10) callbacks.current.onTap();
-        else callbacks.current.onDrop(g.moveX, g.moveY);
+        void callbacks.current.onDrop(g.moveX, g.moveY).finally(() => {
+          requestAnimationFrame(() => {
+            position.setValue({ x: 0, y: 0 });
+            setLifted(false);
+            callbacks.current.onDragEnd();
+          });
+        });
       },
-      onPanResponderTerminate: () => position.setValue({ x: 0, y: 0 }),
+      onPanResponderTerminate: () => {
+        position.setValue({ x: 0, y: 0 });
+        setLifted(false);
+        callbacks.current.onDragEnd();
+      },
     }),
   ).current;
   return (
@@ -1602,6 +1848,8 @@ function Draggable({
       style={[
         style,
         {
+          zIndex: lifted ? 1000 : undefined,
+          elevation: lifted ? 12 : 0,
           transform: position.getTranslateTransform(),
         },
       ]}
@@ -1614,6 +1862,7 @@ function Draggable({
       >
         {children}
       </Pressable>
+      {lifted && tail}
     </Animated.View>
   );
 }
@@ -1672,7 +1921,7 @@ const st = StyleSheet.create({
     paddingBottom: 60,
     gap: 18,
   },
-  heading: { gap: 9, marginBottom: 4 },
+  heading: { gap: 4, marginBottom: 4 },
   eyebrow: {
     fontSize: 10,
     fontWeight: "700",
@@ -1681,9 +1930,9 @@ const st = StyleSheet.create({
   },
   title: {
     fontFamily: Platform.OS === "ios" ? "Georgia" : "serif",
-    fontSize: 34,
+    fontSize: 26,
     color: "#2c4e3b",
-    lineHeight: 42,
+    lineHeight: 32,
   },
   subtitle: { fontSize: 15, lineHeight: 24, color: "#69745e" },
   sectionTitle: {
@@ -1786,11 +2035,58 @@ const st = StyleSheet.create({
     flexShrink: 1,
   },
   welcome: { maxWidth: 460, gap: 18, padding: 16 },
+  rabbitLogo: { width: 64, height: 64, borderRadius: 20, alignSelf: "center" },
+  menuSheet: {
+    backgroundColor: "#fff9eeeb",
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: "#d7c79e",
+    marginVertical: 8,
+    width: "96%",
+    padding: 18,
+  },
+  gardenFriends: {
+    position: "absolute",
+    bottom: 20,
+    left: 12,
+    right: 12,
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  dialogue: {
+    position: "absolute",
+    bottom: 12,
+    left: 8,
+    right: 8,
+    borderRadius: 18,
+    padding: 14,
+    gap: 8,
+    backgroundColor: "#fff9eef5",
+  },
+  playContent: { flexGrow: 1 },
+  playLayout: { flex: 1, flexDirection: "row", padding: 8, gap: 8 },
+  playRail: {
+    flexGrow: 0,
+    flexShrink: 0,
+    backgroundColor: "#fff9ebd9",
+    borderWidth: 1,
+    borderColor: "#dbc99a",
+    borderRadius: 16,
+  },
+  railContent: { padding: 8, gap: 10 },
+  railBrand: {
+    fontFamily: Platform.OS === "ios" ? "Georgia" : "serif",
+    color: "#345b49",
+    fontSize: 19,
+  },
+  playCenter: { flex: 1, minWidth: 0 },
   board: {
+    flexGrow: 1,
     padding: 12,
     borderRadius: 16,
-    backgroundColor: "#567b63",
-    minHeight: 400,
+    backgroundColor: "#284d3c99",
+    borderWidth: 1,
+    borderColor: "#d9c48a99",
   },
   card: {
     borderRadius: 6,

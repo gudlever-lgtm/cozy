@@ -57,7 +57,7 @@ Source artwork already exists in `public/assets/`: four seasonal scenes, three e
 - Centralized i18n keys, interpolation, pluralization, locale formatting and completeness tests.
 
 ## 10. Screens and experience
-Onboarding; Cottage Garden; Klondike; mini-game hub plus 3 mini-games; quest journal; inventory/Lysglimt; garden customization; statistics; Settings. Smooth, pastel, low-clutter UI with rounded cards, original NPC illustration, soft sound and optional music. Native safe areas, portrait-first phones, tablet layouts, accessible typography/touch.
+Onboarding; Cottage Garden; Klondike; mini-game hub plus 3 mini-games; quest journal; inventory/Lysglimt; garden customization; statistics; Settings. Smooth, pastel, low-clutter UI with rounded cards, original NPC illustration, soft sound and optional music. Native safe areas, landscape phones and tablets, full-screen game presentation (updated user direction for 1.7.1), accessible typography/touch.
 
 ## 11. Native technical architecture
 **Only Expo + React Native + TypeScript, Expo Router as appropriate, native offline local storage with migrations, EAS Build.** Shared testable pure TS modules: Solitaire / rewards / quests / mini-games / garden / seasonal ambience / persistence / localization. Android AAB and iOS IPA production builds through Expo EAS; Android debug/preview APK as useful. No web target, PWA, Vite, React Native Web or Capacitor. Avoid unnecessary permissions and do not commit signing credentials. Server checkout: `/home/lakn/games/cozy`; repo: `gudlever-lgtm/cozy`.

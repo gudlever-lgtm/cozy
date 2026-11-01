@@ -15,10 +15,12 @@ export const CharacterIdle = memo(function CharacterIdle({
   character,
   enabled,
   reducedMotion,
+  size = 80,
 }: {
   character: "millie" | "marmalade";
   enabled: boolean;
   reducedMotion: boolean;
+  size?: number;
 }) {
   const moving = useMotionPolicy(enabled, reducedMotion),
     phase = useSharedValue(0);
@@ -48,11 +50,11 @@ export const CharacterIdle = memo(function CharacterIdle({
     ],
   }));
   return (
-    <View pointerEvents="none" style={{ width: 80, height: 100 }}>
+    <View pointerEvents="none" style={{ width: size, height: size * 1.25 }}>
       <Animated.Image
         testID={`living-character-${character}`}
         source={cozyImages.characters[character]}
-        style={[{ width: 80, height: 100 }, style]}
+        style={[{ width: size, height: size * 1.25 }, style]}
         resizeMode="contain"
         accessible={false}
       />
