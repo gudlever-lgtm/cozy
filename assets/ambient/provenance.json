@@ -1,0 +1,110 @@
+{
+  "renderer": "CairoSVG 2.8.2 + Pillow, 4x supersampling/Lanczos",
+  "assets": [
+    {
+      "id": "firefly",
+      "source": "artwork/ambient/firefly.svg",
+      "source_sha256": "03e503f3b7f9243008af69df6fa1e1b3b28ac0fb008a1f34b827e153346ab354",
+      "native_path": "assets/ambient/firefly.png",
+      "scales": [
+        1,
+        2,
+        3
+      ],
+      "logical_size": [
+        24,
+        24
+      ]
+    },
+    {
+      "id": "bird",
+      "source": "artwork/ambient/bird.svg",
+      "source_sha256": "ae7285e084dd6ba0b8c2e6bb894e3fe7513ff64ac71e3ad7aa01d0b9156d206d",
+      "native_path": "assets/ambient/bird.png",
+      "scales": [
+        1,
+        2,
+        3
+      ],
+      "logical_size": [
+        40,
+        25
+      ]
+    },
+    {
+      "id": "butterfly",
+      "source": "artwork/ambient/butterfly.svg",
+      "source_sha256": "0b3cee97ce4c937b25e3e9ce2e535413b7fadf794268b88af6e2d01344f04cd2",
+      "native_path": "assets/ambient/butterfly.png",
+      "scales": [
+        1,
+        2,
+        3
+      ],
+      "logical_size": [
+        28,
+        28
+      ]
+    },
+    {
+      "id": "autumn-leaf",
+      "source": "artwork/ambient/autumn-leaf.svg",
+      "source_sha256": "bdd62b8f19bf4ec66d5c440b138825584bf8ab92a3da6fc8e74f974abc47b025",
+      "native_path": "assets/ambient/autumn-leaf.png",
+      "scales": [
+        1,
+        2,
+        3
+      ],
+      "logical_size": [
+        20,
+        20
+      ]
+    },
+    {
+      "id": "snowflake",
+      "source": "artwork/ambient/snowflake.svg",
+      "source_sha256": "41c5d6cca26fd02ff994a981647b9aa59cd269c1f7ba79a435abd2eaa25ad52e",
+      "native_path": "assets/ambient/snowflake.png",
+      "scales": [
+        1,
+        2,
+        3
+      ],
+      "logical_size": [
+        12,
+        12
+      ]
+    },
+    {
+      "id": "flower-petal",
+      "source": "artwork/ambient/flower-petal.svg",
+      "source_sha256": "c907591a0c677249db72e4f9fc4a3aceb133e8cd4f1c8d33bca97bdecc98f28b",
+      "native_path": "assets/ambient/flower-petal.png",
+      "scales": [
+        1,
+        2,
+        3
+      ],
+      "logical_size": [
+        16,
+        16
+      ]
+    },
+    {
+      "id": "glimmer",
+      "source": "artwork/ambient/glimmer.svg",
+      "source_sha256": "bc6b1c39e81af9b93f2eab9ca1da35e35482ee469cde423b9d1f17b8d9f0061d",
+      "native_path": "assets/ambient/glimmer.png",
+      "scales": [
+        1,
+        2,
+        3
+      ],
+      "logical_size": [
+        24,
+        24
+      ]
+    }
+  ]
+}

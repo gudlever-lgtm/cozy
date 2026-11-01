@@ -65,7 +65,8 @@ import {
   hiddenWon,
 } from "./engine/minigames";
 import { Cottage, NPC_ICON, Portrait, Forest } from "./Art";
-import { Weather } from "./Weather";
+import { LivingWorldAnimationEngine } from "./living/LivingWorldAnimationEngine";
+import { CharacterIdle } from "./living/CharacterIdle";
 import { Audio } from "./Audio";
 import { symbols } from "./assets";
 import { cozyImages } from "./assets/images";
@@ -208,11 +209,17 @@ export default function App() {
     onPress: () => void,
     disabled = false,
     quiet = false,
+    accessibilityLabel?: string,
+    selected?: boolean,
   ) => (
     <Pressable
       accessibilityRole="button"
       disabled={disabled}
-      accessibilityState={{ disabled }}
+      accessibilityLabel={accessibilityLabel ?? label}
+      accessibilityState={{
+        disabled,
+        ...(selected === undefined ? {} : { selected }),
+      }}
       onPress={onPress}
       style={({ pressed }) => [
         st.button,
@@ -469,10 +476,16 @@ export default function App() {
           },
         ]}
       />
-      <Weather
+      <LivingWorldAnimationEngine
         season={season}
+        enabled={s.preferences.animations}
+        quality={s.preferences.animationQuality}
+        reducedMotion={s.preferences.reducedMotion}
         intensity={s.preferences.weather}
-        reduced={s.preferences.reducedMotion}
+        width={sceneSize.width}
+        height={sceneSize.height}
+        time={s.preferences.time}
+        cottageLights={location === "cottage"}
       />
       {!hidden &&
         s.placements.map((p) => (
@@ -675,11 +688,10 @@ export default function App() {
                       {n === "pip" ? (
                         <Portrait animal={n} />
                       ) : (
-                        <Image
-                          source={cozyImages.characters[n]}
-                          style={{ width: 80, height: 100 }}
-                          resizeMode="contain"
-                          accessibilityIgnoresInvertColors
+                        <CharacterIdle
+                          character={n}
+                          enabled={s.preferences.animations}
+                          reducedMotion={s.preferences.reducedMotion}
                         />
                       )}
                       <Text style={st.label}>{tt(n)}</Text>
@@ -1339,7 +1351,24 @@ export default function App() {
                       </React.Fragment>
                     ))}
                   </View>
-                  {(["reducedMotion", "sound", "music"] as const).map((x) => (
+                  <Text style={st.label}>{tt("animationQuality")}</Text>
+                  <View style={st.row}>
+                    {(["low", "medium", "high"] as const).map((quality) => (
+                      <React.Fragment key={quality}>
+                        {button(
+                          tt(quality),
+                          () => pref("animationQuality", quality),
+                          false,
+                          s.preferences.animationQuality !== quality,
+                          tt("animationQuality") + ": " + tt(quality),
+                          s.preferences.animationQuality === quality,
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </View>
+                  {(
+                    ["animations", "reducedMotion", "sound", "music"] as const
+                  ).map((x) => (
                     <View key={x} style={st.settingRow}>
                       <Text style={st.label}>{tt(x)}</Text>
                       {button(
@@ -1347,6 +1376,7 @@ export default function App() {
                         () => pref(x, !s.preferences[x]),
                         false,
                         true,
+                        tt(x) + ": " + tt(s.preferences[x] ? "on" : "off"),
                       )}
                     </View>
                   ))}

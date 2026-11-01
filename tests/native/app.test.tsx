@@ -119,3 +119,36 @@ test("native save without a profile migrates through onboarding without losing r
     expect(save.version).toBe(2);
   });
 });
+
+test("native ambience settings persist independently of game, balances and profile", async () => {
+  const initial = setProfile(
+    fresh("stable-deal", "en"),
+    "Living Garden",
+    "stable-player",
+  );
+  initial.economy.wallet.glimmers = 81;
+  await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(initial));
+  await renderAsync(<App />);
+  await screen.findByText("Welcome to Cozy Solitaire, Living Garden!");
+  press("⚙ Settings");
+  press("Animation quality: Low");
+  press("Animations: On");
+  await waitFor(async () => {
+    const saved = await stored();
+    expect(saved.preferences.animationQuality).toBe("low");
+    expect(saved.preferences.animations).toBe(false);
+    expect(saved.game).toEqual(initial.game);
+    expect(saved.economy).toEqual(initial.economy);
+    expect(saved.profile.id).toBe("stable-player");
+  });
+  await cleanupAsync();
+  await renderAsync(<App />);
+  await screen.findByText("Welcome to Cozy Solitaire, Living Garden!");
+  press("⚙ Settings");
+  expect(
+    screen.getByRole("button", { name: "Animations: Off" }),
+  ).toBeOnTheScreen();
+  expect(
+    screen.getByRole("button", { name: "Animation quality: Low" }),
+  ).toBeSelected();
+});

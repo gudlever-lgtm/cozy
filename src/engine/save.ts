@@ -24,6 +24,8 @@ export type Preferences = {
   reducedMotion: boolean;
   sound: boolean;
   music: boolean;
+  animations: boolean;
+  animationQuality: "low" | "medium" | "high";
 };
 export type Save = {
   version: 2;
@@ -61,6 +63,8 @@ export function fresh(id: string, language: Language): Save {
       reducedMotion: false,
       sound: false,
       music: false,
+      animations: true,
+      animationQuality: "medium",
     },
     game: newGame(id),
     economy: {
@@ -201,6 +205,8 @@ export function migrate(
   )
     throw Error("saveError");
   if (
+    typeof s.preferences.animations !== "boolean" ||
+    !["low", "medium", "high"].includes(s.preferences.animationQuality) ||
     !["da", "en"].includes(s.preferences.language) ||
     !["auto", "spring", "summer", "autumn", "winter"].includes(
       s.preferences.season,

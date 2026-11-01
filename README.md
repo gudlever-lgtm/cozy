@@ -60,3 +60,7 @@ npx eas build --platform all --profile production
 EAS CLI is also installed locally, so the brief's `eas build …` commands work inside an npm script / shell with `node_modules/.bin` on PATH. Cloud builds, store signing, and physical-device testing have **not** been completed by this implementation. JavaScript/Hermes export success does not establish a successful AAB/IPA build.
 
 See [IMPLEMENTATION.md](IMPLEMENTATION.md) for validation evidence and release limitations. The native-only platform decision follows `docs/COZY_MASTER_GAME_DESIGN.md` and the user’s confirmed scope.
+
+## Living world animations
+
+The garden uses the seven approved ambient illustrations as transparent native PNG sprites at 1x/2x/3x. Settings offers Animations On/Off and Low/Medium/High quality in Danish and English. Independent Reanimated motion pauses in the background and respects reduced motion. Millie and Marmalade have whole-portrait idle translations. See [LIVING_WORLD.md](docs/LIVING_WORLD.md) for layers, source provenance, sprite regeneration and explicit device/performance limits. These decorative layers never mount over the card board or change game/economy rules.

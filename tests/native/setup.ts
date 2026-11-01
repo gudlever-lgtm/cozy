@@ -15,3 +15,8 @@ jest.mock("../../src/Audio", () => ({ Audio: () => null }));
 
 import { configure } from "@testing-library/react-native";
 configure({ asyncUtilTimeout: 5000 });
+
+jest.mock("react-native-reanimated", () => ({
+  ...require("react-native-reanimated/mock"),
+  useReducedMotion: () => false,
+}));

@@ -1,5 +1,10 @@
 import type { en } from "./en";
 export const da: Record<keyof typeof en, string> = {
+  animations: "Animationer",
+  animationQuality: "Animationskvalitet",
+  low: "Lav",
+  medium: "Mellem",
+  high: "Høj",
   shuffle: "Forny blomster",
   cottage: "Sommerhuset",
   exploreForest: "Udforsk skoven",
