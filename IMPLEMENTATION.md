@@ -32,3 +32,7 @@ The app integrates the concurrently supplied seasonal/character artwork, complem
 The Expo SDK 54 toolchain has upstream dependency advisories. Compatible nanoid and PostCSS patches are pinned through npm overrides. Remaining advisories include image-size in Metro's local asset processor and decode-uri-component via Expo Router's query-string dependency, along with moderate toolchain issues. Do not treat this as security release approval; review supported SDK upgrades before shipping. The application has no backend, payment processing or transmitted profiles.
 
 The new CI workflow is committed; a remote CI result is not claimed unless observed. Cloud-environment publication is intentionally not performed.
+
+## Later development increment
+
+The subsequent Living World and V2.0 progression work is tracked in `docs/IMPLEMENTATION_STATUS.md` and `docs/TEST_RESULTS.md`; those documents supersede the earlier test counts and schema summary above. They explicitly distinguish implemented/tested features from blocked native builds and unverified device/release gates.

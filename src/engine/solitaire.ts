@@ -13,6 +13,7 @@ export type Game = Board & {
   history: Board[];
   initial: Board;
   won: boolean;
+  challenge?: string;
 };
 export type Place =
   | { kind: "tableau" | "foundations"; pile: number; index?: number }

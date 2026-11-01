@@ -2,6 +2,7 @@ import React from "react";
 import { AccessibilityInfo } from "react-native";
 import {
   renderAsync,
+  within,
   screen,
   fireEvent,
   waitFor,
@@ -116,6 +117,183 @@ test("native save without a profile migrates through onboarding without losing r
     const save = await stored();
     expect(save.economy.wallet.glimmers).toBe(75);
     expect(save.game.id).toBe("legacy");
-    expect(save.version).toBe(2);
+    expect(save.version).toBe(3);
   });
+});
+
+test("native ambience settings persist independently of game, balances and profile", async () => {
+  const initial = setProfile(
+    fresh("stable-deal", "en"),
+    "Living Garden",
+    "stable-player",
+  );
+  initial.economy.wallet.glimmers = 81;
+  await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(initial));
+  await renderAsync(<App />);
+  await screen.findByText("Welcome to Cozy Solitaire, Living Garden!");
+  press("⚙ Settings");
+  press("Animation quality: Low");
+  press("Animations: On");
+  await waitFor(async () => {
+    const saved = await stored();
+    expect(saved.preferences.animationQuality).toBe("low");
+    expect(saved.preferences.animations).toBe(false);
+    expect(saved.game).toEqual(initial.game);
+    expect(saved.economy).toEqual(initial.economy);
+    expect(saved.profile.id).toBe("stable-player");
+  });
+  await cleanupAsync();
+  await renderAsync(<App />);
+  await screen.findByText("Welcome to Cozy Solitaire, Living Garden!");
+  press("⚙ Settings");
+  expect(
+    screen.getByRole("button", { name: "Animations: Off" }),
+  ).toBeOnTheScreen();
+  expect(
+    screen.getByRole("button", { name: "Animation quality: Low" }),
+  ).toBeSelected();
+});
+
+test("native partial hidden puzzle resumes at its level and cannot pay twice after restarting", async () => {
+  await AsyncStorage.setItem(
+    SAVE_KEY,
+    JSON.stringify(
+      setProfile(fresh("mini-save", "en"), "Puzzle Gardener", "mini-player"),
+    ),
+  );
+  await renderAsync(<App />);
+  await screen.findByText("Welcome to Cozy Solitaire, Puzzle Gardener!");
+  press("✿ Mini-games");
+  press("Level 3");
+  fireEvent.press(screen.getAllByRole("button", { name: "Continue" })[1]);
+  press("Key");
+  await waitFor(async () => {
+    const s = await stored();
+    expect(s.miniSession.found).toContain("key");
+    expect(s.miniSession.level).toBe(3);
+  });
+  press("Back");
+  press("Level 1");
+  press("Resume saved puzzle");
+  expect(screen.queryByRole("button", { name: "Key" })).toBeNull();
+  await waitFor(async () => expect((await stored()).miniSession.level).toBe(3));
+  await cleanupAsync();
+  await renderAsync(<App />);
+  await screen.findByText("Welcome to Cozy Solitaire, Puzzle Gardener!");
+  press("✿ Mini-games");
+  expect(screen.queryByRole("button", { name: "Key" })).toBeNull();
+  for (const name of ["Acorn", "Ribbon", "Spoon", "Button"]) press(name);
+  await screen.findByText("Beautifully done! +20 Glimmers");
+  await waitFor(async () =>
+    expect((await stored()).economy.wallet.glimmers).toBe(20),
+  );
+  await cleanupAsync();
+  await renderAsync(<App />);
+  await screen.findByText("Welcome to Cozy Solitaire, Puzzle Gardener!");
+  press("✿ Mini-games");
+  await screen.findByText("Beautifully done! +20 Glimmers");
+  expect((await stored()).economy.wallet.glimmers).toBe(20);
+});
+
+test("native world area purchase, visible building upgrade and story reward persist without changing Solitaire", async () => {
+  const original = setProfile(
+    fresh("world-deal", "en"),
+    "World Gardener",
+    "world-player",
+  );
+  original.completed = [
+    "pip1",
+    "pip2",
+    "millie1",
+    "millie2",
+    "marmalade1",
+    "marmalade2",
+  ];
+  original.counters = {
+    solitaire: 10,
+    match: 10,
+    hidden: 10,
+    tea: 10,
+    gather: 10,
+  };
+  original.economy.wallet = {
+    glimmers: 320,
+    wood: 20,
+    stone: 20,
+    flowers: 20,
+    seeds: 20,
+  };
+  await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(original));
+  await renderAsync(<App />);
+  await screen.findByText("Welcome to Cozy Solitaire, World Gardener!");
+  press("◇ World Map");
+  fireEvent.press(
+    within(screen.getByTestId("world-area-forest")).getByRole("button", {
+      name: "Open the path",
+    }),
+  );
+  await screen.findByText("Forest greenhouse");
+  fireEvent.press(
+    within(screen.getByTestId("world-building-greenhouse")).getByRole(
+      "button",
+      {
+        name: "Improve · 0 / 3",
+      },
+    ),
+  );
+  fireEvent.press(
+    within(screen.getByTestId("world-story-forest1")).getByRole("button", {
+      name: "Collect reward",
+    }),
+  );
+  await waitFor(async () => {
+    const s = await stored();
+    expect(s.world.area).toBe("forest");
+    expect(s.world.buildings.greenhouse).toBe(1);
+    expect(s.world.stories).toContain("forest1");
+    expect(s.economy.wallet.glimmers).toBe(270);
+    expect(s.game).toEqual(original.game);
+  });
+  await cleanupAsync();
+  await renderAsync(<App />);
+  await screen.findByText("Welcome to Cozy Solitaire, World Gardener!");
+  press("◇ World Map");
+  expect(screen.getByText("Forest greenhouse")).toBeOnTheScreen();
+  expect((await stored()).world.buildings.greenhouse).toBe(1);
+});
+
+test("native illustrated card deal safely completes and pays a victory once across undo", async () => {
+  const { suits, snapshot } = require("../../src/engine/solitaire");
+  const s = setProfile(fresh("ending", "en"), "Card Gardener", "card-player");
+  const card = (rank: number, suit: string) => ({
+    id: suit + rank,
+    rank,
+    suit,
+    up: true,
+  });
+  s.game.stock = [];
+  s.game.waste = [];
+  s.game.foundations = suits.map((suit: string) =>
+    Array.from({ length: 12 }, (_, i) => card(i + 1, suit)),
+  );
+  s.game.tableau = [
+    ...suits.map((suit: string) => [card(13, suit)]),
+    [],
+    [],
+    [],
+  ];
+  s.game.initial = snapshot(s.game);
+  await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(s));
+  await renderAsync(<App />);
+  await screen.findByText("Welcome to Cozy Solitaire, Card Gardener!");
+  press("♠ Play Solitaire");
+  press("Safe finish");
+  await screen.findByText("A lovely win!");
+  await waitFor(async () =>
+    expect((await stored()).economy.wallet.glimmers).toBe(60),
+  );
+  press("Undo");
+  press("Safe finish");
+  await screen.findByText("A lovely win!");
+  expect((await stored()).counters.solitaire).toBe(1);
 });

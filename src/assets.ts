@@ -1,7 +1,9 @@
+export { AMBIENT_SPRITES } from "./assets/ambient";
 export { cozyImages } from "./assets/images";
 // Static manifest: imported seasonal art plus original local vector art, icons and audio.
 export const assets = {
   audio: {
+    victory: require("../assets/victory.wav"),
     music: require("../assets/music.wav"),
     nature: require("../assets/nature.wav"),
   },

@@ -10,6 +10,7 @@ import {
   useWindowDimensions,
   Platform,
   AccessibilityInfo,
+  AppState,
   PanResponder,
   Animated,
 } from "react-native";
@@ -35,6 +36,7 @@ import {
 } from "./engine/solitaire";
 import {
   migrate,
+  loadSave,
   setProfile,
   setLanguage,
   saveQueue,
@@ -65,12 +67,31 @@ import {
   hiddenWon,
 } from "./engine/minigames";
 import { Cottage, NPC_ICON, Portrait, Forest } from "./Art";
-import { Weather } from "./Weather";
+import { LivingWorldAnimationEngine } from "./living/LivingWorldAnimationEngine";
+import { VictorySparkles } from "./living/VictorySparkles";
+import { CharacterIdle } from "./living/CharacterIdle";
+import {
+  challenges,
+  challengeGame,
+  type ChallengeId,
+} from "./engine/challenges";
+import { FestivalDecorations } from "./FestivalDecorations";
+import { WorldPanel } from "./WorldPanel";
+import { WorldArt } from "./WorldArt";
+import { CardArtwork } from "./CardArtwork";
+import { enterArea, type AreaId } from "./engine/progression";
+import {
+  matchForLevel,
+  teaForLevel,
+  treasuresForLevel,
+  type MiniLevel,
+} from "./engine/session";
 import { Audio } from "./Audio";
 import { symbols } from "./assets";
 import { cozyImages } from "./assets/images";
 
 type Screen =
+  | "world"
   | "garden"
   | "play"
   | "mini"
@@ -81,6 +102,7 @@ type Screen =
   | "settings";
 const nav: { id: Screen; icon: string }[] = [
   { id: "garden", icon: "⌂" },
+  { id: "world", icon: "◇" },
   { id: "play", icon: "♠" },
   { id: "mini", icon: "✿" },
   { id: "quests", icon: "☷" },
@@ -106,6 +128,9 @@ export default function App() {
     [loadError, setLoadError] = useState(false),
     [writeError, setWriteError] = useState(false),
     [screen, setScreen] = useState<Screen>("garden");
+  const [pendingChallenge, setPendingChallenge] = useState<ChallengeId | null>(
+    null,
+  );
   const [name, setName] = useState(""),
     [message, setMessage] = useState(""),
     [dialog, setDialog] = useState<"new" | "restart" | null>(null),
@@ -113,7 +138,11 @@ export default function App() {
     [npc, setNpc] = useState<"millie" | "marmalade" | "pip" | null>(null),
     [placing, setPlacing] = useState<UpgradeId | null>(null),
     [nextDraw, setNextDraw] = useState<1 | 3>(1);
-  const [location, setLocation] = useState<"cottage" | "forest">("cottage");
+  const location = s?.world.area ?? "cottage";
+  const setLocation = (area: AreaId) => act((v) => enterArea(v, area));
+  const [miniLevel, setMiniLevel] = useState<MiniLevel>(1);
+  const [nextMiniLevel, setNextMiniLevel] = useState<MiniLevel>(1);
+  const [miniHub, setMiniHub] = useState(false);
   const [sceneSize, setSceneSize] = useState({ width: 700, height: 410 });
   const [selected, setSelected] = useState<Place | null>(null),
     [hint, setHint] = useState<ReturnType<typeof hints>[number] | null>(null);
@@ -124,26 +153,62 @@ export default function App() {
     [tea, setTea] = useState(newTea),
     [teaSelected, setTeaSelected] = useState<number | null>(null),
     [found, setFound] = useState<string[]>([]);
+  const activeMini = miniHub ? null : mini;
   const dropTargets = useRef<Record<string, { node: View; place: Place }>>({});
   const update = useCallback(
     (fn: (v: Save) => Save) => setS((v) => (v ? fn(v) : v)),
     [],
   );
+  const latestSave = useRef<Save | null>(null);
+  latestSave.current = s;
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active" || !latestSave.current) return;
+      const current = latestSave.current;
+      const value = {
+        ...current,
+        profile: current.profile
+          ? { ...current.profile, lastPlayedAt: new Date().toISOString() }
+          : null,
+      };
+      latestSave.current = value;
+      update((v) => ({
+        ...v,
+        profile: v.profile
+          ? {
+              ...v.profile,
+              lastPlayedAt:
+                value.profile?.lastPlayedAt ?? new Date().toISOString(),
+            }
+          : null,
+      }));
+      void write(value).catch(() => setWriteError(true));
+    });
+    return () => subscription.remove();
+  }, []);
   const load = useCallback(async () => {
     try {
-      const [raw, reduced] = await Promise.all([
-        AsyncStorage.getItem(SAVE_KEY),
+      const [{ save: data, recovered }, reduced] = await Promise.all([
+        loadSave(
+          AsyncStorage,
+          uuid(),
+          deviceLanguage(getLocales()[0]?.languageCode ?? "en"),
+        ),
         AccessibilityInfo.isReduceMotionEnabled(),
       ]);
-      const data = migrate(
-        raw,
-        uuid(),
-        deviceLanguage(getLocales()[0]?.languageCode ?? "en"),
-      );
+      if (recovered) setMessage(String(i18n.t("backupRecovered")));
       if (reduced) data.preferences.reducedMotion = true;
       await i18n.changeLanguage(data.preferences.language);
       if (data.profile) data.profile.lastPlayedAt = new Date().toISOString();
       setS(data);
+      if (data.miniSession) {
+        setMini(data.miniSession.kind);
+        setMiniId(data.miniSession.id);
+        setMiniLevel(data.miniSession.level);
+        setMatch(data.miniSession.match);
+        setTea(data.miniSession.tea);
+        setFound(data.miniSession.found);
+      }
       setName(data.profile?.username ?? "");
       setLoadError(false);
     } catch {
@@ -173,6 +238,17 @@ export default function App() {
   useEffect(() => {
     if (mini && miniDone) update((v) => reward(v, mini, miniId));
   }, [mini, miniDone, miniId, update]);
+  useEffect(() => {
+    if (!s) return;
+    const miniSession = mini
+      ? { id: miniId, kind: mini, level: miniLevel, match, tea, found }
+      : null;
+    update((v) =>
+      JSON.stringify(v.miniSession) === JSON.stringify(miniSession)
+        ? v
+        : { ...v, miniSession },
+    );
+  }, [!!s, mini, miniId, miniLevel, match, tea, found, update]);
   const tt = (key: Key, options?: Record<string, unknown>) =>
     String(t(key, options));
   const changeLanguage = (language: "da" | "en") => {
@@ -208,11 +284,17 @@ export default function App() {
     onPress: () => void,
     disabled = false,
     quiet = false,
+    accessibilityLabel?: string,
+    selected?: boolean,
   ) => (
     <Pressable
       accessibilityRole="button"
       disabled={disabled}
-      accessibilityState={{ disabled }}
+      accessibilityLabel={accessibilityLabel ?? label}
+      accessibilityState={{
+        disabled,
+        ...(selected === undefined ? {} : { selected }),
+      }}
       onPress={onPress}
       style={({ pressed }) => [
         st.button,
@@ -346,48 +428,7 @@ export default function App() {
             st.selected,
         ]}
       >
-        {c.up ? (
-          <>
-            <Text
-              style={{
-                color: red(c) ? "#a34f50" : "#294e43",
-                fontSize: Math.max(13, cardWidth * 0.23),
-                fontWeight: "700",
-              }}
-            >
-              {c.rank === 1
-                ? "A"
-                : c.rank === 11
-                  ? "J"
-                  : c.rank === 12
-                    ? "Q"
-                    : c.rank === 13
-                      ? "K"
-                      : c.rank}
-              {c.suit}
-            </Text>
-            <Text
-              style={{
-                color: red(c) ? "#a34f50" : "#294e43",
-                fontSize: cardWidth * 0.42,
-                alignSelf: "center",
-              }}
-            >
-              {c.suit}
-            </Text>
-          </>
-        ) : (
-          <Text
-            style={{
-              color: "#e3d6a9",
-              fontSize: cardWidth * 0.4,
-              alignSelf: "center",
-              marginTop: cardWidth * 0.3,
-            }}
-          >
-            {s.economy.inventory.includes("cards") ? "✿" : "✦"}
-          </Text>
-        )}
+        <CardArtwork card={c} theme={s.world.theme} />
       </View>
     </Draggable>
   );
@@ -437,8 +478,8 @@ export default function App() {
         setPlacing(null);
       }}
     >
-      {location === "forest" ? (
-        <Forest season={season} />
+      {location !== "cottage" ? (
+        <WorldArt season={season} area={location} levels={s.world.buildings} />
       ) : (
         <Image
           source={cozyImages.seasons[season]}
@@ -469,12 +510,20 @@ export default function App() {
           },
         ]}
       />
-      <Weather
+      <LivingWorldAnimationEngine
         season={season}
+        enabled={s.preferences.animations}
+        quality={s.preferences.animationQuality}
+        reducedMotion={s.preferences.reducedMotion}
         intensity={s.preferences.weather}
-        reduced={s.preferences.reducedMotion}
+        width={sceneSize.width}
+        height={sceneSize.height}
+        time={s.preferences.time}
+        cottageLights={location === "cottage"}
       />
+      {!hidden && <FestivalDecorations events={s.world.events} />}
       {!hidden &&
+        location === "cottage" &&
         s.placements.map((p) => (
           <Text
             key={p.id}
@@ -489,7 +538,7 @@ export default function App() {
           </Text>
         ))}
       {hidden
-        ? treasures
+        ? treasuresForLevel(miniLevel)
             .filter((o) => !found.includes(o.id))
             .map((o) => (
               <Pressable
@@ -560,7 +609,11 @@ export default function App() {
     );
   return (
     <SafeAreaView style={st.root}>
-      <Audio music={s.preferences.music} sound={s.preferences.sound} />
+      <Audio
+        music={s.preferences.music}
+        sound={s.preferences.sound}
+        victoryId={s.game.won ? s.game.id : null}
+      />
       <View style={[st.shell, wide && { flexDirection: "row" }]}>
         {wide && (
           <View style={st.sidebar}>
@@ -636,6 +689,7 @@ export default function App() {
             contentContainerStyle={[st.content, wide && { padding: 32 }]}
             keyboardShouldPersistTaps="handled"
           >
+            {screen === "world" && <WorldPanel save={s} onUpdate={act} />}
             {screen === "garden" && (
               <>
                 {heading(
@@ -675,11 +729,10 @@ export default function App() {
                       {n === "pip" ? (
                         <Portrait animal={n} />
                       ) : (
-                        <Image
-                          source={cozyImages.characters[n]}
-                          style={{ width: 80, height: 100 }}
-                          resizeMode="contain"
-                          accessibilityIgnoresInvertColors
+                        <CharacterIdle
+                          character={n}
+                          enabled={s.preferences.animations}
+                          reducedMotion={s.preferences.reducedMotion}
                         />
                       )}
                       <Text style={st.label}>{tt(n)}</Text>
@@ -900,6 +953,10 @@ export default function App() {
                   <View style={st.panel}>
                     <Text style={st.sectionTitle}>{tt("victory")}</Text>
                     <Text style={st.subtitle}>{tt("victoryText")}</Text>
+                    <VictorySparkles
+                      enabled={s.preferences.animations}
+                      reducedMotion={s.preferences.reducedMotion}
+                    />
                   </View>
                 )}
                 <View style={st.row}>
@@ -915,18 +972,73 @@ export default function App() {
                     false,
                     true,
                   )}
-                  {button(tt("newGame"), () => setDialog("new"), false, true)}
+                  {button(
+                    tt("newGame"),
+                    () => {
+                      setPendingChallenge(null);
+                      setDialog("new");
+                    },
+                    false,
+                    true,
+                  )}
                   {button(tt("saveContinue"), () => go("garden"), false, true)}
+                </View>
+                <View style={st.panel}>
+                  <Text style={st.sectionTitle}>{tt("challengeTitle")}</Text>
+                  <Text style={st.small}>{tt("challengeIntro")}</Text>
+                  {challenges.map((c) => (
+                    <View key={c.id} style={st.row}>
+                      {button(
+                        tt(("challenge_" + c.id) as Key),
+                        () => {
+                          setPendingChallenge(c.id);
+                          setDialog("new");
+                        },
+                        false,
+                        true,
+                      )}
+                      {s.world.challenges.includes(c.id) && (
+                        <Text style={st.small}>{tt("challengeCompleted")}</Text>
+                      )}
+                    </View>
+                  ))}
                 </View>
               </>
             )}
             {screen === "mini" && (
               <>
                 {heading(
-                  tt(mini ?? "mini"),
-                  mini ? tt((mini + "Rules") as Key) : tt("currencyHint"),
+                  tt(activeMini ?? "mini"),
+                  activeMini
+                    ? tt((activeMini + "Rules") as Key)
+                    : tt("currencyHint"),
                 )}
-                {!mini ? (
+                {!activeMini && (
+                  <>
+                    <Text style={st.small}>{tt("miniLevelHint")}</Text>
+                    <View style={st.row}>
+                      {([1, 2, 3] as const).map((level) => (
+                        <React.Fragment key={level}>
+                          {button(
+                            tt("level", { number: level }),
+                            () => setNextMiniLevel(level),
+                            false,
+                            nextMiniLevel !== level,
+                          )}
+                        </React.Fragment>
+                      ))}
+                    </View>
+                  </>
+                )}
+                {!activeMini &&
+                  mini &&
+                  button(
+                    tt("resumeMini"),
+                    () => setMiniHub(false),
+                    false,
+                    true,
+                  )}
+                {!activeMini ? (
                   <View style={st.tiles}>
                     {(["match", "hidden", "tea"] as const).map((m, i) => (
                       <View key={m} style={st.npc}>
@@ -934,13 +1046,23 @@ export default function App() {
                           {["🌸", "🔍", "🫖"][i]}
                         </Text>
                         <Text style={st.sectionTitle}>{tt(m)}</Text>
+                        <Text style={st.small}>
+                          {tt("progress", {
+                            done: [1, 2, 3].filter((level) =>
+                              s.world.medals.includes(`${m}:${level}`),
+                            ).length,
+                            total: 3,
+                          })}
+                        </Text>
                         <Text style={st.small}>{tt((m + "Rules") as Key)}</Text>
                         {button(tt("continue"), () => {
+                          setMiniHub(false);
+                          setMiniLevel(nextMiniLevel);
                           setMini(m);
                           setMiniId(uuid());
-                          setMatch(newMatch());
+                          setMatch(matchForLevel(nextMiniLevel));
                           setFound([]);
-                          setTea(newTea());
+                          setTea(teaForLevel(nextMiniLevel));
                           setTeaSelected(null);
                           setMatchSelected(null);
                         })}
@@ -949,7 +1071,7 @@ export default function App() {
                   </View>
                 ) : (
                   <>
-                    {mini === "match" && (
+                    {activeMini === "match" && (
                       <>
                         <Text style={st.label}>
                           {tt("matchProgress", {
@@ -990,7 +1112,7 @@ export default function App() {
                           tt("shuffle"),
                           () =>
                             setMatch((g) => ({
-                              ...newMatch(),
+                              ...matchForLevel(miniLevel),
                               score: g.score,
                               turns: g.turns,
                             })),
@@ -1002,7 +1124,7 @@ export default function App() {
                         )}
                       </>
                     )}
-                    {mini === "hidden" && (
+                    {activeMini === "hidden" && (
                       <>
                         {gardenScene(true)}
                         <View style={st.row}>
@@ -1024,7 +1146,7 @@ export default function App() {
                         </View>
                       </>
                     )}
-                    {mini === "tea" && (
+                    {activeMini === "tea" && (
                       <View style={st.tiles}>
                         {tea.map((tray, i) => (
                           <Pressable
@@ -1064,8 +1186,8 @@ export default function App() {
                         tt("replay"),
                         () => {
                           setMiniId(uuid());
-                          setMatch(newMatch());
-                          setTea(newTea());
+                          setMatch(matchForLevel(miniLevel));
+                          setTea(teaForLevel(miniLevel));
                           setFound([]);
                           setTeaSelected(null);
                           setMatchSelected(null);
@@ -1073,7 +1195,7 @@ export default function App() {
                         false,
                         true,
                       )}
-                      {button(tt("back"), () => setMini(null), false, true)}
+                      {button(tt("back"), () => setMiniHub(true), false, true)}
                     </View>
                   </>
                 )}
@@ -1155,7 +1277,10 @@ export default function App() {
                             {u.id !== "cards" &&
                               button(
                                 tt("place"),
-                                () => setPlacing(u.id),
+                                () => {
+                                  setLocation("cottage");
+                                  setPlacing(u.id);
+                                },
                                 false,
                                 true,
                               )}
@@ -1174,6 +1299,13 @@ export default function App() {
                                 return {
                                   ...v,
                                   economy,
+                                  world: {
+                                    ...v.world,
+                                    theme:
+                                      u.id === "cards"
+                                        ? "botanical"
+                                        : v.world.theme,
+                                  },
                                   placements:
                                     u.id === "cards"
                                       ? v.placements
@@ -1339,7 +1471,24 @@ export default function App() {
                       </React.Fragment>
                     ))}
                   </View>
-                  {(["reducedMotion", "sound", "music"] as const).map((x) => (
+                  <Text style={st.label}>{tt("animationQuality")}</Text>
+                  <View style={st.row}>
+                    {(["low", "medium", "high"] as const).map((quality) => (
+                      <React.Fragment key={quality}>
+                        {button(
+                          tt(quality),
+                          () => pref("animationQuality", quality),
+                          false,
+                          s.preferences.animationQuality !== quality,
+                          tt("animationQuality") + ": " + tt(quality),
+                          s.preferences.animationQuality === quality,
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </View>
+                  {(
+                    ["animations", "reducedMotion", "sound", "music"] as const
+                  ).map((x) => (
                     <View key={x} style={st.settingRow}>
                       <Text style={st.label}>{tt(x)}</Text>
                       {button(
@@ -1347,6 +1496,7 @@ export default function App() {
                         () => pref(x, !s.preferences[x]),
                         false,
                         true,
+                        tt(x) + ": " + tt(s.preferences[x] ? "on" : "off"),
                       )}
                     </View>
                   ))}
@@ -1384,7 +1534,13 @@ export default function App() {
         <View style={st.overlay}>
           <View style={st.modal}>
             <Text style={st.sectionTitle}>
-              {tt(dialog === "new" ? "confirmDeal" : "confirmRestart")}
+              {tt(
+                dialog === "new"
+                  ? pendingChallenge
+                    ? "challengeReplace"
+                    : "confirmDeal"
+                  : "confirmRestart",
+              )}
             </Text>
             <View style={st.row}>
               {button(tt("cancel"), () => setDialog(null), false, true)}
@@ -1392,7 +1548,9 @@ export default function App() {
                 if (dialog === "new")
                   update((v) => ({
                     ...v,
-                    game: newGame(uuid(), nextDraw),
+                    game: pendingChallenge
+                      ? challengeGame(uuid(), pendingChallenge)
+                      : newGame(uuid(), nextDraw),
                     attempts: v.attempts + 1,
                   }));
                 else applyGame(restart);

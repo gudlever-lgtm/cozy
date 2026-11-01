@@ -1,4 +1,11 @@
+import { expansionEn } from "./expansion-en";
 export const en = {
+  ...expansionEn,
+  animations: "Animations",
+  animationQuality: "Animation quality",
+  low: "Low",
+  medium: "Medium",
+  high: "High",
   shuffle: "Refresh flowers",
   cottage: "Cottage",
   exploreForest: "Explore the forest",

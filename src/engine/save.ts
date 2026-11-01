@@ -1,3 +1,5 @@
+import { newWorld, validWorld, type WorldProgress } from "./progression";
+import { validSession, type MiniSession } from "./session";
 import { newGame, type Game, type Board, suits } from "./solitaire";
 import {
   type Economy,
@@ -6,6 +8,7 @@ import {
   type Season,
   transact,
   REWARDS,
+  upgrades,
 } from "./world";
 export type Language = "da" | "en";
 export type Profile = {
@@ -24,9 +27,13 @@ export type Preferences = {
   reducedMotion: boolean;
   sound: boolean;
   music: boolean;
+  animations: boolean;
+  animationQuality: "low" | "medium" | "high";
 };
 export type Save = {
-  version: 2;
+  version: 3;
+  world: WorldProgress;
+  miniSession: MiniSession | null;
   profile: Profile | null;
   preferences: Preferences;
   game: Game;
@@ -51,7 +58,9 @@ export const deviceLanguage = (language: string): Language =>
   language.toLowerCase().startsWith("da") ? "da" : "en";
 export function fresh(id: string, language: Language): Save {
   return {
-    version: 2,
+    version: 3,
+    world: newWorld(),
+    miniSession: null,
     profile: null,
     preferences: {
       language,
@@ -61,6 +70,8 @@ export function fresh(id: string, language: Language): Save {
       reducedMotion: false,
       sound: false,
       music: false,
+      animations: true,
+      animationQuality: "medium",
     },
     game: newGame(id),
     economy: {
@@ -152,14 +163,16 @@ export function migrate(
   if (
     !old ||
     typeof old !== "object" ||
-    (old.version !== 1 && old.version !== 2)
+    (old.version !== 1 && old.version !== 2 && old.version !== 3)
   )
     throw Error("saveError");
   const base = fresh(id, language);
   const s = {
     ...base,
     ...old,
-    version: 2,
+    version: 3,
+    world: { ...newWorld(old.economy?.inventory ?? []), ...old.world },
+    miniSession: old.miniSession ?? null,
     preferences: { ...base.preferences, ...old.preferences },
     counters: { ...base.counters, ...old.counters },
     economy: {
@@ -177,7 +190,19 @@ export function migrate(
     s.game.foundations.length !== 4 ||
     !Array.isArray(s.economy.receipts) ||
     !Array.isArray(s.completed) ||
-    !Array.isArray(s.placements)
+    !Array.isArray(s.placements) ||
+    !s.placements.every(
+      (p) =>
+        p &&
+        upgrades.some((u) => u.id === p.id) &&
+        Number.isFinite(p.x) &&
+        Number.isFinite(p.y) &&
+        p.x >= 5 &&
+        p.x <= 95 &&
+        p.y >= 10 &&
+        p.y <= 90,
+    ) ||
+    !s.completed.every((id) => typeof id === "string")
   )
     throw Error("saveError");
   if (
@@ -192,6 +217,7 @@ export function migrate(
     !validBoard(s.game) ||
     !validBoard(s.game.initial) ||
     !Array.isArray(s.game.history) ||
+    s.game.history.length > 200 ||
     !s.game.history.every(validBoard) ||
     ![1, 3].includes(s.game.draw) ||
     !Number.isSafeInteger(s.game.moves) ||
@@ -201,6 +227,8 @@ export function migrate(
   )
     throw Error("saveError");
   if (
+    typeof s.preferences.animations !== "boolean" ||
+    !["low", "medium", "high"].includes(s.preferences.animationQuality) ||
     !["da", "en"].includes(s.preferences.language) ||
     !["auto", "spring", "summer", "autumn", "winter"].includes(
       s.preferences.season,
@@ -226,6 +254,32 @@ export function migrate(
     !s.economy.receipts.every((x) => typeof x === "string")
   )
     throw Error("saveError");
+  if (
+    !Number.isSafeInteger(s.attempts) ||
+    s.attempts < 0 ||
+    !Number.isSafeInteger(s.streak) ||
+    s.streak < 0 ||
+    !validWorld(s.world) ||
+    !validSession(s.miniSession) ||
+    !s.world ||
+    !["cottage", "forest", "river", "village", "winterland"].includes(
+      s.world.area,
+    ) ||
+    !Array.isArray(s.world.areas) ||
+    !Array.isArray(s.world.stories) ||
+    !Array.isArray(s.world.events) ||
+    !Array.isArray(s.world.challenges) ||
+    !Array.isArray(s.world.medals) ||
+    !s.world.relationships ||
+    Object.values(s.world.relationships).some(
+      (n) => !Number.isInteger(n) || n < 0 || n > 5,
+    ) ||
+    !s.world.buildings ||
+    Object.values(s.world.buildings).some(
+      (n) => !Number.isInteger(n) || n < 0 || n > 3,
+    )
+  )
+    throw Error("saveError");
   return s;
 }
 export function reward(
@@ -249,19 +303,73 @@ export function reward(
     economy = transact(economy, "achievement:explorer", {
       glimmers: REWARDS.achievement,
     });
-  return { ...s, economy, counters };
+  const medal =
+    s.miniSession?.id === id && s.miniSession.kind === type
+      ? `${type}:${s.miniSession.level}`
+      : null;
+  return {
+    ...s,
+    economy,
+    counters,
+    world: {
+      ...s.world,
+      challenges:
+        type === "solitaire" && s.game.id === id && s.game.challenge
+          ? [...new Set([...s.world.challenges, s.game.challenge])]
+          : s.world.challenges,
+      medals: medal ? [...new Set([...s.world.medals, medal])] : s.world.medals,
+    },
+  };
 }
 export interface Storage {
   getItem(key: string): Promise<string | null>;
   setItem(key: string, value: string): Promise<void>;
 }
 export function saveQueue(storage: Storage) {
-  let pending = Promise.resolve();
+  let pending = Promise.resolve(),
+    lastGood: string | null = null,
+    initialized = false;
   return (s: Save) => {
     const json = JSON.stringify(s);
     pending = pending
       .catch(() => {})
-      .then(() => storage.setItem(SAVE_KEY, json));
+      .then(async () => {
+        if (!initialized) {
+          const previous = await storage.getItem(SAVE_KEY);
+          if (previous) {
+            try {
+              migrate(previous, "backup", "en");
+              lastGood = previous;
+            } catch {
+              /* Preserve a valid existing backup when the primary is corrupt. */
+            }
+          }
+          initialized = true;
+        }
+        if (lastGood !== null) await storage.setItem(BACKUP_KEY, lastGood);
+        await storage.setItem(SAVE_KEY, json);
+        lastGood = json;
+      });
     return pending;
   };
+}
+
+export const BACKUP_KEY = SAVE_KEY + ".backup";
+export async function loadSave(
+  storage: Storage,
+  id: string,
+  language: Language,
+): Promise<{ save: Save; recovered: boolean }> {
+  const primary = await storage.getItem(SAVE_KEY);
+  if (primary !== null) {
+    try {
+      return { save: migrate(primary, id, language), recovered: false };
+    } catch (error) {
+      const backup = await storage.getItem(BACKUP_KEY);
+      if (backup === null) throw error;
+      return { save: migrate(backup, id, language), recovered: true };
+    }
+  }
+  const backup = await storage.getItem(BACKUP_KEY);
+  return { save: migrate(backup, id, language), recovered: backup !== null };
 }
