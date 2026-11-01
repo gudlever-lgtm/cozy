@@ -3,6 +3,8 @@ import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
 import { pour, teaWon, type Tea } from "./engine/minigames";
 import { MiniArtwork } from "./MiniArtwork";
+import { IdleFirefly, type IdleGuideSettings } from "./living/IdleFirefly";
+import { teaIdleHint } from "./presentation/idleHints";
 import { GameIcon } from "./GameIcon";
 
 /** Fixed five-tray board. Every tap explains its outcome; empty trays are destinations. */
@@ -10,10 +12,12 @@ export function TeaTime({
   game,
   disabled,
   onChange,
+  idleGuide,
 }: {
   game: Tea;
   disabled: boolean;
   onChange: (next: Tea) => void;
+  idleGuide?: IdleGuideSettings;
 }) {
   const { t } = useTranslation();
   const [selected, setSelected] = useState<number | null>(null);
@@ -97,6 +101,26 @@ export function TeaTime({
         onLayout={(e) => setBounds(e.nativeEvent.layout)}
         style={s.trays}
       >
+        <IdleFirefly
+          settings={
+            idleGuide
+              ? { ...idleGuide, enabled: idleGuide.enabled && !disabled }
+              : undefined
+          }
+          revision={String(selected) + JSON.stringify(game)}
+          resolve={() => {
+            const move = teaIdleHint(game, selected);
+            const trayWidth = (bounds.width - 8 - 32) / 5;
+            return move
+              ? move.map((index) => ({
+                  x: 4 + index * (trayWidth + 8) + trayWidth * 0.8,
+                  y:
+                    26 +
+                    ((3 - game[index].length + 0.4) * (bounds.height - 34)) / 3,
+                }))
+              : [];
+          }}
+        />
         {game.map((tray, i) => {
           const target = selected !== null && pour(game, selected, i) !== game;
           return (

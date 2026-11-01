@@ -25,6 +25,7 @@ export function useMotionStatus(enabled: boolean, reducedMotion: boolean) {
     };
   }, []);
   return {
+    foreground: appState === "active",
     active: shouldAnimate(enabled, reducedMotion || systemReduced, appState),
     reason: !enabled
       ? "off"

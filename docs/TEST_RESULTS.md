@@ -56,3 +56,7 @@ TypeScript and formatting passed; 37 engine/presentation tests and 36 Android/iO
 ## 1.7.9 mini-game interaction and fixed play areas
 
 47 engine/presentation tests and 100 Android/iOS native component test runs pass. TypeScript/formatting, native JS exports and local ARM64 APK compilation were executed. See [MINIGAME_USABILITY_1.7.9.md](MINIGAME_USABILITY_1.7.9.md) for exact input, completion, persistence and reward coverage, plus the explicit device-testing limits.
+
+## 1.7.10 quiet idle guidance
+
+49 engine/presentation tests and 112 Android/iOS component test runs pass, with TypeScript/formatting, native JS exports and the local ARM64 APK build. See [IDLE_FIREFLY_1.7.10.md](IDLE_FIREFLY_1.7.10.md) for actual coverage and physical-device limitations.

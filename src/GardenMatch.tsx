@@ -11,6 +11,8 @@ import { planMatchSwap, type Match } from "./engine/minigames";
 import { swipeNeighbour } from "./presentation/matchGesture";
 import Svg, { Defs, LinearGradient, Stop, Rect } from "react-native-svg";
 import { useMotionStatus } from "./living/useMotionPolicy";
+import { IdleFirefly, type IdleGuideSettings } from "./living/IdleFirefly";
+import { matchIdleHint } from "./presentation/idleHints";
 import { MiniArtwork } from "./MiniArtwork";
 type Piece = {
   id: string;
@@ -28,6 +30,7 @@ export function GardenMatch({
   reducedMotion,
   onChange,
   onBusyChange,
+  idleGuide,
 }: {
   game: Match;
   size: number;
@@ -35,6 +38,7 @@ export function GardenMatch({
   reducedMotion: boolean;
   onChange: (game: Match) => void;
   onBusyChange?: (busy: boolean) => void;
+  idleGuide?: IdleGuideSettings;
 }) {
   const { t } = useTranslation(),
     inset = 9,
@@ -408,6 +412,27 @@ export function GardenMatch({
           />
         </Svg>
       </View>
+      <IdleFirefly
+        settings={
+          idleGuide
+            ? {
+                ...idleGuide,
+                enabled: idleGuide.enabled && !disabled,
+                paused: idleGuide.paused || lifted !== null,
+              }
+            : undefined
+        }
+        revision={game}
+        resolve={() => {
+          const move = matchIdleHint(game);
+          return move
+            ? move.map((index) => ({
+                x: inset + (index % 6) * cell + cell * 0.78,
+                y: inset + Math.floor(index / 6) * cell + cell * 0.25,
+              }))
+            : [];
+        }}
+      />
       {pieces.map((piece) => (
         <Animated.View
           key={piece.id}

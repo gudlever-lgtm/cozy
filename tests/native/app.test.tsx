@@ -1,5 +1,5 @@
 import React from "react";
-import { AccessibilityInfo, Animated } from "react-native";
+import { AccessibilityInfo, Animated, AppState } from "react-native";
 import {
   act,
   renderAsync,
@@ -13,6 +13,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { pour, teaWon, hasMatchMove } from "../../src/engine/minigames";
 import { teaForLevel, type MiniLevel } from "../../src/engine/session";
 import App from "../../src/App";
+import { IdleFirefly, IDLE_HINT_DELAY } from "../../src/living/IdleFirefly";
+import { solitaireIdleHint } from "../../src/presentation/idleHints";
 import i18n from "../../src/i18n";
 import { fresh, setProfile, SAVE_KEY } from "../../src/engine/save";
 
@@ -1052,3 +1054,91 @@ test.each([1, 2, 3] as MiniLevel[])(
     expect((await stored()).counters.match).toBe(1);
   },
 );
+
+test("idle guide in Tea Time resets on actual touch lifecycle and moves without spending anything", async () => {
+  Object.defineProperty(AppState, "currentState", {
+    value: "active",
+    configurable: true,
+  });
+  jest.useFakeTimers();
+  try {
+    const original = setProfile(fresh("idle-tea", "en"), "Idle Native", "p");
+    await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(original));
+    await renderAsync(<App />);
+    await screen.findByTestId("main-tabs");
+    press("✿ Mini-games");
+    fireEvent.press(screen.getByTestId("mini-start-tea"));
+    await act(async () => {});
+    expect(screen.UNSAFE_getByType(IdleFirefly).props.settings.paused).toBe(
+      false,
+    );
+    const marker = () =>
+      screen.queryByTestId("idle-hint-static", { includeHiddenElements: true });
+    await act(async () => {
+      jest.advanceTimersByTime(IDLE_HINT_DELAY - 1);
+    });
+    expect(marker()).toBeNull();
+    await act(async () => {
+      jest.advanceTimersByTime(1);
+    });
+    expect(marker()).not.toBeNull();
+    let root = screen.getByTestId("main-tabs");
+    while (!root.props.onTouchStart) root = root.parent!;
+    act(() => root.props.onTouchStart());
+    expect(marker()).toBeNull();
+    await act(async () => {
+      jest.advanceTimersByTime(20000);
+    });
+    expect(marker()).toBeNull();
+    act(() => root.props.onTouchEnd({ nativeEvent: { touches: [] } }));
+    await act(async () => {
+      jest.advanceTimersByTime(IDLE_HINT_DELAY);
+    });
+    expect(marker()).not.toBeNull();
+    press("Tray 1");
+    expect(marker()).toBeNull();
+    press("Tray 4");
+    await waitFor(async () => {
+      const saved = await stored();
+      expect(saved.miniSession.tea[3]).toEqual([2]);
+      expect(saved.game).toEqual(original.game);
+      expect(saved.economy.wallet).toEqual(original.economy.wallet);
+    });
+  } finally {
+    jest.useRealTimers();
+  }
+});
+
+test("Solitaire idle guide resolves actual registered card/target anchors without moving the deal", async () => {
+  const original = setProfile(fresh("idle-card", "en"), "Idle Cards", "p");
+  expect(solitaireIdleHint(original.game)).not.toBeNull();
+  await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(original));
+  await renderAsync(<App />);
+  await screen.findByTestId("main-tabs");
+  press("♠ Play Solitaire");
+  for (const node of screen.UNSAFE_root.findAll(
+    (n) => typeof n.instance?.measureInWindow === "function",
+  )) {
+    jest
+      .spyOn(node.instance, "measureInWindow")
+      .mockImplementation((callback: unknown) => {
+        (callback as (x: number, y: number, w: number, h: number) => void)(
+          100,
+          200,
+          40,
+          60,
+        );
+      });
+  }
+  const guide = screen.UNSAFE_getByType(IdleFirefly);
+  let points: { x: number; y: number }[] = [];
+  await act(async () => {
+    points = await guide.props.resolve();
+  });
+  expect(points).toHaveLength(2);
+  expect(
+    points.every((p) => Number.isFinite(p.x) && Number.isFinite(p.y)),
+  ).toBe(true);
+  expect(guide.props.absolute).toBe(true);
+  expect((await stored()).game).toEqual(original.game);
+});

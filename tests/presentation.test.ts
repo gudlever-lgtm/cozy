@@ -336,3 +336,49 @@ test("journey progress reflects real objectives, claims, areas, stories and upgr
   assert.equal(progress.percent, 100);
   assert.equal(JSON.stringify(save), original);
 });
+
+import {
+  solitaireIdleHint,
+  matchIdleHint,
+  teaIdleHint,
+} from "../src/presentation/idleHints";
+import { canMove } from "../src/engine/solitaire";
+import { newMatch, pour, teaWon, planMatchSwap } from "../src/engine/minigames";
+import { teaForLevel } from "../src/engine/session";
+test("idle suggestions are legal and never mutate Solitaire or match boards", () => {
+  for (let seed = 0; seed < 15; seed++) {
+    const game = newGame("idle-" + seed),
+      copy = structuredClone(game);
+    const move = solitaireIdleHint(game);
+    if (move) assert.ok(canMove(game, move.from, move.to));
+    assert.deepEqual(game, copy);
+  }
+  const match = newMatch(),
+    before = structuredClone(match),
+    swap = matchIdleHint(match)!;
+  assert.ok(swap);
+  assert.notEqual(planMatchSwap(match, ...swap).next, match);
+  assert.deepEqual(match, before);
+  assert.equal(matchIdleHint({ ...match, turns: 0 }), null);
+  assert.equal(matchIdleHint({ ...match, score: match.target }), null);
+});
+test("Tea Time idle suggestions lead to a solution at every difficulty and respect selected sources", () => {
+  for (const level of [1, 2, 3] as const) {
+    let game = teaForLevel(level);
+    const original = structuredClone(game);
+    const first = teaIdleHint(game)!;
+    assert.ok(first);
+    assert.deepEqual(game, original);
+    const selected = teaIdleHint(game, first[0])!;
+    assert.equal(selected[0], first[0]);
+    for (let step = 0; step < 40 && !teaWon(game); step++) {
+      const move = teaIdleHint(game);
+      assert.ok(move);
+      const next = pour(game, ...move);
+      assert.notEqual(next, game);
+      game = next;
+    }
+    assert.ok(teaWon(game));
+    assert.equal(teaIdleHint(game), null);
+  }
+});

@@ -30,6 +30,12 @@ import { MiniGameHub } from "./MiniGameHub";
 import { QuestJournal } from "./QuestJournal";
 import type { QuestObjective } from "./presentation/quests";
 import { ScreenPager } from "./ScreenPager";
+import {
+  IdleFirefly,
+  measureHintNode,
+  type IdleGuideSettings,
+} from "./living/IdleFirefly";
+import { solitaireIdleHint } from "./presentation/idleHints";
 import { TeaTime } from "./TeaTime";
 import { GardenMatch } from "./GardenMatch";
 import { MiniArtwork } from "./MiniArtwork";
@@ -217,6 +223,9 @@ export default function App() {
     screen === "settings" ||
     screen === "mini";
   const lastCardTap = useRef<{ id: string; time: number } | null>(null);
+  const [idleActivity, setIdleActivity] = useState(0);
+  const [touching, setTouching] = useState(false);
+  const idleNodes = useRef<Record<string, View>>({});
   const dropTargets = useRef<Record<string, { node: View; place: Place }>>({});
   const update = useCallback(
     (fn: (v: Save) => Save) => setS((v) => (v ? fn(v) : v)),
@@ -226,6 +235,8 @@ export default function App() {
   latestSave.current = s;
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (state) => {
+      setTouching(false);
+      setIdleActivity((n) => n + 1);
       if (state === "active" || !latestSave.current) return;
       const current = latestSave.current;
       const value = {
@@ -483,6 +494,67 @@ export default function App() {
     setSelected(null);
     setHint(null);
   };
+  const idleSettings: IdleGuideSettings = {
+    enabled: s.preferences.animations,
+    reducedMotion: s.preferences.reducedMotion,
+    activity: idleActivity,
+    paused:
+      touching ||
+      !!dragging ||
+      !!dialog ||
+      help ||
+      miniHelp ||
+      challengeOpen ||
+      stackPile !== null ||
+      !!message,
+  };
+  const idleRef = (id: string) => (node: View | null) => {
+    if (node) idleNodes.current[id] = node;
+    else delete idleNodes.current[id];
+  };
+  const solitaireGuide = async () => {
+    const move = solitaireIdleHint(s.game);
+    if (!move) {
+      if (!s.game.won && (s.game.stock.length || s.game.waste.length)) {
+        const stock = await measureHintNode(idleNodes.current.stock);
+        return stock
+          ? [{ x: stock.x + stock.width - 3, y: stock.y + stock.height * 0.5 }]
+          : [];
+      }
+      return [];
+    }
+    const sourceNode =
+      idleNodes.current["card:" + JSON.stringify(move.from)] ??
+      (move.from.kind === "tableau"
+        ? idleNodes.current["stack:" + move.from.pile]
+        : undefined);
+    const destinationNode =
+      move.to.kind === "tableau"
+        ? dropTargets.current["t" + move.to.pile]?.node
+        : move.to.kind === "foundations"
+          ? dropTargets.current["f" + move.to.pile]?.node
+          : undefined;
+    const [source, destination] = await Promise.all([
+      measureHintNode(sourceNode),
+      measureHintNode(destinationNode),
+    ]);
+    if (!source || !destination) return [];
+    const sourcePoint = {
+      x: source.x + source.width - 3,
+      y: source.y + (move.from.kind === "tableau" ? 4 : source.height * 0.5),
+    };
+    const toY =
+      move.to.kind === "tableau"
+        ? (boardLayout.columns[move.to.pile].offsets[
+            s.game.tableau[move.to.pile].length - 1
+          ] ?? 0) +
+          cardHeight * 0.5
+        : cardHeight * 0.5;
+    return [
+      sourcePoint,
+      { x: destination.x + destination.width - 3, y: destination.y + toY },
+    ];
+  };
   const pref = <K extends keyof Save["preferences"]>(
     key: K,
     value: Save["preferences"][K],
@@ -660,6 +732,8 @@ export default function App() {
       }}
     >
       <View
+        collapsable={false}
+        ref={idleRef("card:" + JSON.stringify(p))}
         style={[
           st.card,
           { width: cardWidth, height: cardHeight },
@@ -823,6 +897,28 @@ export default function App() {
         time={s.preferences.time}
         cottageLights={location === "cottage"}
       />
+      {hidden && (
+        <IdleFirefly
+          settings={{
+            ...idleSettings,
+            enabled: idleSettings.enabled && !miniDone,
+          }}
+          revision={found}
+          resolve={() => {
+            const next = treasuresForLevel(miniLevel).find(
+              (o) => !found.includes(o.id),
+            );
+            return next
+              ? [
+                  {
+                    x: (next.x * sceneSize.width) / 100 + 12,
+                    y: (next.y * sceneSize.height) / 100 - 8,
+                  },
+                ]
+              : [];
+          }}
+        />
+      )}
       {!hidden && <FestivalDecorations events={s.world.events} />}
       {!hidden &&
         location === "cottage" &&
@@ -920,7 +1016,21 @@ export default function App() {
       </SafeAreaView>
     );
   return (
-    <SafeAreaView style={st.root}>
+    <SafeAreaView
+      style={st.root}
+      onTouchStart={() => {
+        setTouching(true);
+        setIdleActivity((n) => n + 1);
+      }}
+      onTouchEnd={(event) => {
+        setTouching((event.nativeEvent.touches?.length ?? 0) > 0);
+        setIdleActivity((n) => n + 1);
+      }}
+      onTouchCancel={() => {
+        setTouching(false);
+        setIdleActivity((n) => n + 1);
+      }}
+    >
       <Audio
         music={s.preferences.music}
         sound={s.preferences.sound}
@@ -1163,6 +1273,15 @@ export default function App() {
                     }}
                   >
                     <View style={st.board} testID="solitaire-board">
+                      <IdleFirefly
+                        settings={{
+                          ...idleSettings,
+                          enabled: idleSettings.enabled && !s.game.won,
+                        }}
+                        revision={s.game}
+                        resolve={solitaireGuide}
+                        absolute
+                      />
                       <View
                         testID="board-ambience"
                         pointerEvents="none"
@@ -1203,6 +1322,8 @@ export default function App() {
                       >
                         <View style={{ flexDirection: "row", gap: 5 }}>
                           <Pressable
+                            ref={idleRef("stock")}
+                            collapsable={false}
                             accessibilityRole="button"
                             accessibilityLabel={tt(
                               s.game.stock.length ? "draw" : "recycle",
@@ -1295,6 +1416,8 @@ export default function App() {
                               {boardLayout.columns[pile].hiddenIndices.length >
                                 0 && (
                                 <Pressable
+                                  ref={idleRef("stack:" + pile)}
+                                  collapsable={false}
                                   testID={`stack-picker-${pile}`}
                                   accessibilityRole="button"
                                   accessibilityLabel={tt("showStack", {
@@ -1572,6 +1695,7 @@ export default function App() {
                               reducedMotion={s.preferences.reducedMotion}
                               onChange={setMatch}
                               onBusyChange={setMatchBusy}
+                              idleGuide={idleSettings}
                             />
                           </>
                         )}
@@ -1627,6 +1751,7 @@ export default function App() {
                             game={tea}
                             disabled={miniDone}
                             onChange={setTea}
+                            idleGuide={idleSettings}
                           />
                         )}
                       </MiniPlayArea>
