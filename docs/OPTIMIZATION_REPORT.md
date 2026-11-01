@@ -15,3 +15,7 @@ Implemented pure board inverse, deep snapshots without JSON serialization, bound
 Checks and subsequent steps are recorded as their commits become green. Native gestures, audio and device performance are not tested on hardware.
 
 Step 1 checks: TypeScript/formatting pass; **62 engine tests / 158 native runs** pass. Fresh save after 200 actions: **12,494 bytes**. The 200-entry cap is tested explicitly: a 300-action game can undo its latest 200, while shorter runs undo exactly to their start.
+
+## Step 2 — fewer storage writes
+
+Identical serialized saves are skipped inside the serialized queue, including concurrently queued duplicates. Backups default to a 30-second interval, with injectable interval/clock for deterministic tests; the first write establishes/preserves a safe copy. Failed primary writes remain retryable, and a corrupt primary cannot overwrite an existing recovery copy. The existing 150 ms UI debounce and immediate background save remain. **64 engine tests / 158 native runs**, TypeScript and formatting pass.

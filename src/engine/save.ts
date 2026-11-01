@@ -412,10 +412,18 @@ export interface Storage {
   getItem(key: string): Promise<string | null>;
   setItem(key: string, value: string): Promise<void>;
 }
-export function saveQueue(storage: Storage) {
+export function saveQueue(
+  storage: Storage,
+  {
+    backupEveryMs = 30_000,
+    now = Date.now,
+  }: { backupEveryMs?: number; now?: () => number } = {},
+) {
   let pending = Promise.resolve(),
     lastGood: string | null = null,
-    initialized = false;
+    initialized = false,
+    lastWritten: string | null = null,
+    lastBackupAt = -Infinity;
   return (s: Save) => {
     const json = JSON.stringify(s);
     pending = pending
@@ -433,9 +441,21 @@ export function saveQueue(storage: Storage) {
           }
           initialized = true;
         }
-        if (lastGood !== null) await storage.setItem(BACKUP_KEY, lastGood);
+        if (json === lastWritten) return;
+        const time = now();
+        if (
+          lastWritten === null ||
+          time - lastBackupAt >= Math.max(0, backupEveryMs)
+        ) {
+          if (lastGood !== null) await storage.setItem(BACKUP_KEY, lastGood);
+          else if ((await storage.getItem(BACKUP_KEY)) === null)
+            await storage.setItem(BACKUP_KEY, json);
+          // A corrupt primary must never replace an existing recovery copy.
+          lastBackupAt = time;
+        }
         await storage.setItem(SAVE_KEY, json);
         lastGood = json;
+        lastWritten = json;
       });
     return pending;
   };
