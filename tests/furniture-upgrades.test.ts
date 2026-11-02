@@ -14,8 +14,8 @@ test("owned furniture upgrades through persisted transaction receipts", () => {
   assert.equal(furnitureLevel(upgraded, "bench"), 2);
   assert.equal(upgraded.wallet.glimmers, 410);
   assert.equal(upgraded.wallet.wood, 16);
-  assert.equal(furnitureLevel(upgradeFurniture(upgraded), "bench"), 3);
-  assert.throws(() => upgradeFurniture(upgradeFurniture(upgraded), "bench"));
+  assert.equal(furnitureLevel(upgradeFurniture(upgraded, "bench"), "bench"), 3);
+  assert.throws(() => upgradeFurniture(upgradeFurniture(upgraded, "bench"), "bench"));
 });
 
 test("placement validates ownership and normalized garden coordinates", () => {
