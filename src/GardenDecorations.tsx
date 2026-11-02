@@ -18,6 +18,7 @@ import {
 import { Sprite } from "./living/Sprite";
 import { NewGardenArtwork } from "./NewGardenArtwork";
 import { FurnitureLevelArtwork } from "./FurnitureLevelArtwork";
+import { GardenVisitors } from "./GardenVisitors";
 const isNew = (id: DecorationId): id is "birdhouse" | "teaTable" => id === "birdhouse" || id === "teaTable";
 export function DecorationArtwork({
   id,
@@ -151,6 +152,9 @@ export function GardenDecorations({
                     <Sprite key={i} kind="glimmer" size={Math.max(12, box.width * 0.17)} />
                   ))}
                 </View>
+              )}
+              {(id === "birdhouse" || id === "teaTable") && (
+                <GardenVisitors kind={id} active={moving} size={Math.min(box.width,box.height)}/>
               )}
               {(id === "birdhouse" || id === "teaTable") && (
                 <CozyObjectMotion kind={id} active={moving} width={box.width}/>
