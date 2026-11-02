@@ -1,5 +1,6 @@
 import { expansionEn } from "./expansion-en";
 export const en = {
+  gardenCollection: "Garden collection",
   birdhouse: "Birdhouse",
   teaTable: "Tea table",
   solitaireNoMoves: "No more moves found. Try Undo or New game.",
