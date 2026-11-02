@@ -16,6 +16,7 @@ import {
   decorationLayout,
 } from "./presentation/decorations";
 import { Sprite } from "./living/Sprite";
+import { FurnitureLevelArtwork } from "./FurnitureLevelArtwork";
 export function DecorationArtwork({
   id,
   size = 44,
@@ -124,6 +125,11 @@ export function GardenDecorations({
                 style={StyleSheet.absoluteFill}
                 accessible={false}
               />
+              {level > 1 && (
+                <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+                  <FurnitureLevelArtwork id={id} level={level} />
+                </View>
+              )}
               {level > 1 && (
                 <View pointerEvents="none" testID={"decoration-upgrade-" + id}
                   style={{ position:"absolute", right:0, bottom:0, flexDirection:"row" }}>
