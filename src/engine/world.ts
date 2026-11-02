@@ -97,6 +97,8 @@ export const upgrades = [
   { id: "lantern", cost: 20, wood: 0, icon: "🏮", x: 45, y: 62 },
   { id: "forest", cost: 50, wood: 2, icon: "🌲", x: 88, y: 28 },
   { id: "cards", cost: 25, wood: 0, icon: "✿", x: 35, y: 80 },
+  { id: "birdhouse", cost: 45, wood: 3, icon: "🐦", x: 61, y: 69 },
+  { id: "teaTable", cost: 55, wood: 4, icon: "🫖", x: 57, y: 84 },
 ] as const;
 /** Repeatable furniture upgrades encoded in the existing persistent transaction receipts.
  * This preserves v4 saves without adding an incompatible save schema.
