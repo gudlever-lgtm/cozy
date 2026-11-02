@@ -7,6 +7,8 @@ export const DECORATION_ANCHORS = {
   flowers: { x: 0.83, y: 0.88, width: 0.1, aspect: 1312 / 1199 },
   bench: { x: 0.72, y: 0.94, width: 0.16, aspect: 1.5 },
   bridge: { x: 0.5, y: 0.98, width: 0.15, aspect: 1.5 },
+  birdhouse: { x: 0.61, y: 0.69, width: 0.105, aspect: 1 },
+  teaTable: { x: 0.57, y: 0.84, width: 0.15, aspect: 1 },
 } as const;
 export function decorationLayout(
   id: DecorationId,
