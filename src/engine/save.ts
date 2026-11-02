@@ -20,6 +20,7 @@ import {
   gameReward,
   resourceGains,
   upgrades,
+  place,
 } from "./world";
 export type Language = "da" | "en";
 export type Profile = {
@@ -390,6 +391,19 @@ export function reward(
     economy = transact(economy, "achievement:explorer", {
       glimmers: REWARDS.achievement,
     });
+  // Permanent, earned garden objects. Existing purchases remain untouched.
+  // Unlock once after the third completed Hidden Treasures / Tea Time game.
+  let placements = s.placements;
+  const rewardItem = type === "hidden" && counters.hidden >= 3
+    ? "birdhouse"
+    : type === "tea" && counters.tea >= 3
+      ? "teaTable"
+      : null;
+  if (rewardItem && !economy.inventory.includes(rewardItem)) {
+    const item = upgrades.find(u => u.id === rewardItem)!;
+    economy = transact(economy, "unlock:" + rewardItem, {}, rewardItem);
+    placements = place(economy.inventory, placements, { id: rewardItem, x: item.x, y: item.y });
+  }
   const medal =
     s.miniSession?.id === id && s.miniSession.kind === type
       ? `${type}:${s.miniSession.level}`
@@ -398,6 +412,7 @@ export function reward(
     ...s,
     economy,
     counters,
+    placements,
     world: {
       ...s.world,
       challenges:
