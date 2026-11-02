@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Local standalone Android APK build (no EAS / Expo cloud).
 # Usage: bash scripts/build-test-apk.sh
-# Optional: APK_BASE_URL=https://your-host.example/apk bash scripts/build-test-apk.sh
+# Optional: APK_DEST_DIR=/other/path APK_BASE_URL=https://host/downloads bash scripts/build-test-apk.sh
 set -euo pipefail
 cd "$(dirname "$0")/.."
 export CI=1 EXPO_NO_TELEMETRY=1
@@ -54,29 +54,32 @@ if ! "$APK_SIGNER" verify "$APK" >/dev/null 2>&1; then
   echo "Do not distribute this APK. For a private test, a local debug keystore may be used; do not use it for Play Store releases." >&2
   exit 1
 fi
-mkdir -p dist/apk
-cp -f "$APK" dist/apk/cozy-solitaire-test.apk
-sha256sum dist/apk/cozy-solitaire-test.apk
+# Publish only after the release APK has passed signature verification.
+APK_DEST_DIR="${APK_DEST_DIR:-/var/www/dulmens.dk/downloads}"
+APK_BASE_URL="${APK_BASE_URL:-https://dulmens.dk/downloads}"
+if ! mkdir -p "$APK_DEST_DIR"; then
+  echo "Cannot create $APK_DEST_DIR. Grant the build user write access." >&2
+  exit 1
+fi
+if [[ ! -w "$APK_DEST_DIR" ]]; then
+  echo "Cannot write to $APK_DEST_DIR. Fix ownership/permissions first." >&2
+  exit 1
+fi
+APK_OUT="$APK_DEST_DIR/cozy-solitaire-test.apk"
+install -m 0644 "$APK" "$APK_OUT"
+sha256sum "$APK_OUT"
 echo
-echo "APK READY: $(pwd)/dist/apk/cozy-solitaire-test.apk"
-echo "Size: $(du -h dist/apk/cozy-solitaire-test.apk | cut -f1)"
+echo "APK READY: $APK_OUT"
+echo "Size: $(du -h "$APK_OUT" | cut -f1)"
 echo
-echo "For LAN download, from another terminal run:"
-echo "  cd $(pwd)/dist && python3 -m http.server 8765 --bind 0.0.0.0"
-echo "Make port 8765 accessible ONLY to your trusted local network."
-if [[ -n "${APK_BASE_URL:-}" ]]; then
-  URL="${APK_BASE_URL%/}/cozy-solitaire-test.apk"
-  echo "Download address (verify this URL is reachable on your phone): $URL"
-  if command -v qrencode >/dev/null; then
-    echo "Scan this QR code to download the APK:"
-    qrencode -t ANSIUTF8 "$URL"
-    qrencode -o dist/apk/cozy-solitaire-qr.png -s 8 -m 2 "$URL"
-    echo "QR image: $(pwd)/dist/apk/cozy-solitaire-qr.png"
-  else
-    echo "To print a terminal QR code: sudo apt-get install qrencode"
-  fi
+URL="${APK_BASE_URL%/}/cozy-solitaire-test.apk"
+echo "Expected download URL: $URL"
+echo "Verify your lighttpd vhost serves $APK_DEST_DIR at /downloads/."
+if command -v qrencode >/dev/null; then
+  echo "Scan this QR code to download the APK:"
+  qrencode -t ANSIUTF8 "$URL"
+  qrencode -o "$APK_DEST_DIR/cozy-solitaire-qr.png" -s 8 -m 2 "$URL"
+  echo "QR image: $APK_DEST_DIR/cozy-solitaire-qr.png"
 else
-  echo "To generate a QR code, run with:"
-  echo "  APK_BASE_URL=http://YOUR_SERVER_LAN_IP:8765/apk bash scripts/build-test-apk.sh"
-  echo "Choose an address reachable by your Android device (never localhost/127.0.0.1)."
+  echo "Install qrencode for QR output: apt-get install qrencode"
 fi
