@@ -1,0 +1,78 @@
+name: Cozy Android test APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/cozy-android-apk.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cozy-android-test-apk
+  cancel-in-progress: false
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Install QR tool
+        run: sudo apt-get update && sudo apt-get install -y qrencode
+      - name: Install project dependencies
+        run: npm ci --include=dev --no-audit --no-fund
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Tests
+        run: npm test
+      - name: Generate Android native project locally
+        run: npx --no-install expo prebuild --platform android --no-install
+        env:
+          EXPO_NO_TELEMETRY: '1'
+      - name: Compile standalone test APK with Gradle (no EAS)
+        run: cd android && bash ./gradlew :app:assembleRelease --no-daemon --stacktrace
+        env:
+          CI: '1'
+          NODE_OPTIONS: '--max-old-space-size=4096'
+      - name: Verify APK and prepare QR
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="android/app/build/outputs/apk/release/app-release.apk"
+          test -s "$APK"
+          SIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -1)"
+          test -x "$SIGNER"
+          "$SIGNER" verify "$APK"
+          mkdir -p out
+          cp "$APK" out/cozy-solitaire-test.apk
+          URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/cozy-android-test/cozy-solitaire-test.apk"
+          qrencode -o out/cozy-solitaire-qr.png -s 8 -m 2 "$URL"
+          sha256sum out/cozy-solitaire-test.apk > out/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cozy-android-apk-with-qr
+          path: out/
+          retention-days: 14
+      - name: Publish APK and QR to GitHub test release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh release view cozy-android-test >/dev/null 2>&1; then
+            gh release upload cozy-android-test out/cozy-solitaire-test.apk out/cozy-solitaire-qr.png out/SHA256SUMS.txt --clobber
+          else
+            gh release create cozy-android-test out/cozy-solitaire-test.apk out/cozy-solitaire-qr.png out/SHA256SUMS.txt \
+              --title "Cozy Solitaire Android test APK" --notes "Development/testing build; signed with the Android project test configuration. Not a Play Store release." --prerelease
+          fi
