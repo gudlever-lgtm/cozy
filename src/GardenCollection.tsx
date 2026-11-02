@@ -1,11 +1,11 @@
 import React from "react";
-import { ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { upgrades, furnitureLevel } from "./engine/world";
 import type { Save } from "./engine/save";
 import { DecorationArtwork } from "./GardenDecorations";
 import type { DecorationId } from "./assets/decorations";
 
-export function GardenCollection({save, language}: {save: Save; language: "da"|"en"}) {
+export function GardenCollection({save, language, onPlay}: {save: Save; language: "da"|"en"; onPlay: (kind: "hidden"|"tea"|"decorations") => void}) {
   const da=language==="da";
   const items=upgrades.filter(item=>item.id!=="cards");
   const count=items.filter(item=>save.economy.inventory.includes(item.id)).length;
@@ -19,6 +19,15 @@ export function GardenCollection({save, language}: {save: Save; language: "da"|"
       {da?"Havens samlealbum":"Garden collection"}
     </Text>
     <Text style={{fontSize:14,color:"#536c57"}}>{count}/{items.length} {da?"dekorationer samlet":"decorations collected"}</Text>
+    <Pressable accessibilityRole="button" testID="collection-next-goal" onPress={() => onPlay(!save.economy.inventory.includes("birdhouse")?"hidden":!save.economy.inventory.includes("teaTable")?"tea":"decorations")}
+      style={{padding:12,borderRadius:14,backgroundColor:"#e2efdc"}}>
+      <Text style={{fontWeight:"700",color:"#315744"}}>{da?"Dit næste mål":"Your next goal"}</Text>
+      <Text style={{color:"#315744"}}>{!save.economy.inventory.includes("birdhouse")
+        ? (da?"Vind fuglehuset i Hidden Treasures":"Earn the birdhouse in Hidden Treasures")
+        :!save.economy.inventory.includes("teaTable")
+        ?(da?"Vind tebordet i Tea Time":"Earn the tea table in Tea Time")
+        :(da?"Se flere dekorationer":"Explore more decorations")}</Text>
+    </Pressable>
     <ScrollView contentContainerStyle={{flexDirection:"row",flexWrap:"wrap",gap:10,paddingBottom:25}}>
       {items.map(item=>{
         const owned=save.economy.inventory.includes(item.id);
@@ -43,6 +52,9 @@ export function GardenCollection({save, language}: {save: Save; language: "da"|"
               ? (da?"Samlet · Niveau ":"Collected · Level ")+level+"/3"
               : source}
           </Text>
+          {!owned && <Pressable onPress={() => onPlay(item.id==="birdhouse"?"hidden":item.id==="teaTable"?"tea":"decorations")} accessibilityRole="button">
+            <Text style={{textAlign:"center",color:"#315744",fontWeight:"700"}}>{da?"Find genstanden":"Find this item"}</Text>
+          </Pressable>}
           {!owned && <Text style={{textAlign:"center",fontSize:11,color:"#63735e"}}>
             {item.cost} ✨ · {item.wood} {da?"træ":"wood"}
           </Text>}
