@@ -202,8 +202,8 @@ export default function App() {
           forest: ["Træer", "Trees"], birdhouse: ["Fuglehus", "Birdhouse"],
           teaTable: ["Tebord", "Tea table"],
         };
-        const name = names[newDecoration]?.[language === "da" ? 0 : 1] ?? newDecoration;
-        setTip(language === "da" ? "✨ Ny dekoration: " + name : "✨ New decoration: " + name);
+        const name = names[newDecoration]?.[s.preferences.language === "da" ? 0 : 1] ?? newDecoration;
+        setTip(s.preferences.language === "da" ? "✨ Ny dekoration: " + name : "✨ New decoration: " + name);
       }
     }
     knownGardenItems.current = current;
