@@ -929,7 +929,7 @@ export default function App() {
   const gardenScene = (hidden = false) => (
     <View
       testID="garden-scene"
-      style={[st.scene, { flex: 1, minHeight: 0 }]}
+      style={[st.scene, { flex: 1, minHeight: 0, borderWidth: 0, borderRadius: 0 }]}
       onLayout={(e) => setSceneSize(e.nativeEvent.layout)}
     >
       {location !== "cottage" ? (
@@ -1222,7 +1222,7 @@ export default function App() {
               />
             )}
             {screen === "garden" && (
-              <View style={st.playLayout}>
+              <View testID="garden-fullscreen" style={{ flex: 1, minHeight: 0 }}>
                 <View style={st.playCenter}>
                   <GardenViewport language={language} editing={gardenEditing}>{gardenScene()}</GardenViewport>
                   {location === "cottage" && (
@@ -1299,10 +1299,12 @@ export default function App() {
                       </Text>
                     </View>
                   </View>
+                  <View style={{ position: "absolute", bottom: 78, left: 10, right: 10 }} pointerEvents="box-none">
                   <MaterialRibbon
                     wallet={s.economy.wallet}
                     onOpen={() => go("inventory")}
                   />
+                  </View>
                   {location === "forest" && (
                     <ForestGuide
                       save={s}
@@ -2377,6 +2379,7 @@ export default function App() {
         style={[
           st.tabDock,
           { maxWidth: 420, width: "90%", alignSelf: "center" },
+          screen === "garden" && { position: "absolute", bottom: 6, left: 0, right: 0, zIndex: 100, elevation: 15 },
         ]}
       >
         {(
