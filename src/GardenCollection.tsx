@@ -19,6 +19,9 @@ export function GardenCollection({save, language, onPlay}: {save: Save; language
       {da?"Havens samlealbum":"Garden collection"}
     </Text>
     <Text style={{fontSize:14,color:"#536c57"}}>{count}/{items.length} {da?"dekorationer samlet":"decorations collected"}</Text>
+    <View testID="collection-progress" style={{height:10,borderRadius:8,backgroundColor:"#deded4",overflow:"hidden"}}>
+      <View style={{height:"100%",width:`${Math.round(count/items.length*100)}%`,backgroundColor:"#79a37b",borderRadius:8}}/>
+    </View>
     <Pressable accessibilityRole="button" testID="collection-next-goal" onPress={() => onPlay(!save.economy.inventory.includes("birdhouse")?"hidden":!save.economy.inventory.includes("teaTable")?"tea":"decorations")}
       style={{padding:12,borderRadius:14,backgroundColor:"#e2efdc"}}>
       <Text style={{fontWeight:"700",color:"#315744"}}>{da?"Dit næste mål":"Your next goal"}</Text>
@@ -52,6 +55,12 @@ export function GardenCollection({save, language, onPlay}: {save: Save; language
               ? (da?"Samlet · Niveau ":"Collected · Level ")+level+"/3"
               : source}
           </Text>
+          {!owned && (item.id==="birdhouse" || item.id==="teaTable") && (
+            <Text style={{textAlign:"center",fontSize:11,color:"#536c57"}}>
+              {Math.min(3,item.id==="birdhouse"?save.counters.hidden:save.counters.tea)}/3
+              {da?" spil gennemført":" games completed"}
+            </Text>
+          )}
           {!owned && <Pressable onPress={() => onPlay(item.id==="birdhouse"?"hidden":item.id==="teaTable"?"tea":"decorations")} accessibilityRole="button">
             <Text style={{textAlign:"center",color:"#315744",fontWeight:"700"}}>{da?"Find genstanden":"Find this item"}</Text>
           </Pressable>}
