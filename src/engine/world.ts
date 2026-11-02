@@ -98,6 +98,31 @@ export const upgrades = [
   { id: "forest", cost: 50, wood: 2, icon: "🌲", x: 88, y: 28 },
   { id: "cards", cost: 25, wood: 0, icon: "✿", x: 35, y: 80 },
 ] as const;
+/** Repeatable furniture upgrades encoded in the existing persistent transaction receipts.
+ * This preserves v4 saves without adding an incompatible save schema.
+ */
+export const MAX_FURNITURE_LEVEL = 3;
+export function furnitureLevel(e: Economy, id: string): number {
+  if (!e.inventory.includes(id)) return 0;
+  let level = 1;
+  for (let next = 2; next <= MAX_FURNITURE_LEVEL; next++) {
+    if (!e.receipts.includes(`furniture:${id}:${next}`)) break;
+    level = next;
+  }
+  return level;
+}
+export function furnitureUpgradeCost(id: string, nextLevel: number): Partial<Wallet> {
+  const item = upgrades.find(u => u.id === id);
+  if (!item || id === "cards" || !Number.isInteger(nextLevel) || nextLevel < 2 || nextLevel > MAX_FURNITURE_LEVEL)
+    throw Error("invalidTransaction");
+  return { glimmers: -(item.cost * nextLevel), wood: -(Math.max(1,item.wood) * (nextLevel - 1)) };
+}
+export function upgradeFurniture(e: Economy, id: string): Economy {
+  const level = furnitureLevel(e, id);
+  if (level < 1 || level >= MAX_FURNITURE_LEVEL) throw Error("invalidTransaction");
+  const next = level + 1;
+  return transact(e, `furniture:${id}:${next}`, furnitureUpgradeCost(id,next));
+}
 export type UpgradeId = (typeof upgrades)[number]["id"];
 export type Placement = { id: UpgradeId; x: number; y: number };
 export function place(
