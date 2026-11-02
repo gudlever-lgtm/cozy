@@ -1,5 +1,7 @@
 import { expansionEn } from "./expansion-en";
 export const en = {
+  birdhouse: "Birdhouse",
+  teaTable: "Tea table",
   solitaireNoMoves: "No more moves found. Try Undo or New game.",
   randomDeal: "Random deal",
   winnableDeal: "Guaranteed winnable deal",
