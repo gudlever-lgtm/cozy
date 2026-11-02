@@ -2378,7 +2378,7 @@ export default function App() {
         testID="main-tabs"
         style={[
           st.tabDock,
-          { maxWidth: 420, width: "90%", alignSelf: "center" },
+          { maxWidth: 500, width: "94%", alignSelf: "center" },
           screen === "garden" && { position: "absolute", bottom: 6, left: 0, right: 0, zIndex: 100, elevation: 15 },
         ]}
       >
@@ -2386,6 +2386,7 @@ export default function App() {
           [
             { id: "garden", label: "⌂ " + tt("garden"), icon: "garden" },
             { id: "play", label: "♠ " + tt("play"), icon: "play" },
+            { id: "mini", label: tt("mini"), icon: "mini" },
             { id: "menu", label: tt("mainMenu"), icon: "menu" },
           ] as const
         ).map((item) => (
@@ -2398,13 +2399,17 @@ export default function App() {
               if (item.id === "menu") setMenuOpen(true);
               else {
                 if (item.id === "garden") setLocation("cottage");
+                if (item.id === "mini") {
+                  setMiniHub(true);
+                  setMiniTarget(null);
+                }
                 go(item.id);
                 setTip(tt(item.id));
               }
             }}
             style={[
               st.tabButton,
-              { width: "30%", maxWidth: 120 },
+              { width: "23%", maxWidth: 115 },
               item.id === screen && st.navActive,
             ]}
           >
