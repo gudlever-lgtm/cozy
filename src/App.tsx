@@ -1607,6 +1607,17 @@ export default function App() {
                 >
                   <>
                     {button(
+                      tt("newGame"),
+                      () => {
+                        setPendingChallenge(null);
+                        setDialog("new");
+                      },
+                      false,
+                      true,
+                    )}
+                  </>
+                  <>
+                    {button(
                       tt("undo"),
                       () => applyGame(undo),
                       !s.game.history.length,
