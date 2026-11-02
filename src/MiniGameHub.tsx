@@ -53,9 +53,10 @@ export function MiniGameHub({
               accessibilityRole="button"
               accessibilityLabel={String(t("resumeMini"))}
               onPress={onResume}
-              style={s.button}
+              style={[s.button, {width: 126, flexDirection: "row", gap: 5, backgroundColor: "#e0eedc", borderColor: "#8dac82"}]}
             >
-              <GameIcon name="restart" size={30} />
+              <GameIcon name="restart" size={22} />
+              <Text style={s.name}>{String(t("resumeMini"))}</Text>
             </Pressable>
           )}
         </View>
