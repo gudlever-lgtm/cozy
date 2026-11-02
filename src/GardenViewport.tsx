@@ -11,9 +11,10 @@ const distance = (a: {pageX:number;pageY:number}, b: {pageX:number;pageY:number}
  * Keeping scale >= 1 avoids blank space outside the illustrated garden.
  * The decorative scene is transformed together, maintaining sprite alignment.
  */
-export function GardenViewport({ children, language = "da" }: {
+export function GardenViewport({ children, language = "da", editing = false }: {
   children: React.ReactNode;
   language?: "da" | "en";
+  editing?: boolean;
 }) {
   const [bounds, setBounds] = useState({ width: 0, height: 0 });
   const scale = useRef(new Animated.Value(1)).current;
@@ -34,10 +35,10 @@ export function GardenViewport({ children, language = "da" }: {
     repaint(v=>v+1);
   };
   const respond = useMemo(() => PanResponder.create({
-    onStartShouldSetPanResponder: evt => evt.nativeEvent.touches.length >= 2,
+    onStartShouldSetPanResponder: evt => !editing && evt.nativeEvent.touches.length >= 2,
     onMoveShouldSetPanResponder: (evt, gesture) =>
-      evt.nativeEvent.touches.length >= 2 ||
-      (camera.current.zoom > 1.01 && Math.hypot(gesture.dx,gesture.dy) > 5),
+      !editing && (evt.nativeEvent.touches.length >= 2 ||
+      (camera.current.zoom > 1.01 && Math.hypot(gesture.dx,gesture.dy) > 5)),
     onPanResponderGrant: evt => {
       const c = camera.current;
       const touches = evt.nativeEvent.touches;
@@ -66,7 +67,7 @@ export function GardenViewport({ children, language = "da" }: {
     },
     onPanResponderRelease: () => repaint(v=>v+1),
     onPanResponderTerminate: () => repaint(v=>v+1),
-  }), [bounds.width,bounds.height,scale,dx,dy]);
+  }), [bounds.width,bounds.height,scale,dx,dy,editing]);
   return (
     <View testID="garden-viewport" style={styles.root} onLayout={e=>setBounds(({width,height}) => {
       const n=e.nativeEvent.layout;
