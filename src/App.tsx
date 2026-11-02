@@ -44,6 +44,7 @@ import { ForestGuide } from "./ForestGuide";
 import { winnableGame } from "./engine/winnable";
 import { HiddenTreasureEffects } from "./HiddenTreasureEffects";
 import { GardenDecorations, DecorationArtwork } from "./GardenDecorations";
+import { GardenViewport } from "./GardenViewport";
 import { TeaTime } from "./TeaTime";
 import { GardenMatch } from "./GardenMatch";
 import { MiniArtwork } from "./MiniArtwork";
@@ -1179,7 +1180,7 @@ export default function App() {
             {screen === "garden" && (
               <View style={st.playLayout}>
                 <View style={st.playCenter}>
-                  {gardenScene()}
+                  <GardenViewport language={language}>{gardenScene()}</GardenViewport>
                   <View style={st.gardenHud}>
                     <Pressable
                       accessibilityRole="button"
