@@ -45,6 +45,7 @@ import { winnableGame } from "./engine/winnable";
 import { HiddenTreasureEffects } from "./HiddenTreasureEffects";
 import { GardenDecorations, DecorationArtwork } from "./GardenDecorations";
 import { GardenViewport } from "./GardenViewport";
+import { GardenCollection } from "./GardenCollection";
 import { GardenEditOverlay } from "./GardenEditOverlay";
 import { FurnitureControls } from "./FurnitureControls";
 import { TeaTime } from "./TeaTime";
@@ -133,6 +134,7 @@ type Screen =
   | "quests"
   | "inventory"
   | "decorations"
+  | "collection"
   | "statistics"
   | "settings";
 const write = saveQueue(AsyncStorage);
@@ -1980,6 +1982,12 @@ export default function App() {
                   );
                 })}
               />
+            )}
+            {screen === "collection" && (
+              <GardenCollection save={s} language={language} onPlay={(kind) => {
+                if (kind === "hidden" || kind === "tea") { setMiniTarget(kind); setMiniHub(true); go("mini"); }
+                else go("decorations");
+              }} />
             )}
             {screen === "inventory" && (
               <InventoryPanel save={s} onInfo={setTip} />
