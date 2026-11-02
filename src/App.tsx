@@ -86,6 +86,7 @@ import {
   upgrades,
   transact,
   place,
+  upgradeFurniture,
   seasonAt,
   type Season,
 } from "./engine/world";
@@ -1893,11 +1894,23 @@ export default function App() {
                           save={s}
                           id={u.id}
                           language={language}
-                          onChange={(next) =>
-                            update((current) => ({
+                          onMove={(id, dx, dy) =>
+                            act((current) => {
+                              const original = current.placements.find((p) => p.id === id);
+                              const fallback = upgrades.find((u) => u.id === id);
+                              if (!fallback) return current;
+                              const x = Math.max(5, Math.min(95, (original?.x ?? fallback.x) + dx));
+                              const y = Math.max(10, Math.min(90, (original?.y ?? fallback.y) + dy));
+                              return {
+                                ...current,
+                                placements: place(current.economy.inventory, current.placements, { id, x, y }),
+                              };
+                            })
+                          }
+                          onUpgrade={(id) =>
+                            act((current) => ({
                               ...current,
-                              economy: next.economy,
-                              placements: next.placements,
+                              economy: upgradeFurniture(current.economy, id),
                             }))
                           }
                         />
