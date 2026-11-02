@@ -1,6 +1,7 @@
 import { expansionDa } from "./expansion-da";
 import type { en } from "./en";
 export const da: Record<keyof typeof en, string> = {
+  gardenCollection: "Havens samlealbum",
   birdhouse: "Fuglehus",
   teaTable: "Tebord",
   solitaireNoMoves: "Ingen flere træk fundet. Prøv Fortryd eller Nyt spil.",
