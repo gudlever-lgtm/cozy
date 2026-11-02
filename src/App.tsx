@@ -45,6 +45,7 @@ import { winnableGame } from "./engine/winnable";
 import { HiddenTreasureEffects } from "./HiddenTreasureEffects";
 import { GardenDecorations, DecorationArtwork } from "./GardenDecorations";
 import { GardenViewport } from "./GardenViewport";
+import { FurnitureControls } from "./FurnitureControls";
 import { TeaTime } from "./TeaTime";
 import { GardenMatch } from "./GardenMatch";
 import { MiniArtwork } from "./MiniArtwork";
@@ -920,6 +921,8 @@ export default function App() {
       {!hidden && location === "cottage" && (
         <GardenDecorations
           owned={s.economy.inventory}
+          placements={s.placements}
+          economy={s.economy}
           width={sceneSize.width}
           height={sceneSize.height}
           enabled={s.preferences.animations}
@@ -1885,6 +1888,20 @@ export default function App() {
                           </View>
                         )}
                       </View>
+                      {owned && u.id !== "cards" && (
+                        <FurnitureControls
+                          save={s}
+                          id={u.id}
+                          language={language}
+                          onChange={(next) =>
+                            update((current) => ({
+                              ...current,
+                              economy: next.economy,
+                              placements: next.placements,
+                            }))
+                          }
+                        />
+                      )}
                       <Pressable
                         accessibilityRole="button"
                         accessibilityLabel={
