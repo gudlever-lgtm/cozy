@@ -2,6 +2,7 @@ import React, { useMemo, useRef } from "react";
 import { Animated, PanResponder, Text, View } from "react-native";
 import { decorationImages, type DecorationId } from "./assets/decorations";
 import { DECORATION_ANCHORS, decorationLayout } from "./presentation/decorations";
+import { NewGardenArtwork } from "./NewGardenArtwork";
 import type { Placement } from "./engine/world";
 
 type Props = {
@@ -64,14 +65,16 @@ function DraggableDecoration({ id, position, width, height, language, onPlace }:
       }}
       {...responder.panHandlers}
     >
-      <Animated.Image source={decorationImages[id]} resizeMode="contain" style={{width:"100%",height:"100%"}} />
+      {id === "birdhouse" || id === "teaTable" ?
+        <NewGardenArtwork id={id} size={Math.min(box.width,box.height)} /> :
+        <Animated.Image source={decorationImages[id]} resizeMode="contain" style={{width:"100%",height:"100%"}} /> }
     </Animated.View>
   );
 }
 export function GardenEditOverlay({owned,placements,width,height,language,onPlace}:Props) {
   if (width<=0||height<=0) return null;
   return <View testID="garden-edit-overlay" pointerEvents="box-none" style={{position:"absolute",left:0,right:0,top:0,bottom:0}}>
-    {(Object.keys(decorationImages) as DecorationId[])
+    {(Object.keys(DECORATION_ANCHORS) as DecorationId[])
       .filter(id=>owned.includes(id))
       .map(id=><DraggableDecoration key={id} id={id} position={placements.find(p=>p.id===id)}
         width={width} height={height} language={language} onPlace={onPlace} />)}
