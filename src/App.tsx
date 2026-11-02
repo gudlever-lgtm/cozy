@@ -45,6 +45,7 @@ import { winnableGame } from "./engine/winnable";
 import { HiddenTreasureEffects } from "./HiddenTreasureEffects";
 import { GardenDecorations, DecorationArtwork } from "./GardenDecorations";
 import { GardenViewport } from "./GardenViewport";
+import { GardenEditOverlay } from "./GardenEditOverlay";
 import { FurnitureControls } from "./FurnitureControls";
 import { TeaTime } from "./TeaTime";
 import { GardenMatch } from "./GardenMatch";
@@ -175,6 +176,7 @@ export default function App() {
   >(null);
   const [questFocus, setQuestFocus] = useState<string | null>(null);
   const [decorationFocus, setDecorationFocus] = useState<number | undefined>();
+  const [gardenEditing, setGardenEditing] = useState(false);
   const [miniBounds, setMiniBounds] = useState({ width: 0, height: 0 });
   const [stackPile, setStackPile] = useState<number | null>(null);
   const [boardSize, setBoardSize] = useState({ width: 0, height: 0 });
@@ -517,6 +519,7 @@ export default function App() {
     setStackPile(null);
     setChallengeOpen(false);
     setScreen(id);
+    if (id !== "garden") setGardenEditing(false);
     setMessage("");
     setHelp(false);
     setNpc(null);
@@ -1000,6 +1003,19 @@ export default function App() {
         />
       )}
       {!hidden && <FestivalDecorations events={s.world.events} />}
+      {!hidden && location === "cottage" && gardenEditing && (
+        <GardenEditOverlay
+          owned={s.economy.inventory}
+          placements={s.placements}
+          width={sceneSize.width}
+          height={sceneSize.height}
+          language={language}
+          onPlace={(id, x, y) => act((v) => ({
+            ...v,
+            placements: place(v.economy.inventory, v.placements, { id, x, y }),
+          }))}
+        />
+      )}
 
       {hidden
         ? treasuresForLevel(miniLevel, miniId)
@@ -1184,7 +1200,20 @@ export default function App() {
             {screen === "garden" && (
               <View style={st.playLayout}>
                 <View style={st.playCenter}>
-                  <GardenViewport language={language}>{gardenScene()}</GardenViewport>
+                  <GardenViewport language={language} editing={gardenEditing}>{gardenScene()}</GardenViewport>
+                  {location === "cottage" && (
+                    <Pressable
+                      testID="garden-edit-toggle"
+                      accessibilityRole="button"
+                      accessibilityLabel={language === "da" ? "Indret haven" : "Arrange garden"}
+                      onPress={() => setGardenEditing(v => !v)}
+                      style={{ position:"absolute", right:12, bottom:62, backgroundColor:"#fff8e9ef", borderRadius:16, paddingHorizontal:16, paddingVertical:10, borderWidth:1, borderColor:"#c6ac82" }}
+                    >
+                      <Text style={{ color:"#315744", fontWeight:"700" }}>
+                        {language === "da" ? (gardenEditing ? "Færdig" : "Indret haven") : (gardenEditing ? "Done" : "Arrange garden")}
+                      </Text>
+                    </Pressable>
+                  )}
                   <View style={st.gardenHud}>
                     <Pressable
                       accessibilityRole="button"
