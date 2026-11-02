@@ -1893,6 +1893,17 @@ export default function App() {
                         <Text style={st.fittedName} numberOfLines={2}>
                           {tt(u.id)}
                         </Text>
+                        {!owned && (u.id === "birdhouse" || u.id === "teaTable") && (
+                          <Text style={st.small}>
+                            {language === "da"
+                              ? (u.id === "birdhouse"
+                                  ? "Vindes efter 3 Hidden Treasures-spil"
+                                  : "Vindes efter 3 Tea Time-spil")
+                              : (u.id === "birdhouse"
+                                  ? "Earn after 3 Hidden Treasures games"
+                                  : "Earn after 3 Tea Time games")}
+                          </Text>
+                        )}
                         {owned ? (
                           <Text style={st.small}>{tt("owned")}</Text>
                         ) : (
