@@ -1231,7 +1231,7 @@ export default function App() {
                       accessibilityRole="button"
                       accessibilityLabel={language === "da" ? "Indret haven" : "Arrange garden"}
                       onPress={() => setGardenEditing(v => !v)}
-                      style={{ position:"absolute", right:12, bottom:62, backgroundColor:"#fff8e9ef", borderRadius:16, paddingHorizontal:16, paddingVertical:10, borderWidth:1, borderColor:"#c6ac82" }}
+                      style={{ position:"absolute", right:12, bottom:138, backgroundColor:"#fff8e9ef", borderRadius:16, paddingHorizontal:16, paddingVertical:10, borderWidth:1, borderColor:"#c6ac82" }}
                     >
                       <Text style={{ color:"#315744", fontWeight:"700" }}>
                         {language === "da" ? (gardenEditing ? "Færdig" : "Indret haven") : (gardenEditing ? "Done" : "Arrange garden")}
