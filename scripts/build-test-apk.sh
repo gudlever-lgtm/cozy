@@ -20,7 +20,7 @@ npm test
 
 # Expo prebuild generates the native Android project locally.
 # It does NOT build through EAS or require Expo account login.
-if [[ ! -f android/gradlew && ! -f android/app/build.gradle ]]; then
+if [[ ! -f android/gradlew || ! -f android/app/build.gradle ]]; then
   echo "Generating local native Android project..."
   npx --no-install expo prebuild --platform android --no-install
 fi
