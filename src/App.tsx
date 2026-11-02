@@ -186,6 +186,28 @@ export default function App() {
 
   const [guaranteedDeal, setGuaranteedDeal] = useState(false);
   const [tip, setTip] = useState<string | null>(null);
+  // Show a gentle one-time notification when a decoration is actually earned or bought.
+  // The first loaded save establishes the baseline; old inventory is never announced.
+  const knownGardenItems = useRef<string[] | null>(null);
+  useEffect(() => {
+    if (!s) return;
+    const current = s.economy.inventory;
+    if (knownGardenItems.current !== null) {
+      const added = current.filter((item) => !knownGardenItems.current!.includes(item));
+      const newDecoration = added.find((item) => upgrades.some((u) => u.id === item && u.id !== "cards"));
+      if (newDecoration) {
+        const names: Record<string, [string, string]> = {
+          flowers: ["Blomsterbed", "Flower bed"], bench: ["Havebænk", "Garden bench"],
+          bridge: ["Havebro", "Garden bridge"], lantern: ["Lanterne", "Lantern"],
+          forest: ["Træer", "Trees"], birdhouse: ["Fuglehus", "Birdhouse"],
+          teaTable: ["Tebord", "Tea table"],
+        };
+        const name = names[newDecoration]?.[language === "da" ? 0 : 1] ?? newDecoration;
+        setTip(language === "da" ? "✨ Ny dekoration: " + name : "✨ New decoration: " + name);
+      }
+    }
+    knownGardenItems.current = current;
+  }, [s?.economy.inventory]);
   const checkBlockedAfterAction = useRef(false);
   useEffect(() => {
     if (!checkBlockedAfterAction.current || !s) return;
