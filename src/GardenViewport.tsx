@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Animated, PanResponder, Pressable, StyleSheet, Text, View } from "react-native";
 
 const MIN_ZOOM = 1;
@@ -34,6 +34,9 @@ export function GardenViewport({ children, language = "da", editing = false }: {
     dy.setValue(next.y);
     repaint(v=>v+1);
   };
+  useEffect(() => {
+    if (editing) commit(1, 0, 0);
+  }, [editing]);
   const respond = useMemo(() => PanResponder.create({
     onStartShouldSetPanResponder: evt => !editing && evt.nativeEvent.touches.length >= 2,
     onMoveShouldSetPanResponder: (evt, gesture) =>
@@ -76,14 +79,14 @@ export function GardenViewport({ children, language = "da", editing = false }: {
       <Animated.View testID="garden-camera-content" style={[StyleSheet.absoluteFill, {transform:[{translateX:dx},{translateY:dy},{scale}]}]} {...respond.panHandlers}>
         {children}
       </Animated.View>
-      <View style={styles.controls} pointerEvents="box-none">
+      {!editing && <View style={styles.controls} pointerEvents="box-none">
         <Pressable testID="garden-zoom-in" accessibilityRole="button" accessibilityLabel={language==="da"?"Zoom ind":"Zoom in"}
           onPress={()=>commit(camera.current.zoom+0.25,camera.current.x,camera.current.y)} style={styles.button}><Text style={styles.symbol}>+</Text></Pressable>
         <Pressable testID="garden-reset-view" accessibilityRole="button" accessibilityLabel={language==="da"?"Nulstil udsnit":"Reset view"}
           onPress={()=>commit(1,0,0)} style={styles.button}><Text style={styles.small}>⌂</Text></Pressable>
         <Pressable testID="garden-zoom-out" accessibilityRole="button" accessibilityLabel={language==="da"?"Zoom ud":"Zoom out"}
           onPress={()=>commit(camera.current.zoom-0.25,camera.current.x,camera.current.y)} style={styles.button}><Text style={styles.symbol}>−</Text></Pressable>
-      </View>
+      </View>}
     </View>
   );
 }
