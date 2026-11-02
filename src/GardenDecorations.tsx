@@ -38,6 +38,19 @@ export function DecorationArtwork({
     />
   );
 }
+function CozyObjectMotion({kind, active, width}: {kind:"birdhouse"|"teaTable"; active:boolean; width:number}) {
+  const phase=useSharedValue(0);
+  React.useEffect(()=>{
+    if(active) phase.value=withRepeat(withSequence(withTiming(1,{duration:3600}),withTiming(0,{duration:3600})),-1,false);
+    else {cancelAnimation(phase);phase.value=0;}
+    return ()=>cancelAnimation(phase);
+  },[active,phase]);
+  const style=useAnimatedStyle(()=>({opacity:0.15+phase.value*0.4,transform:[{translateY:-phase.value*5}]}));
+  return <Animated.View testID={"garden-motion-"+kind} pointerEvents="none"
+    style={[{position:"absolute",top:kind==="birdhouse"?0:10,right:0},style]}>
+    <Sprite kind="glimmer" size={Math.max(12,width*0.19)}/>
+  </Animated.View>;
+}
 function LanternGlow({
   active,
   width,
@@ -138,6 +151,9 @@ export function GardenDecorations({
                     <Sprite key={i} kind="glimmer" size={Math.max(12, box.width * 0.17)} />
                   ))}
                 </View>
+              )}
+              {(id === "birdhouse" || id === "teaTable") && (
+                <CozyObjectMotion kind={id} active={moving} width={box.width}/>
               )}
               {id === "lantern" && (
                 <LanternGlow
