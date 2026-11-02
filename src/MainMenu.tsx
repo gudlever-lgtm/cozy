@@ -20,7 +20,7 @@ export type MenuDestination =
   | "rules"
   | "challenge";
 const routes = {
-  games: ["play", "mini", "restartDeal", "rules", "challenge"],
+  games: ["play", "restartDeal", "rules", "challenge"],
   garden: ["world", "quests", "decorations", "collection", "forest"],
   materials: ["inventory", "earn"],
   player: ["statistics", "settings"],
