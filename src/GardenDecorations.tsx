@@ -16,7 +16,9 @@ import {
   decorationLayout,
 } from "./presentation/decorations";
 import { Sprite } from "./living/Sprite";
+import { NewGardenArtwork } from "./NewGardenArtwork";
 import { FurnitureLevelArtwork } from "./FurnitureLevelArtwork";
+const isNew = (id: DecorationId): id is "birdhouse" | "teaTable" => id === "birdhouse" || id === "teaTable";
 export function DecorationArtwork({
   id,
   size = 44,
@@ -24,6 +26,7 @@ export function DecorationArtwork({
   id: DecorationId;
   size?: number;
 }) {
+  if (isNew(id)) return <NewGardenArtwork id={id} size={size} />;
   return (
     <Image
       testID={`decoration-art-${id}`}
@@ -118,13 +121,11 @@ export function GardenDecorations({
               testID={`garden-decoration-${id}`}
               style={{ position: "absolute", ...box }}
             >
-              <Image
-                source={decorationImages[id]}
-                resizeMode="contain"
-                resizeMethod="resize"
-                style={StyleSheet.absoluteFill}
-                accessible={false}
-              />
+              {isNew(id) ? (
+                <View style={StyleSheet.absoluteFill} pointerEvents="none"><NewGardenArtwork id={id} size={Math.min(box.width, box.height)} /></View>
+              ) : (
+                <Image source={decorationImages[id]} resizeMode="contain" resizeMethod="resize" style={StyleSheet.absoluteFill} accessible={false} />
+              )}
               {level > 1 && (
                 <View pointerEvents="none" style={StyleSheet.absoluteFill}>
                   <FurnitureLevelArtwork id={id} level={level} />
