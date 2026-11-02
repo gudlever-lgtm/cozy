@@ -9,6 +9,7 @@ export type MenuDestination =
   | "world"
   | "quests"
   | "decorations"
+  | "collection"
   | "inventory"
   | "statistics"
   | "settings"
@@ -20,7 +21,7 @@ export type MenuDestination =
   | "challenge";
 const routes = {
   games: ["play", "mini", "newDeal", "restartDeal", "rules", "challenge"],
-  garden: ["world", "quests", "decorations", "forest"],
+  garden: ["world", "quests", "decorations", "collection", "forest"],
   materials: ["inventory", "earn"],
   player: ["statistics", "settings"],
 } as const;
@@ -69,6 +70,7 @@ export function MainMenu({
     challenge: "challengeTitle",
     forest: "exploreForest",
     earn: "gather",
+    collection: "gardenCollection",
   };
   const title = (id: MenuDestination) => String(t(itemKeys[id] ?? id));
   const itemIcons: Partial<Record<MenuDestination, string>> = {
