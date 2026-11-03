@@ -1,6 +1,11 @@
 import { expansionDa } from "./expansion-da";
 import type { en } from "./en";
 export const da: Record<keyof typeof en, string> = {
+  buildGarden: "Byg din have",
+  buildDone: "Færdig",
+  buildHelp:
+    "Byg fra kataloget. Træk tingene i haven, eller brug pilene til at placere dem.",
+  buildItem: "Byg {{item}}",
   firefliesBalance: "{{count}} ildfluer",
   solitaireKeyAt: "Nøgle ved {{count}} kabalesejre",
   klondike: "Klondike",
@@ -18,7 +23,7 @@ export const da: Record<keyof typeof en, string> = {
   finishMini: "Afslut minispil",
   needDealReward: "Vind et minispil for at få flere nye spil.",
   needFireflies:
-    "Vind kabaler for at samle 30 ildfluer og åbne 3-korts kabale og udfordringer.",
+    "Vind kabaler for at samle 30 ildfluer til udfordringer og nøgler til nye kabaletyper.",
   gardenCollection: "Havens samlealbum",
   birdhouse: "Fuglehus",
   teaTable: "Tebord",

@@ -1,5 +1,10 @@
 import { expansionEn } from "./expansion-en";
 export const en = {
+  buildGarden: "Build your garden",
+  buildDone: "Done building",
+  buildHelp:
+    "Build from the catalog. Drag objects in the garden or use the arrows to position them.",
+  buildItem: "Build {{item}}",
   firefliesBalance: "{{count}} fireflies",
   solitaireKeyAt: "Key at {{count}} solitaire wins",
   klondike: "Klondike",
@@ -18,7 +23,7 @@ export const en = {
   finishMini: "Finish mini game",
   needDealReward: "Win a mini game to earn more new deals.",
   needFireflies:
-    "Win solitaire to collect 30 fireflies and unlock draw-three and challenges.",
+    "Win solitaire to collect 30 fireflies for challenges and keys for new solitaire types.",
   gardenCollection: "Garden collection",
   birdhouse: "Birdhouse",
   teaTable: "Tea table",

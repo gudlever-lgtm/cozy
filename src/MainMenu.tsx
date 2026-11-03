@@ -71,6 +71,7 @@ export function MainMenu({
     forest: "exploreForest",
     earn: "gather",
     collection: "gardenCollection",
+    decorations: "buildGarden",
   };
   const title = (id: MenuDestination) => String(t(itemKeys[id] ?? id));
   const itemIcons: Partial<Record<MenuDestination, string>> = {
