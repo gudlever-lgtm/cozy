@@ -1,5 +1,23 @@
 import { expansionEn } from "./expansion-en";
 export const en = {
+  solitaireKeyAt: "Key at {{count}} solitaire wins",
+  klondike: "Klondike",
+  open: "Open solitaire",
+  whitehead: "Whitehead",
+  klondikeRules:
+    "Build down in alternating colors. Only kings fill empty columns.",
+  openRules: "All tableau cards are visible. Uses Klondike building rules.",
+  whiteheadRules:
+    "All tableau cards are visible. Build down in the same color; move sequences of one suit. Any card fills an empty column.",
+  mainProgressReward: "+10 fireflies · +10 moves for both mini games",
+  miniHelpReward: "+{{count}} undo · +1 new deal",
+  miniProgressInfo:
+    "Win solitaire: +10 moves for each mini game. Finish both for a new pair.",
+  earnedMiniMoves: "{{count}} earned moves",
+  finishMini: "Finish mini game",
+  needDealReward: "Win a mini game to earn more new deals.",
+  needFireflies:
+    "Win solitaire to collect 30 fireflies and unlock draw-three and challenges.",
   gardenCollection: "Garden collection",
   birdhouse: "Birdhouse",
   teaTable: "Tea table",

@@ -1,3 +1,9 @@
+import {
+  newSolitaire,
+  solitaireTypes,
+  type SolitaireKind,
+} from "./engine/solitaire";
+import { finishMini } from "./engine/miniProgress";
 import { appStyles as st } from "./App.styles";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
@@ -29,7 +35,7 @@ import { JourneyRibbon } from "./JourneyRibbon";
 import { MainMenu, type MenuDestination } from "./MainMenu";
 import { MaterialRibbon } from "./MaterialRibbon";
 import { InventoryPanel } from "./InventoryPanel";
-import { MiniGameHub } from "./MiniGameHub";
+import type { MiniSlot } from "./engine/miniProgress";
 import { QuestJournal } from "./QuestJournal";
 import type { QuestObjective } from "./presentation/quests";
 import { ScreenPager } from "./ScreenPager";
@@ -170,6 +176,7 @@ export default function App() {
     serial: number;
     section: "buildings" | "storyJournal";
   } | null>(null);
+  const [nextSolitaire, setNextSolitaire] = useState<SolitaireKind>("klondike");
   const [miniHelp, setMiniHelp] = useState(false);
   const [questRequest, setQuestRequest] = useState(0);
   const [appearanceRequest, setAppearanceRequest] = useState(0);
@@ -193,17 +200,30 @@ export default function App() {
     if (!s) return;
     const current = s.economy.inventory;
     if (knownGardenItems.current !== null) {
-      const added = current.filter((item) => !knownGardenItems.current!.includes(item));
-      const newDecoration = added.find((item) => upgrades.some((u) => u.id === item && u.id !== "cards"));
+      const added = current.filter(
+        (item) => !knownGardenItems.current!.includes(item),
+      );
+      const newDecoration = added.find((item) =>
+        upgrades.some((u) => u.id === item && u.id !== "cards"),
+      );
       if (newDecoration) {
         const names: Record<string, [string, string]> = {
-          flowers: ["Blomsterbed", "Flower bed"], bench: ["Havebænk", "Garden bench"],
-          bridge: ["Havebro", "Garden bridge"], lantern: ["Lanterne", "Lantern"],
-          forest: ["Træer", "Trees"], birdhouse: ["Fuglehus", "Birdhouse"],
+          flowers: ["Blomsterbed", "Flower bed"],
+          bench: ["Havebænk", "Garden bench"],
+          bridge: ["Havebro", "Garden bridge"],
+          lantern: ["Lanterne", "Lantern"],
+          forest: ["Træer", "Trees"],
+          birdhouse: ["Fuglehus", "Birdhouse"],
           teaTable: ["Tebord", "Tea table"],
         };
-        const name = names[newDecoration]?.[s.preferences.language === "da" ? 0 : 1] ?? newDecoration;
-        setTip(s.preferences.language === "da" ? "✨ Ny dekoration: " + name : "✨ New decoration: " + name);
+        const name =
+          names[newDecoration]?.[s.preferences.language === "da" ? 0 : 1] ??
+          newDecoration;
+        setTip(
+          s.preferences.language === "da"
+            ? "✨ Ny dekoration: " + name
+            : "✨ New decoration: " + name,
+        );
       }
     }
     knownGardenItems.current = current;
@@ -237,7 +257,7 @@ export default function App() {
   const location = s?.world.area ?? "cottage";
   const setLocation = (area: AreaId) => act((v) => enterArea(v, area));
   const [miniLevel, setMiniLevel] = useState<MiniLevel>(1);
-  const [nextMiniLevel, setNextMiniLevel] = useState<MiniLevel>(1);
+
   const [miniHub, setMiniHub] = useState(false);
   const [matchBusy, setMatchBusy] = useState(false);
   const [sceneSize, setSceneSize] = useState({ width: 700, height: 410 });
@@ -367,7 +387,18 @@ export default function App() {
     update((v) =>
       JSON.stringify(v.miniSession) === JSON.stringify(miniSession)
         ? v
-        : { ...v, miniSession },
+        : {
+            ...v,
+            miniSession,
+            miniProgress: {
+              ...v.miniProgress,
+              slots: v.miniProgress.slots.map((slot) =>
+                miniSession && slot.session.id === miniSession.id
+                  ? { ...slot, session: miniSession }
+                  : slot,
+              ),
+            },
+          },
     );
   }, [!!s, mini, miniId, miniLevel, match, tea, found, update]);
   const tt = (key: Key, options?: Record<string, unknown>) =>
@@ -613,10 +644,35 @@ export default function App() {
     ];
   };
   const earnMaterials = () => {
-    setMiniTarget(null);
-    setMiniHub(true);
+    go("play");
+  };
+  const openMini = (slot: MiniSlot) => {
+    if (slot.done || slot.moves <= 0) return;
+    const session = slot.session;
+    setMini(session.kind);
+    setMiniId(session.id);
+    setMiniLevel(session.level);
+    setMatch({ ...session.match, turns: slot.moves });
+    setTea(session.tea);
+    setFound(session.found);
+    setMiniHub(false);
     go("mini");
   };
+  const miniMoves =
+    s?.miniProgress.slots.find((slot) => slot.session.id === miniId)?.moves ??
+    0;
+  const spendMiniMove = () =>
+    update((v) => ({
+      ...v,
+      miniProgress: {
+        ...v.miniProgress,
+        slots: v.miniProgress.slots.map((slot) =>
+          slot.session.id === miniId && slot.moves > 0
+            ? { ...slot, moves: slot.moves - 1 }
+            : slot,
+        ),
+      },
+    }));
   const navigateMenu = (id: MenuDestination) => {
     if (
       id === "newDeal" ||
@@ -643,7 +699,10 @@ export default function App() {
       go("garden");
       return;
     }
-    if (id === "mini") setMiniHub(true);
+    if (id === "mini") {
+      go("garden");
+      return;
+    }
     go(id);
   };
   const pref = <K extends keyof Save["preferences"]>(
@@ -929,7 +988,10 @@ export default function App() {
   const gardenScene = (hidden = false) => (
     <View
       testID="garden-scene"
-      style={[st.scene, { flex: 1, minHeight: 0, borderWidth: 0, borderRadius: 0 }]}
+      style={[
+        st.scene,
+        { flex: 1, minHeight: 0, borderWidth: 0, borderRadius: 0 },
+      ]}
       onLayout={(e) => setSceneSize(e.nativeEvent.layout)}
     >
       {location !== "cottage" ? (
@@ -1034,10 +1096,16 @@ export default function App() {
           width={sceneSize.width}
           height={sceneSize.height}
           language={language}
-          onPlace={(id, x, y) => act((v) => ({
-            ...v,
-            placements: place(v.economy.inventory, v.placements, { id, x, y }),
-          }))}
+          onPlace={(id, x, y) =>
+            act((v) => ({
+              ...v,
+              placements: place(v.economy.inventory, v.placements, {
+                id,
+                x,
+                y,
+              }),
+            }))
+          }
         />
       )}
 
@@ -1049,7 +1117,12 @@ export default function App() {
                 key={o.id}
                 accessibilityRole="button"
                 accessibilityLabel={tt(o.id)}
-                onPress={() => setFound((f) => [...new Set([...f, o.id])])}
+                onPress={() => {
+                  if (!miniDone && miniMoves > 0 && !found.includes(o.id)) {
+                    spendMiniMove();
+                    setFound((f) => [...f, o.id]);
+                  }
+                }}
                 style={{
                   position: "absolute",
                   left: `${o.x}%`,
@@ -1222,19 +1295,42 @@ export default function App() {
               />
             )}
             {screen === "garden" && (
-              <View testID="garden-fullscreen" style={{ flex: 1, minHeight: 0 }}>
+              <View
+                testID="garden-fullscreen"
+                style={{ flex: 1, minHeight: 0 }}
+              >
                 <View style={st.playCenter}>
-                  <GardenViewport language={language} editing={gardenEditing}>{gardenScene()}</GardenViewport>
+                  <GardenViewport language={language} editing={gardenEditing}>
+                    {gardenScene()}
+                  </GardenViewport>
                   {location === "cottage" && (
                     <Pressable
                       testID="garden-edit-toggle"
                       accessibilityRole="button"
-                      accessibilityLabel={language === "da" ? "Indret haven" : "Arrange garden"}
-                      onPress={() => setGardenEditing(v => !v)}
-                      style={{ position:"absolute", right:12, bottom:138, backgroundColor:"#fff8e9ef", borderRadius:16, paddingHorizontal:16, paddingVertical:10, borderWidth:1, borderColor:"#c6ac82" }}
+                      accessibilityLabel={
+                        language === "da" ? "Indret haven" : "Arrange garden"
+                      }
+                      onPress={() => setGardenEditing((v) => !v)}
+                      style={{
+                        position: "absolute",
+                        right: 12,
+                        bottom: 138,
+                        backgroundColor: "#fff8e9ef",
+                        borderRadius: 16,
+                        paddingHorizontal: 16,
+                        paddingVertical: 10,
+                        borderWidth: 1,
+                        borderColor: "#c6ac82",
+                      }}
                     >
-                      <Text style={{ color:"#315744", fontWeight:"700" }}>
-                        {language === "da" ? (gardenEditing ? "Færdig" : "Indret haven") : (gardenEditing ? "Done" : "Arrange garden")}
+                      <Text style={{ color: "#315744", fontWeight: "700" }}>
+                        {language === "da"
+                          ? gardenEditing
+                            ? "Færdig"
+                            : "Indret haven"
+                          : gardenEditing
+                            ? "Done"
+                            : "Arrange garden"}
                       </Text>
                     </Pressable>
                   )}
@@ -1299,11 +1395,67 @@ export default function App() {
                       </Text>
                     </View>
                   </View>
-                  <View style={{ position: "absolute", bottom: 78, left: 10, right: 10 }} pointerEvents="box-none">
-                  <MaterialRibbon
-                    wallet={s.economy.wallet}
-                    onOpen={() => go("inventory")}
-                  />
+                  <View
+                    style={{
+                      position: "absolute",
+                      bottom: 78,
+                      left: 10,
+                      right: 10,
+                    }}
+                    pointerEvents="box-none"
+                  >
+                    <MaterialRibbon
+                      wallet={s.economy.wallet}
+                      onOpen={() => go("inventory")}
+                    />
+                  </View>
+                  <View
+                    testID="active-mini-pair"
+                    style={{ position: "absolute", right: 10, top: 64, gap: 6 }}
+                  >
+                    <Text style={st.label}>
+                      ✦ {s.miniProgress.fireflies} / 30
+                    </Text>
+                    {s.miniProgress.keys.map((key) => (
+                      <Text key={key} style={st.small}>
+                        ⚿ {tt(key as Key)}
+                      </Text>
+                    ))}
+                    {s.miniProgress.slots.map((slot) => (
+                      <Pressable
+                        key={slot.session.id}
+                        testID={`active-mini-${slot.session.kind}`}
+                        accessibilityRole="button"
+                        accessibilityLabel={`${tt(slot.session.kind)}: ${slot.done ? tt("questDone") : tt("earnedMiniMoves", { count: slot.moves })}`}
+                        disabled={slot.done || slot.moves === 0}
+                        onPress={() => openMini(slot)}
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          backgroundColor: "#fff8e9ee",
+                          padding: 8,
+                          borderRadius: 16,
+                          opacity: slot.done ? 0.5 : 1,
+                        }}
+                      >
+                        <GameIcon name={slot.session.kind} size={30} />
+                        <Text style={st.label}>
+                          {slot.done ? "✓" : slot.moves}
+                        </Text>
+                      </Pressable>
+                    ))}
+                    <Text
+                      style={[
+                        st.small,
+                        {
+                          maxWidth: 155,
+                          backgroundColor: "#fff8e9ee",
+                          padding: 5,
+                        },
+                      ]}
+                    >
+                      {tt("miniProgressInfo")}
+                    </Text>
                   </View>
                   {location === "forest" && (
                     <ForestGuide
@@ -1311,9 +1463,8 @@ export default function App() {
                       onUpdate={act}
                       onGather={earnMaterials}
                       onGame={(kind) => {
-                        setMiniTarget(kind);
-                        setMiniHub(true);
-                        go("mini");
+                        go("garden");
+                        setTip(tt("miniProgressInfo"));
                       }}
                       onManage={() => {
                         setWorldManagement({
@@ -1621,8 +1772,20 @@ export default function App() {
                   <>
                     {button(
                       tt("undo"),
-                      () => applyGame(undo),
-                      !s.game.history.length,
+                      () =>
+                        update((v) =>
+                          v.miniProgress.undo > 0
+                            ? {
+                                ...v,
+                                game: undo(v.game),
+                                miniProgress: {
+                                  ...v.miniProgress,
+                                  undo: v.miniProgress.undo - 1,
+                                },
+                              }
+                            : v,
+                        ),
+                      !s.game.history.length || s.miniProgress.undo === 0,
                       true,
                     )}
                     {button(
@@ -1666,24 +1829,10 @@ export default function App() {
             {screen === "mini" && (
               <>
                 {!activeMini ? (
-                  <MiniGameHub
-                    level={nextMiniLevel}
-                    onLevel={setNextMiniLevel}
-                    target={miniTarget}
-                    saved={mini}
-                    medals={s.world.medals}
-                    onResume={() => setMiniHub(false)}
-                    onStart={(kind) => {
-                      setMiniTarget(null);
-                      setMiniHub(false);
-                      setMiniLevel(nextMiniLevel);
-                      setMini(kind);
-                      setMiniId(uuid());
-                      setMatch(matchForLevel(nextMiniLevel));
-                      setFound([]);
-                      setTea(teaForLevel(nextMiniLevel));
-                    }}
-                  />
+                  <View>
+                    <Text style={st.label}>{tt("miniProgressInfo")}</Text>
+                    {button(tt("garden"), () => go("garden"))}
+                  </View>
                 ) : (
                   <View style={st.playLayout} testID="mini-play-layout">
                     <ScrollView
@@ -1704,16 +1853,23 @@ export default function App() {
                             })),
                           miniDone || match.turns === 0 || matchBusy,
                         )}
-                      {iconButton("restart", tt("replay"), () => {
-                        setMiniId(uuid());
-                        setMatch(matchForLevel(miniLevel));
-                        setTea(teaForLevel(miniLevel));
-                        setFound([]);
-                      })}
                       {iconButton("close", tt("back"), () => {
                         setMatchBusy(false);
-                        setMiniHub(true);
+                        go("garden");
                       })}
+                      {iconButton(
+                        "close",
+                        tt("finishMini"),
+                        () => {
+                          update((v) => ({
+                            ...v,
+                            miniProgress: finishMini(v.miniProgress, miniId),
+                          }));
+                          setMini(null);
+                          go("garden");
+                        },
+                        !miniDone && miniMoves > 0,
+                      )}
                     </ScrollView>
                     <View
                       style={{ flex: 1, minWidth: 0, minHeight: 0, gap: 4 }}
@@ -1784,9 +1940,14 @@ export default function App() {
                                   height - insets.top - insets.bottom - 126) -
                                   16,
                               )}
-                              disabled={miniDone || match.turns === 0}
+                              disabled={miniDone || miniMoves === 0}
                               reducedMotion={s.preferences.reducedMotion}
-                              onChange={setMatch}
+                              onChange={(next) => {
+                                if (miniMoves > 0) {
+                                  spendMiniMove();
+                                  setMatch(next);
+                                }
+                              }}
                               onBusyChange={setMatchBusy}
                               idleGuide={idleSettings}
                             />
@@ -1842,8 +2003,13 @@ export default function App() {
                           <TeaTime
                             key={miniId}
                             game={tea}
-                            disabled={miniDone}
-                            onChange={setTea}
+                            disabled={miniDone || miniMoves === 0}
+                            onChange={(next) => {
+                              if (miniMoves > 0) {
+                                spendMiniMove();
+                                setTea(next);
+                              }
+                            }}
                             idleGuide={idleSettings}
                           />
                         )}
@@ -1871,9 +2037,7 @@ export default function App() {
                     earnMaterials();
                     setTip(tt("gatherHint"));
                   } else {
-                    setMiniTarget(objective.type);
-                    go("mini");
-                    setMiniHub(mini !== objective.type);
+                    go("garden");
                     setTip(tt("questChooseGame", { game: tt(objective.type) }));
                   }
                 }}
@@ -1930,17 +2094,18 @@ export default function App() {
                         <Text style={st.fittedName} numberOfLines={2}>
                           {tt(u.id)}
                         </Text>
-                        {!owned && (u.id === "birdhouse" || u.id === "teaTable") && (
-                          <Text style={st.small}>
-                            {language === "da"
-                              ? (u.id === "birdhouse"
+                        {!owned &&
+                          (u.id === "birdhouse" || u.id === "teaTable") && (
+                            <Text style={st.small}>
+                              {language === "da"
+                                ? u.id === "birdhouse"
                                   ? "Vindes efter 3 Hidden Treasures-spil"
-                                  : "Vindes efter 3 Tea Time-spil")
-                              : (u.id === "birdhouse"
+                                  : "Vindes efter 3 Tea Time-spil"
+                                : u.id === "birdhouse"
                                   ? "Earn after 3 Hidden Treasures games"
-                                  : "Earn after 3 Tea Time games")}
-                          </Text>
-                        )}
+                                  : "Earn after 3 Tea Time games"}
+                            </Text>
+                          )}
                         {owned ? (
                           <Text style={st.small}>{tt("owned")}</Text>
                         ) : (
@@ -1973,14 +2138,28 @@ export default function App() {
                           language={language}
                           onMove={(id, dx, dy) =>
                             act((current) => {
-                              const original = current.placements.find((p) => p.id === id);
-                              const fallback = upgrades.find((u) => u.id === id);
+                              const original = current.placements.find(
+                                (p) => p.id === id,
+                              );
+                              const fallback = upgrades.find(
+                                (u) => u.id === id,
+                              );
                               if (!fallback) return current;
-                              const x = Math.max(5, Math.min(95, (original?.x ?? fallback.x) + dx));
-                              const y = Math.max(10, Math.min(90, (original?.y ?? fallback.y) + dy));
+                              const x = Math.max(
+                                5,
+                                Math.min(95, (original?.x ?? fallback.x) + dx),
+                              );
+                              const y = Math.max(
+                                10,
+                                Math.min(90, (original?.y ?? fallback.y) + dy),
+                              );
                               return {
                                 ...current,
-                                placements: place(current.economy.inventory, current.placements, { id, x, y }),
+                                placements: place(
+                                  current.economy.inventory,
+                                  current.placements,
+                                  { id, x, y },
+                                ),
                               };
                             })
                           }
@@ -2019,10 +2198,16 @@ export default function App() {
               />
             )}
             {screen === "collection" && (
-              <GardenCollection save={s} language={language} onPlay={(kind) => {
-                if (kind === "hidden" || kind === "tea") { setMiniTarget(kind); setMiniHub(true); go("mini"); }
-                else go("decorations");
-              }} />
+              <GardenCollection
+                save={s}
+                language={language}
+                onPlay={(kind) => {
+                  if (kind === "hidden" || kind === "tea") {
+                    go("garden");
+                    setTip(tt("miniProgressInfo"));
+                  } else go("decorations");
+                }}
+              />
             )}
             {screen === "inventory" && (
               <InventoryPanel save={s} onInfo={setTip} />
@@ -2379,14 +2564,21 @@ export default function App() {
         style={[
           st.tabDock,
           { maxWidth: 500, width: "94%", alignSelf: "center" },
-          screen === "garden" && { position: "absolute", bottom: 6, left: 0, right: 0, zIndex: 100, elevation: 15 },
+          screen === "garden" && {
+            position: "absolute",
+            bottom: 6,
+            left: 0,
+            right: 0,
+            zIndex: 100,
+            elevation: 15,
+          },
         ]}
       >
         {(
           [
             { id: "garden", label: "⌂ " + tt("garden"), icon: "garden" },
             { id: "play", label: "♠ " + tt("play"), icon: "play" },
-            { id: "mini", label: tt("mini"), icon: "mini" },
+
             { id: "menu", label: tt("mainMenu"), icon: "menu" },
           ] as const
         ).map((item) => (
@@ -2399,17 +2591,13 @@ export default function App() {
               if (item.id === "menu") setMenuOpen(true);
               else {
                 if (item.id === "garden") setLocation("cottage");
-                if (item.id === "mini") {
-                  setMiniHub(true);
-                  setMiniTarget(null);
-                }
                 go(item.id);
                 setTip(tt(item.id));
               }
             }}
             style={[
               st.tabButton,
-              { width: "23%", maxWidth: 115 },
+              { width: "31%", maxWidth: 150 },
               item.id === screen && st.navActive,
             ]}
           >
@@ -2569,35 +2757,89 @@ export default function App() {
                 )}
               </Text>
               {dialog === "new" && !pendingChallenge && (
-                <View style={st.row}>
-                  {button(
-                    tt("randomDeal"),
-                    () => setGuaranteedDeal(false),
-                    false,
-                    !guaranteedDeal,
+                <View>
+                  {solitaireTypes.map((kind) =>
+                    button(
+                      `${tt(kind.id)}${kind.id !== "klondike" && !s.miniProgress.keys.includes(kind.id) ? ` · ${tt("solitaireKeyAt", { count: kind.fireflies / 10 })}` : ""}`,
+                      () => setNextSolitaire(kind.id),
+                      kind.id !== "klondike" &&
+                        !s.miniProgress.keys.includes(kind.id),
+                      nextSolitaire === kind.id,
+                    ),
                   )}
-                  {button(
-                    tt("winnableDeal"),
-                    () => setGuaranteedDeal(true),
-                    false,
-                    guaranteedDeal,
-                  )}
+                  <Text style={st.small}>
+                    {tt((nextSolitaire + "Rules") as Key)}
+                  </Text>
                 </View>
               )}
+              {dialog === "new" &&
+                !pendingChallenge &&
+                nextSolitaire === "klondike" && (
+                  <View style={st.row}>
+                    {button(
+                      tt("randomDeal"),
+                      () => setGuaranteedDeal(false),
+                      false,
+                      !guaranteedDeal,
+                    )}
+                    {button(
+                      tt("winnableDeal"),
+                      () => setGuaranteedDeal(true),
+                      false,
+                      guaranteedDeal,
+                    )}
+                  </View>
+                )}
               <View style={st.row}>
                 {button(tt("cancel"), () => setDialog(null), false, true)}
                 {button(tt("confirm"), () => {
-                  if (dialog === "new")
+                  if (dialog === "new") {
+                    if (
+                      guaranteedDeal &&
+                      nextSolitaire === "klondike" &&
+                      !pendingChallenge &&
+                      s.miniProgress.deals <= 0 &&
+                      !s.game.won
+                    ) {
+                      setTip(tt("needDealReward"));
+                      return;
+                    }
+                    if (
+                      nextSolitaire !== "klondike" &&
+                      !s.miniProgress.keys.includes(nextSolitaire)
+                    ) {
+                      setTip(tt("needFireflies"));
+                      return;
+                    }
+                    if (
+                      (nextDraw === 3 || pendingChallenge) &&
+                      s.miniProgress.fireflies < 30
+                    ) {
+                      setTip(tt("needFireflies"));
+                      return;
+                    }
                     update((v) => ({
                       ...v,
                       game: pendingChallenge
                         ? challengeGame(uuid(), pendingChallenge)
-                        : guaranteedDeal
-                          ? winnableGame(uuid(), nextDraw, v.attempts - 1)
-                          : newGame(uuid(), nextDraw),
+                        : nextSolitaire !== "klondike"
+                          ? newSolitaire(uuid(), nextSolitaire, nextDraw)
+                          : guaranteedDeal
+                            ? winnableGame(uuid(), nextDraw, v.attempts - 1)
+                            : newGame(uuid(), nextDraw),
+                      miniProgress: {
+                        ...v.miniProgress,
+                        deals:
+                          v.game.won ||
+                          nextSolitaire !== "klondike" ||
+                          !guaranteedDeal ||
+                          pendingChallenge
+                            ? v.miniProgress.deals
+                            : Math.max(0, v.miniProgress.deals - 1),
+                      },
                       attempts: v.attempts + 1,
                     }));
-                  else applyGame(restart);
+                  } else applyGame(restart);
                   setDialog(null);
                   setSelected(null);
                 })}

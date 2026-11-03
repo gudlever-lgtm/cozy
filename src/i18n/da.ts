@@ -1,6 +1,23 @@
 import { expansionDa } from "./expansion-da";
 import type { en } from "./en";
 export const da: Record<keyof typeof en, string> = {
+  solitaireKeyAt: "Nøgle ved {{count}} kabalesejre",
+  klondike: "Klondike",
+  open: "Åben kabale",
+  whitehead: "Whitehead",
+  klondikeRules: "Byg ned i skiftende farver. Kun konger på tomme pladser.",
+  openRules: "Alle bordkort er synlige. Ellers samme regler som Klondike.",
+  whiteheadRules:
+    "Alle bordkort er synlige. Byg ned i samme farve, flyt sekvenser i samme kulør. Alle kort kan fylde tomme pladser.",
+  mainProgressReward: "+10 ildfluer · +10 træk til begge minispil",
+  miniHelpReward: "+{{count}} fortryd · +1 nyt spil",
+  miniProgressInfo:
+    "Vind kabale: +10 træk til hvert minispil. Begge afsluttet → to nye.",
+  earnedMiniMoves: "{{count}} optjente træk",
+  finishMini: "Afslut minispil",
+  needDealReward: "Vind et minispil for at få flere nye spil.",
+  needFireflies:
+    "Vind kabaler for at samle 30 ildfluer og åbne 3-korts kabale og udfordringer.",
   gardenCollection: "Havens samlealbum",
   birdhouse: "Fuglehus",
   teaTable: "Tebord",
@@ -41,7 +58,7 @@ export const da: Record<keyof typeof en, string> = {
   questNeedsPrevious: "Gør først {{quest}} færdig, og hent belønningen.",
   questUnlockItem: "Lås {{item}} op",
   questCompleteGame: "Gennemfør {{game}}",
-  questChooseGame: "Vælg {{game}} i minispilmenuen.",
+  questChooseGame: "Find {{game}} blandt de aktive minispil på forsiden.",
   questClaimed: "Belønning hentet:",
   millie1Info: "Millie mangler frø til at begynde sin blomsterhave.",
   millie2Info:

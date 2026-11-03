@@ -22,7 +22,7 @@ export type MenuDestination =
 const routes = {
   games: ["play", "restartDeal", "rules", "challenge"],
   garden: ["world", "quests", "decorations", "collection", "forest"],
-  materials: ["inventory", "earn"],
+  materials: ["inventory"],
   player: ["statistics", "settings"],
 } as const;
 const legacy: Partial<Record<MenuDestination, string>> = {

@@ -29,6 +29,13 @@ export function GameRewardLine({
         alignItems: "center",
       }}
     >
+      <Text style={{ color: "#345b49", fontSize: compact ? 10 : 11 }}>
+        {String(
+          t(kind === "solitaire" ? "mainProgressReward" : "miniHelpReward", {
+            count: level,
+          }),
+        )}
+      </Text>
       {entries.map(([r, n]) => (
         <View
           key={r}

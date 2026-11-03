@@ -1,3 +1,9 @@
+import {
+  newMiniProgress,
+  validMiniProgress,
+  finishMini,
+  type MiniProgress,
+} from "./miniProgress";
 import { newWorld, validWorld, type WorldProgress } from "./progression";
 import { validSession, type MiniSession } from "./session";
 import {
@@ -44,6 +50,7 @@ export type Preferences = {
 };
 export type Save = {
   version: 4;
+  miniProgress: MiniProgress;
   world: WorldProgress;
   miniSession: MiniSession | null;
   profile: Profile | null;
@@ -71,6 +78,7 @@ export const deviceLanguage = (language: string): Language =>
 export function fresh(id: string, language: Language): Save {
   return {
     version: 4,
+    miniProgress: newMiniProgress(),
     world: newWorld(),
     miniSession: null,
     profile: null,
@@ -240,6 +248,9 @@ export function migrate(
     version: 4,
     world: { ...newWorld(old.economy?.inventory ?? []), ...old.world },
     miniSession: old.miniSession ?? null,
+    miniProgress: old.miniProgress
+      ? { ...newMiniProgress(), ...old.miniProgress }
+      : newMiniProgress(),
     preferences: { ...base.preferences, ...old.preferences },
     counters: { ...base.counters, ...old.counters },
     economy: {
@@ -251,6 +262,8 @@ export function migrate(
   } as Save;
   if (
     !s.game ||
+    (s.game.variant !== undefined &&
+      !["klondike", "open", "whitehead"].includes(s.game.variant)) ||
     !Array.isArray(s.game.tableau) ||
     s.game.tableau.length !== 7 ||
     !Array.isArray(s.game.stock) ||
@@ -339,6 +352,8 @@ export function migrate(
     s.streak < 0 ||
     !validWorld(s.world) ||
     !validSession(s.miniSession) ||
+    !validMiniProgress(s.miniProgress) ||
+    !s.miniProgress.slots.every((slot) => validSession(slot.session)) ||
     !s.world ||
     !["cottage", "forest", "river", "village", "winterland"].includes(
       s.world.area,
@@ -394,15 +409,20 @@ export function reward(
   // Permanent, earned garden objects. Existing purchases remain untouched.
   // Unlock once after the third completed Hidden Treasures / Tea Time game.
   let placements = s.placements;
-  const rewardItem = type === "hidden" && counters.hidden >= 3
-    ? "birdhouse"
-    : type === "tea" && counters.tea >= 3
-      ? "teaTable"
-      : null;
+  const rewardItem =
+    type === "hidden" && counters.hidden >= 3
+      ? "birdhouse"
+      : type === "tea" && counters.tea >= 3
+        ? "teaTable"
+        : null;
   if (rewardItem && !economy.inventory.includes(rewardItem)) {
-    const item = upgrades.find(u => u.id === rewardItem)!;
+    const item = upgrades.find((u) => u.id === rewardItem)!;
     economy = transact(economy, "unlock:" + rewardItem, {}, rewardItem);
-    placements = place(economy.inventory, placements, { id: rewardItem, x: item.x, y: item.y });
+    placements = place(economy.inventory, placements, {
+      id: rewardItem,
+      x: item.x,
+      y: item.y,
+    });
   }
   const medal =
     s.miniSession?.id === id && s.miniSession.kind === type
@@ -410,6 +430,27 @@ export function reward(
       : null;
   return {
     ...s,
+    miniProgress:
+      type === "solitaire"
+        ? {
+            ...s.miniProgress,
+            fireflies: s.miniProgress.fireflies + 10,
+            keys: [
+              ...new Set([
+                ...s.miniProgress.keys,
+                ...(counters.solitaire >= 3 ? ["open"] : []),
+                ...(counters.solitaire >= 6 ? ["whitehead"] : []),
+              ]),
+            ],
+            slots: s.miniProgress.slots.map((slot) =>
+              slot.done ? slot : { ...slot, moves: slot.moves + 10 },
+            ),
+          }
+        : {
+            ...finishMini(s.miniProgress, id),
+            undo: s.miniProgress.undo + difficulty,
+            deals: s.miniProgress.deals + 1,
+          },
     economy,
     counters,
     placements,

@@ -1,6 +1,8 @@
 export type Suit = "♠" | "♥" | "♣" | "♦";
 export type Card = { id: string; suit: Suit; rank: number; up: boolean };
+export type SolitaireKind = "klondike" | "open" | "whitehead";
 export type Board = {
+  variant?: SolitaireKind;
   stock: Card[];
   waste: Card[];
   tableau: Card[][];
@@ -27,6 +29,7 @@ export type Delta =
   | { op: "recycle"; n: number; flipped: number[] }
   | { op: "move"; from: PileRef; to: PileRef; n: number; flipped: number[] };
 export const snapshot = (g: Board): Board => ({
+  ...(g.variant ? { variant: g.variant } : {}),
   stock: g.stock.map((c) => ({ ...c })),
   waste: g.waste.map((c) => ({ ...c })),
   tableau: g.tableau.map((p) => p.map((c) => ({ ...c }))),
@@ -141,7 +144,9 @@ export function canMove(g: Board, from: Place, to: Place): boolean {
   for (let i = 1; i < cards.length; i++)
     if (
       cards[i - 1].rank !== cards[i].rank + 1 ||
-      red(cards[i - 1]) === red(cards[i])
+      (g.variant === "whitehead"
+        ? cards[i - 1].suit !== cards[i].suit
+        : red(cards[i - 1]) === red(cards[i]))
     )
       return false;
   const pile = g[to.kind][to.pile];
@@ -154,8 +159,12 @@ export function canMove(g: Board, from: Place, to: Place): boolean {
       (!top ? c.rank === 1 : top.suit === c.suit && c.rank === top.rank + 1)
     );
   return !top
-    ? c.rank === 13
-    : top.up && red(top) !== red(c) && top.rank === c.rank + 1;
+    ? g.variant === "whitehead" || c.rank === 13
+    : top.up &&
+        (g.variant === "whitehead"
+          ? red(top) === red(c)
+          : red(top) !== red(c)) &&
+        top.rank === c.rank + 1;
 }
 function update(g: Game, delta: Delta, mutate: (b: Board) => void): Game {
   const b = snapshot(g);
@@ -309,4 +318,26 @@ export function isStuck(g: Game): boolean {
     current = next;
   }
   return false;
+}
+
+export const solitaireTypes: { id: SolitaireKind; fireflies: number }[] = [
+  { id: "klondike", fireflies: 0 },
+  { id: "open", fireflies: 30 },
+  { id: "whitehead", fireflies: 60 },
+];
+export function newSolitaire(
+  id: string,
+  variant: SolitaireKind,
+  draw: 1 | 3 = 1,
+): Game {
+  const game = newGame(id, draw);
+  game.variant = variant;
+  if (variant !== "klondike")
+    game.tableau.forEach((p) =>
+      p.forEach((c) => {
+        c.up = true;
+      }),
+    );
+  game.initial = snapshot(game);
+  return game;
 }

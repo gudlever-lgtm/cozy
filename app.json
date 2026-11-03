@@ -3,7 +3,7 @@
     "name": "Cozy Solitaire",
     "slug": "cozy-solitaire",
     "scheme": "cozysolitaire",
-    "version": "1.7.14",
+    "version": "1.8.0",
     "orientation": "landscape",
     "userInterfaceStyle": "light",
     "icon": "./assets/icon.png",
@@ -15,7 +15,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.gudlever.cozy",
-      "buildNumber": "15",
+      "buildNumber": "16",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "UIStatusBarHidden": true
@@ -23,13 +23,15 @@
     },
     "android": {
       "package": "com.gudlever.cozy",
-      "versionCode": 15,
+      "versionCode": 16,
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#f6f2e8"
       },
       "permissions": [],
-      "blockedPermissions": ["android.permission.RECORD_AUDIO"]
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "plugins": [
       "expo-router",
@@ -53,7 +55,10 @@
     "experiments": {
       "typedRoutes": true
     },
-    "platforms": ["ios", "android"],
+    "platforms": [
+      "ios",
+      "android"
+    ],
     "androidStatusBar": {
       "hidden": true
     },
