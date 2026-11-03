@@ -139,10 +139,17 @@ export function MainMenu({
                         (legacy[id] ? legacy[id] + " " : "") + title(id)
                       }
                       onPress={() => onNavigate(id)}
-                      style={[s.card, group === "games" && { height: "30%" }]}
+                      style={[
+                        s.card,
+                        group && routes[group].length > 4 && { height: "30%" },
+                      ]}
                     >
                       <GameIcon name={itemIcons[id] ?? id} size={34} />
-                      <Text style={s.label} numberOfLines={2}>
+                      <Text
+                        style={s.label}
+                        numberOfLines={2}
+                        maxFontSizeMultiplier={1.2}
+                      >
                         {title(id)}
                       </Text>
                     </Pressable>
@@ -190,7 +197,7 @@ const s = StyleSheet.create({
     gap: 8,
   },
   card: {
-    width: "48.8%",
+    width: "48%",
     height: "46%",
     minHeight: 44,
     flexDirection: "row",

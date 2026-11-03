@@ -5,6 +5,7 @@ import type { Save } from "./engine/save";
 import { stories, storyProgress, claimStory } from "./engine/progression";
 import type { MiniKind } from "./engine/session";
 import { GameIcon } from "./GameIcon";
+import { StrongScrollView } from "./StrongScrollView";
 export function ForestGuide({
   save,
   onUpdate,
@@ -62,63 +63,67 @@ export function ForestGuide({
         : "buildings";
   return (
     <View testID="forest-guide" style={s.root}>
-      <View style={{ flexDirection: "row", gap: 6, alignItems: "center" }}>
-        <GameIcon name="quests" size={26} />
-        <Text style={s.title}>{String(t(story?.id ?? "forestComplete"))}</Text>
-      </View>
-      {story ? (
-        <View style={{ gap: 3 }}>
-          {story.objectives.map((o, i) => {
-            const done = Math.min(
-              o.count,
-              "counter" in o
-                ? save.counters[o.counter]
-                : (save.world.buildings[o.building] ?? 0),
-            );
-            const label =
-              "counter" in o
-                ? o.counter === "gather"
-                  ? t("forestGatherGoal", { done, total: o.count })
-                  : t("forestGameGoal", {
-                      game: t(o.counter),
+      <StrongScrollView contentContainerStyle={{ gap: 6 }}>
+        <View style={{ flexDirection: "row", gap: 6, alignItems: "center" }}>
+          <GameIcon name="quests" size={26} />
+          <Text style={s.title}>
+            {String(t(story?.id ?? "forestComplete"))}
+          </Text>
+        </View>
+        {story ? (
+          <View style={{ gap: 3 }}>
+            {story.objectives.map((o, i) => {
+              const done = Math.min(
+                o.count,
+                "counter" in o
+                  ? save.counters[o.counter]
+                  : (save.world.buildings[o.building] ?? 0),
+              );
+              const label =
+                "counter" in o
+                  ? o.counter === "gather"
+                    ? t("forestGatherGoal", { done, total: o.count })
+                    : t("forestGameGoal", {
+                        game: t(o.counter),
+                        done,
+                        total: o.count,
+                      })
+                  : t("forestBuildingGoal", {
+                      building: t(o.building),
                       done,
                       total: o.count,
-                    })
-                : t("forestBuildingGoal", {
-                    building: t(o.building),
-                    done,
-                    total: o.count,
-                  });
-            return (
-              <Text key={i} style={s.text}>
-                {done === o.count ? "✓ " : "· "}
-                {String(label)}
-              </Text>
-            );
-          })}
-        </View>
-      ) : (
-        <Text style={s.text}>{String(t("forestFreeExplore"))}</Text>
-      )}
-      <Pressable
-        testID="forest-next-action"
-        accessibilityRole="button"
-        accessibilityLabel={String(
-          t(actionKey, {
-            game: pending && "counter" in pending ? t(pending.counter) : "",
-          }),
+                    });
+              return (
+                <Text key={i} style={s.text}>
+                  {done === o.count ? "✓ " : "· "}
+                  {String(label)}
+                </Text>
+              );
+            })}
+          </View>
+        ) : (
+          <Text style={s.text}>{String(t("forestFreeExplore"))}</Text>
         )}
-        onPress={action}
-        style={s.button}
-      >
-        <Text style={s.buttonText}>
-          {String(
+        <Pressable
+          testID="forest-next-action"
+          accessibilityRole="button"
+          accessibilityLabel={String(
             t(actionKey, {
               game: pending && "counter" in pending ? t(pending.counter) : "",
             }),
           )}
-        </Text>
-      </Pressable>
+          onPress={action}
+          style={s.button}
+        >
+          <Text style={s.buttonText}>
+            {String(
+              t(actionKey, {
+                game: pending && "counter" in pending ? t(pending.counter) : "",
+              }),
+            )}
+          </Text>
+        </Pressable>
+      </StrongScrollView>
     </View>
   );
 }
@@ -126,10 +131,12 @@ const s = StyleSheet.create({
   root: {
     position: "absolute",
     left: 10,
-    bottom: 10,
+    bottom: 6,
     width: "44%",
     maxWidth: 330,
-    padding: 10,
+    height: 180,
+    maxHeight: "90%",
+    padding: 8,
     gap: 6,
     borderRadius: 16,
     borderWidth: 1,

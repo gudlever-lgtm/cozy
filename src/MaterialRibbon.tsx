@@ -50,10 +50,8 @@ export function MaterialRibbon({
 }
 const s = StyleSheet.create({
   root: {
-    position: "absolute",
-    top: 62,
-    right: 8,
-    left: 8,
+    flexShrink: 1,
+    minWidth: 0,
     alignItems: "flex-end",
   },
   bar: {
@@ -61,7 +59,7 @@ const s = StyleSheet.create({
     maxWidth: "100%",
     paddingHorizontal: 8,
     flexDirection: "row",
-    gap: 9,
+    gap: 5,
     alignItems: "center",
     borderRadius: 13,
     borderWidth: 1,
@@ -69,7 +67,7 @@ const s = StyleSheet.create({
     backgroundColor: "#fff8e9ed",
   },
   material: {
-    minWidth: 35,
+    minWidth: 28,
     maxWidth: 80,
     flexShrink: 1,
     flexDirection: "row",

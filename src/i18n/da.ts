@@ -1,6 +1,7 @@
 import { expansionDa } from "./expansion-da";
 import type { en } from "./en";
 export const da: Record<keyof typeof en, string> = {
+  firefliesBalance: "{{count}} ildfluer",
   solitaireKeyAt: "Nøgle ved {{count}} kabalesejre",
   klondike: "Klondike",
   open: "Åben kabale",

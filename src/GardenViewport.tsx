@@ -92,7 +92,7 @@ export function GardenViewport({ children, language = "da", editing = false }: {
 }
 const styles = StyleSheet.create({
   root:{flex:1, overflow:"hidden", position:"relative"},
-  controls:{position:"absolute",right:12,top:"30%",gap:6,zIndex:20},
+  controls:{position:"absolute",right:8,bottom:8,flexDirection:"row",gap:4,zIndex:20},
   button:{minWidth:44,minHeight:44,borderRadius:17,backgroundColor:"#fff8e9ee",borderWidth:1,borderColor:"#d8ba89",alignItems:"center",justifyContent:"center"},
   symbol:{fontSize:27,color:"#315744",fontWeight:"600"},
   small:{fontSize:24,color:"#315744",fontWeight:"600"},

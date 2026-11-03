@@ -1,3 +1,4 @@
+import { GardenMiniPair } from "./GardenMiniPair";
 import {
   newSolitaire,
   solitaireTypes,
@@ -1299,10 +1300,85 @@ export default function App() {
                 testID="garden-fullscreen"
                 style={{ flex: 1, minHeight: 0 }}
               >
-                <View style={st.playCenter}>
-                  <GardenViewport language={language} editing={gardenEditing}>
-                    {gardenScene()}
-                  </GardenViewport>
+                <View style={st.gardenHud}>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      location === "cottage"
+                        ? tt("millie")
+                        : tt("welcome", { username: s.profile.username })
+                    }
+                    onPress={() =>
+                      location === "cottage"
+                        ? setNpc("millie")
+                        : setTip(
+                            tt("welcome", { username: s.profile!.username }),
+                          )
+                    }
+                  >
+                    <Image
+                      source={require("../assets/icon.png")}
+                      style={{ width: 44, height: 44, borderRadius: 14 }}
+                    />
+                  </Pressable>
+                  {location === "cottage" && (
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={tt("marmalade")}
+                      onPress={() => setNpc("marmalade")}
+                      style={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: 24,
+                        backgroundColor: "#fff7e6e6",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        borderWidth: 1,
+                        borderColor: "#d2bd8d",
+                      }}
+                    >
+                      <CharacterIdle
+                        character="marmalade"
+                        enabled={s.preferences.animations}
+                        reducedMotion={s.preferences.reducedMotion}
+                        size={42}
+                      />
+                    </Pressable>
+                  )}
+                  <View
+                    accessible
+                    accessibilityLabel={
+                      "✦ " +
+                      number(s.economy.wallet.glimmers, language) +
+                      " " +
+                      tt("glimmers")
+                    }
+                    style={st.hudPill}
+                  >
+                    <GameIcon name="glimmer" color="#917133" size={22} />
+                    <Text style={st.currencyText}>
+                      {number(s.economy.wallet.glimmers, language)}
+                    </Text>
+                  </View>
+                </View>
+
+                <View
+                  testID="garden-action-bar"
+                  style={{
+                    flexDirection: "row",
+                    flexWrap: "wrap",
+                    gap: 4,
+                    alignItems: "center",
+                    paddingHorizontal: 6,
+                    paddingBottom: 4,
+                    flexShrink: 0,
+                  }}
+                >
+                  <GardenMiniPair
+                    progress={s.miniProgress}
+                    onOpen={openMini}
+                    onHelp={() => setTip(tt("miniProgressInfo"))}
+                  />
                   {location === "cottage" && (
                     <Pressable
                       testID="garden-edit-toggle"
@@ -1312,18 +1388,25 @@ export default function App() {
                       }
                       onPress={() => setGardenEditing((v) => !v)}
                       style={{
-                        position: "absolute",
-                        right: 12,
-                        bottom: 138,
+                        minHeight: 44,
+                        justifyContent: "center",
                         backgroundColor: "#fff8e9ef",
                         borderRadius: 16,
-                        paddingHorizontal: 16,
-                        paddingVertical: 10,
+                        paddingHorizontal: 10,
+                        paddingVertical: 6,
                         borderWidth: 1,
                         borderColor: "#c6ac82",
                       }}
                     >
-                      <Text style={{ color: "#315744", fontWeight: "700" }}>
+                      <Text
+                        numberOfLines={1}
+                        maxFontSizeMultiplier={1.2}
+                        style={{
+                          color: "#315744",
+                          fontWeight: "700",
+                          fontSize: 12,
+                        }}
+                      >
                         {language === "da"
                           ? gardenEditing
                             ? "Færdig"
@@ -1334,129 +1417,16 @@ export default function App() {
                       </Text>
                     </Pressable>
                   )}
-                  <View style={st.gardenHud}>
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={
-                        location === "cottage"
-                          ? tt("millie")
-                          : tt("welcome", { username: s.profile.username })
-                      }
-                      onPress={() =>
-                        location === "cottage"
-                          ? setNpc("millie")
-                          : setTip(
-                              tt("welcome", { username: s.profile!.username }),
-                            )
-                      }
-                    >
-                      <Image
-                        source={require("../assets/icon.png")}
-                        style={{ width: 44, height: 44, borderRadius: 14 }}
-                      />
-                    </Pressable>
-                    {location === "cottage" && (
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={tt("marmalade")}
-                        onPress={() => setNpc("marmalade")}
-                        style={{
-                          width: 48,
-                          height: 48,
-                          borderRadius: 24,
-                          backgroundColor: "#fff7e6e6",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          borderWidth: 1,
-                          borderColor: "#d2bd8d",
-                        }}
-                      >
-                        <CharacterIdle
-                          character="marmalade"
-                          enabled={s.preferences.animations}
-                          reducedMotion={s.preferences.reducedMotion}
-                          size={42}
-                        />
-                      </Pressable>
-                    )}
-                    <View
-                      accessible
-                      accessibilityLabel={
-                        "✦ " +
-                        number(s.economy.wallet.glimmers, language) +
-                        " " +
-                        tt("glimmers")
-                      }
-                      style={st.hudPill}
-                    >
-                      <GameIcon name="glimmer" color="#917133" size={22} />
-                      <Text style={st.currencyText}>
-                        {number(s.economy.wallet.glimmers, language)}
-                      </Text>
-                    </View>
-                  </View>
-                  <View
-                    style={{
-                      position: "absolute",
-                      bottom: 78,
-                      left: 10,
-                      right: 10,
-                    }}
-                    pointerEvents="box-none"
-                  >
-                    <MaterialRibbon
-                      wallet={s.economy.wallet}
-                      onOpen={() => go("inventory")}
-                    />
-                  </View>
-                  <View
-                    testID="active-mini-pair"
-                    style={{ position: "absolute", right: 10, top: 64, gap: 6 }}
-                  >
-                    <Text style={st.label}>
-                      ✦ {s.miniProgress.fireflies} / 30
-                    </Text>
-                    {s.miniProgress.keys.map((key) => (
-                      <Text key={key} style={st.small}>
-                        ⚿ {tt(key as Key)}
-                      </Text>
-                    ))}
-                    {s.miniProgress.slots.map((slot) => (
-                      <Pressable
-                        key={slot.session.id}
-                        testID={`active-mini-${slot.session.kind}`}
-                        accessibilityRole="button"
-                        accessibilityLabel={`${tt(slot.session.kind)}: ${slot.done ? tt("questDone") : tt("earnedMiniMoves", { count: slot.moves })}`}
-                        disabled={slot.done || slot.moves === 0}
-                        onPress={() => openMini(slot)}
-                        style={{
-                          flexDirection: "row",
-                          alignItems: "center",
-                          backgroundColor: "#fff8e9ee",
-                          padding: 8,
-                          borderRadius: 16,
-                          opacity: slot.done ? 0.5 : 1,
-                        }}
-                      >
-                        <GameIcon name={slot.session.kind} size={30} />
-                        <Text style={st.label}>
-                          {slot.done ? "✓" : slot.moves}
-                        </Text>
-                      </Pressable>
-                    ))}
-                    <Text
-                      style={[
-                        st.small,
-                        {
-                          maxWidth: 155,
-                          backgroundColor: "#fff8e9ee",
-                          padding: 5,
-                        },
-                      ]}
-                    >
-                      {tt("miniProgressInfo")}
-                    </Text>
-                  </View>
+
+                  <MaterialRibbon
+                    wallet={s.economy.wallet}
+                    onOpen={() => go("inventory")}
+                  />
+                </View>
+                <View style={st.playCenter}>
+                  <GardenViewport language={language} editing={gardenEditing}>
+                    {gardenScene()}
+                  </GardenViewport>
                   {location === "forest" && (
                     <ForestGuide
                       save={s}
@@ -2564,14 +2534,6 @@ export default function App() {
         style={[
           st.tabDock,
           { maxWidth: 500, width: "94%", alignSelf: "center" },
-          screen === "garden" && {
-            position: "absolute",
-            bottom: 6,
-            left: 0,
-            right: 0,
-            zIndex: 100,
-            elevation: 15,
-          },
         ]}
       >
         {(
@@ -2603,6 +2565,8 @@ export default function App() {
           >
             <GameIcon name={item.icon} size={26} />
             <Text
+              numberOfLines={1}
+              maxFontSizeMultiplier={1.2}
               style={{
                 fontSize: 10,
                 color: item.id === screen ? "#fff8e9" : "#345b49",
@@ -2746,104 +2710,120 @@ export default function App() {
         )}
         {dialog && (
           <View accessibilityViewIsModal style={st.overlay}>
-            <View style={st.modal}>
-              <Text style={st.sectionTitle}>
-                {tt(
-                  dialog === "new"
-                    ? pendingChallenge
-                      ? "challengeReplace"
-                      : "confirmDeal"
-                    : "confirmRestart",
-                )}
-              </Text>
-              {dialog === "new" && !pendingChallenge && (
-                <View>
-                  {solitaireTypes.map((kind) =>
-                    button(
-                      `${tt(kind.id)}${kind.id !== "klondike" && !s.miniProgress.keys.includes(kind.id) ? ` · ${tt("solitaireKeyAt", { count: kind.fireflies / 10 })}` : ""}`,
-                      () => setNextSolitaire(kind.id),
-                      kind.id !== "klondike" &&
-                        !s.miniProgress.keys.includes(kind.id),
-                      nextSolitaire === kind.id,
-                    ),
+            <View
+              style={[
+                st.modal,
+                {
+                  height:
+                    dialog === "new" ? "90%" : Math.min(240, height * 0.85),
+                  maxHeight: "94%",
+                },
+              ]}
+            >
+              <ScrollView
+                testID="deal-dialog-scroll"
+                contentContainerStyle={{ gap: 8 }}
+              >
+                <Text style={st.sectionTitle}>
+                  {tt(
+                    dialog === "new"
+                      ? pendingChallenge
+                        ? "challengeReplace"
+                        : "confirmDeal"
+                      : "confirmRestart",
                   )}
-                  <Text style={st.small}>
-                    {tt((nextSolitaire + "Rules") as Key)}
-                  </Text>
-                </View>
-              )}
-              {dialog === "new" &&
-                !pendingChallenge &&
-                nextSolitaire === "klondike" && (
-                  <View style={st.row}>
-                    {button(
-                      tt("randomDeal"),
-                      () => setGuaranteedDeal(false),
-                      false,
-                      !guaranteedDeal,
-                    )}
-                    {button(
-                      tt("winnableDeal"),
-                      () => setGuaranteedDeal(true),
-                      false,
-                      guaranteedDeal,
-                    )}
+                </Text>
+                {dialog === "new" && !pendingChallenge && (
+                  <View>
+                    {solitaireTypes.map((kind) => (
+                      <React.Fragment key={kind.id}>
+                        {button(
+                          `${tt(kind.id)}${kind.id !== "klondike" && !s.miniProgress.keys.includes(kind.id) ? ` · ${tt("solitaireKeyAt", { count: kind.fireflies / 10 })}` : ""}`,
+                          () => setNextSolitaire(kind.id),
+                          kind.id !== "klondike" &&
+                            !s.miniProgress.keys.includes(kind.id),
+                          nextSolitaire === kind.id,
+                        )}
+                      </React.Fragment>
+                    ))}
+                    <Text style={st.small}>
+                      {tt((nextSolitaire + "Rules") as Key)}
+                    </Text>
                   </View>
                 )}
-              <View style={st.row}>
-                {button(tt("cancel"), () => setDialog(null), false, true)}
-                {button(tt("confirm"), () => {
-                  if (dialog === "new") {
-                    if (
-                      guaranteedDeal &&
-                      nextSolitaire === "klondike" &&
-                      !pendingChallenge &&
-                      s.miniProgress.deals <= 0 &&
-                      !s.game.won
-                    ) {
-                      setTip(tt("needDealReward"));
-                      return;
-                    }
-                    if (
-                      nextSolitaire !== "klondike" &&
-                      !s.miniProgress.keys.includes(nextSolitaire)
-                    ) {
-                      setTip(tt("needFireflies"));
-                      return;
-                    }
-                    if (
-                      (nextDraw === 3 || pendingChallenge) &&
-                      s.miniProgress.fireflies < 30
-                    ) {
-                      setTip(tt("needFireflies"));
-                      return;
-                    }
-                    update((v) => ({
-                      ...v,
-                      game: pendingChallenge
-                        ? challengeGame(uuid(), pendingChallenge)
-                        : nextSolitaire !== "klondike"
-                          ? newSolitaire(uuid(), nextSolitaire, nextDraw)
-                          : guaranteedDeal
-                            ? winnableGame(uuid(), nextDraw, v.attempts - 1)
-                            : newGame(uuid(), nextDraw),
-                      miniProgress: {
-                        ...v.miniProgress,
-                        deals:
-                          v.game.won ||
-                          nextSolitaire !== "klondike" ||
-                          !guaranteedDeal ||
-                          pendingChallenge
-                            ? v.miniProgress.deals
-                            : Math.max(0, v.miniProgress.deals - 1),
-                      },
-                      attempts: v.attempts + 1,
-                    }));
-                  } else applyGame(restart);
-                  setDialog(null);
-                  setSelected(null);
-                })}
-              </View>
+                {dialog === "new" &&
+                  !pendingChallenge &&
+                  nextSolitaire === "klondike" && (
+                    <View style={st.row}>
+                      {button(
+                        tt("randomDeal"),
+                        () => setGuaranteedDeal(false),
+                        false,
+                        !guaranteedDeal,
+                      )}
+                      {button(
+                        tt("winnableDeal"),
+                        () => setGuaranteedDeal(true),
+                        false,
+                        guaranteedDeal,
+                      )}
+                    </View>
+                  )}
+                <View style={st.row}>
+                  {button(tt("cancel"), () => setDialog(null), false, true)}
+                  {button(tt("confirm"), () => {
+                    if (dialog === "new") {
+                      if (
+                        guaranteedDeal &&
+                        nextSolitaire === "klondike" &&
+                        !pendingChallenge &&
+                        s.miniProgress.deals <= 0 &&
+                        !s.game.won
+                      ) {
+                        setTip(tt("needDealReward"));
+                        return;
+                      }
+                      if (
+                        nextSolitaire !== "klondike" &&
+                        !s.miniProgress.keys.includes(nextSolitaire)
+                      ) {
+                        setTip(tt("needFireflies"));
+                        return;
+                      }
+                      if (
+                        (nextDraw === 3 || pendingChallenge) &&
+                        s.miniProgress.fireflies < 30
+                      ) {
+                        setTip(tt("needFireflies"));
+                        return;
+                      }
+                      update((v) => ({
+                        ...v,
+                        game: pendingChallenge
+                          ? challengeGame(uuid(), pendingChallenge)
+                          : nextSolitaire !== "klondike"
+                            ? newSolitaire(uuid(), nextSolitaire, nextDraw)
+                            : guaranteedDeal
+                              ? winnableGame(uuid(), nextDraw, v.attempts - 1)
+                              : newGame(uuid(), nextDraw),
+                        miniProgress: {
+                          ...v.miniProgress,
+                          deals:
+                            v.game.won ||
+                            nextSolitaire !== "klondike" ||
+                            !guaranteedDeal ||
+                            pendingChallenge
+                              ? v.miniProgress.deals
+                              : Math.max(0, v.miniProgress.deals - 1),
+                        },
+                        attempts: v.attempts + 1,
+                      }));
+                    } else applyGame(restart);
+                    setDialog(null);
+                    setSelected(null);
+                  })}
+                </View>
+              </ScrollView>
             </View>
           </View>
         )}

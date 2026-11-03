@@ -1,5 +1,6 @@
 import { expansionEn } from "./expansion-en";
 export const en = {
+  firefliesBalance: "{{count}} fireflies",
   solitaireKeyAt: "Key at {{count}} solitaire wins",
   klondike: "Klondike",
   open: "Open solitaire",
