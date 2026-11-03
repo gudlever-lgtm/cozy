@@ -995,7 +995,21 @@ export default function App() {
         st.scene,
         { flex: 1, minHeight: 0, borderWidth: 0, borderRadius: 0 },
       ]}
-      onLayout={(e) => setSceneSize(e.nativeEvent.layout)}
+      onLayout={(event) => {
+        const { width, height } = event.nativeEvent.layout;
+        if (
+          !Number.isFinite(width) ||
+          !Number.isFinite(height) ||
+          width <= 0 ||
+          height <= 0
+        )
+          return;
+        setSceneSize((previous) =>
+          previous.width === width && previous.height === height
+            ? previous
+            : { width, height },
+        );
+      }}
     >
       {location !== "cottage" ? (
         <WorldArt

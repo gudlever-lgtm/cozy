@@ -72,10 +72,13 @@ export function GardenViewport({ children, language = "da", editing = false }: {
     onPanResponderTerminate: () => repaint(v=>v+1),
   }), [bounds.width,bounds.height,scale,dx,dy,editing]);
   return (
-    <View testID="garden-viewport" style={styles.root} onLayout={e=>setBounds(({width,height}) => {
-      const n=e.nativeEvent.layout;
-      return width===n.width&&height===n.height?{width,height}:{width:n.width,height:n.height};
-    })}>
+    <View testID="garden-viewport" style={styles.root} onLayout={e => {
+      // Copy native values before React can defer the state updater and release the event.
+      const { width, height } = e.nativeEvent.layout;
+      if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) return;
+      setBounds(previous => previous.width === width && previous.height === height
+        ? previous : { width, height });
+    }}>
       <Animated.View testID="garden-camera-content" style={[StyleSheet.absoluteFill, {transform:[{translateX:dx},{translateY:dy},{scale}]}]} {...respond.panHandlers}>
         {children}
       </Animated.View>
