@@ -1,4 +1,4 @@
-name: Cozy Android test APK
+name: Cozy Android test APK (native Gradle)
 
 on:
   workflow_dispatch:
