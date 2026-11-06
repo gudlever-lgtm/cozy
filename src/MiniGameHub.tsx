@@ -3,7 +3,6 @@ import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
 import { ScreenPager } from "./ScreenPager";
 import { MiniArtwork } from "./MiniArtwork";
-import { GameRewardLine } from "./GameRewardLine";
 import { GameIcon } from "./GameIcon";
 import type { MiniKind, MiniLevel } from "./engine/session";
 export function MiniGameHub({
@@ -13,7 +12,6 @@ export function MiniGameHub({
   onResume,
   saved,
   target,
-  medals,
 }: {
   level: MiniLevel;
   onLevel: (level: MiniLevel) => void;
@@ -21,7 +19,6 @@ export function MiniGameHub({
   onResume: () => void;
   saved: MiniKind | null;
   target?: MiniKind | null;
-  medals: string[];
 }) {
   const { t } = useTranslation();
   return (
@@ -53,10 +50,9 @@ export function MiniGameHub({
               accessibilityRole="button"
               accessibilityLabel={String(t("resumeMini"))}
               onPress={onResume}
-              style={[s.button, {width: 126, flexDirection: "row", gap: 5, backgroundColor: "#e0eedc", borderColor: "#8dac82"}]}
+              style={[s.button, { backgroundColor: "#e0eedc", borderColor: "#8dac82" }]}
             >
               <GameIcon name="restart" size={22} />
-              <Text style={s.name}>{String(t("resumeMini"))}</Text>
             </Pressable>
           )}
         </View>
@@ -81,10 +77,8 @@ export function MiniGameHub({
               {String(t(kind))}
             </Text>
             <Text style={s.note}>
-              {String(t("level", { number: level }))} ·{" "}
-              {medals.filter((id) => id.startsWith(kind + ":")).length}/3
+              {String(t("level", { number: level }))}
             </Text>
-            <GameRewardLine kind={kind} level={level} compact />
           </View>
           <Pressable
             testID={`mini-start-${kind}`}
