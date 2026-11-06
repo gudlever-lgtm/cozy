@@ -1771,20 +1771,33 @@ export default function App() {
                   <>
                     {button(
                       tt("undo"),
-                      () =>
-                        update((v) =>
-                          v.miniProgress.undo > 0
-                            ? {
-                                ...v,
-                                game: undo(v.game),
-                                miniProgress: {
-                                  ...v.miniProgress,
-                                  undo: v.miniProgress.undo - 1,
-                                },
-                              }
-                            : v,
-                        ),
-                      !s.game.history.length || s.miniProgress.undo === 0,
+                      () => {
+                        if (!s.game.history.length) {
+                          setTip(
+                            language === "da"
+                              ? "Der er ingen træk at fortryde endnu."
+                              : "There are no moves to undo yet.",
+                          );
+                          return;
+                        }
+                        if (s.miniProgress.undo <= 0) {
+                          setTip(
+                            language === "da"
+                              ? "Du har ikke flere Undo-point. Vind minispil – Match, Skattejagt eller Tebord – for at tjene flere. Sværere niveauer giver flere point."
+                              : "You are out of Undo points. Win mini-games – Match, Hidden Treasures or Tea Time – to earn more. Harder levels award more points.",
+                          );
+                          return;
+                        }
+                        update((v) => ({
+                          ...v,
+                          game: undo(v.game),
+                          miniProgress: {
+                            ...v.miniProgress,
+                            undo: Math.max(0, v.miniProgress.undo - 1),
+                          },
+                        }));
+                      },
+                      false,
                       true,
                     )}
                     {button(
