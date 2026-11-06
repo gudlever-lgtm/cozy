@@ -35,6 +35,7 @@ import {
 import { StackCardPicker } from "./StackCardPicker";
 import { JourneyRibbon } from "./JourneyRibbon";
 import { MainMenu, type MenuDestination } from "./MainMenu";
+import { MiniGameHub } from "./MiniGameHub";
 import { MaterialRibbon } from "./MaterialRibbon";
 import { InventoryPanel } from "./InventoryPanel";
 import type { MiniSlot } from "./engine/miniProgress";
@@ -649,6 +650,27 @@ export default function App() {
   const earnMaterials = () => {
     go("play");
   };
+  const startMiniGame = (kind: "match" | "hidden" | "tea") => {
+    setMini(kind);
+    setMiniId(uuid());
+    setMatch(matchForLevel(miniLevel));
+    setTea(teaForLevel(miniLevel));
+    setFound([]);
+    setMiniHub(false);
+    go("mini");
+  };
+  const resumeMiniGame = () => {
+    const session = s.miniSession;
+    if (!session) return;
+    setMini(session.kind);
+    setMiniId(session.id);
+    setMiniLevel(session.level);
+    setMatch(session.match);
+    setTea(session.tea);
+    setFound(session.found);
+    setMiniHub(false);
+    go("mini");
+  };
   const openMini = (slot: MiniSlot) => {
     if (slot.done || slot.moves <= 0) return;
     const session = slot.session;
@@ -703,7 +725,8 @@ export default function App() {
       return;
     }
     if (id === "mini") {
-      go("garden");
+      setMiniHub(true);
+      go("mini");
       return;
     }
     go(id);
@@ -1817,10 +1840,22 @@ export default function App() {
             )}
             {screen === "mini" && (
               <>
-                {!activeMini ? (
-                  <View>
-                    <Text style={st.label}>{tt("miniProgressInfo")}</Text>
-                    {button(tt("garden"), () => go("garden"))}
+                {miniHub ? (
+                  <MiniGameHub
+                    level={miniLevel}
+                    onLevel={setMiniLevel}
+                    onStart={startMiniGame}
+                    onResume={resumeMiniGame}
+                    saved={s.miniSession?.kind ?? null}
+                    target={miniTarget}
+                  />
+                ) : !activeMini ? (
+                  <View style={st.panel}>
+                    <Text style={st.subtitle}>{tt("miniProgressInfo")}</Text>
+                    <View style={st.row}>
+                      {button(tt("mini"), () => setMiniHub(true))}
+                      {button(tt("garden"), () => go("garden"), false, true)}
+                    </View>
                   </View>
                 ) : (
                   <View style={st.playLayout} testID="mini-play-layout">
@@ -2404,9 +2439,9 @@ export default function App() {
         >
           {(
             [
-              { id: "garden", label: "⌂ " + tt("garden"), icon: "garden" },
-              { id: "play", label: "♠ " + tt("play"), icon: "play" },
-
+              { id: "garden", label: tt("garden"), icon: "garden" },
+              { id: "play", label: tt("play"), icon: "play" },
+              { id: "mini", label: tt("mini"), icon: "mini" },
               { id: "menu", label: tt("mainMenu"), icon: "menu" },
             ] as const
           ).map((item) => (
@@ -2419,13 +2454,14 @@ export default function App() {
                 if (item.id === "menu") setMenuOpen(true);
                 else {
                   if (item.id === "garden") setLocation("cottage");
+                  if (item.id === "mini") setMiniHub(true);
                   go(item.id);
                   setTip(tt(item.id));
                 }
               }}
               style={[
                 st.tabButton,
-                { width: "31%", maxWidth: 150 },
+                { width: "24%", maxWidth: 120, height: 56 },
                 item.id === screen && st.navActive,
               ]}
             >
@@ -2434,7 +2470,7 @@ export default function App() {
                 numberOfLines={1}
                 maxFontSizeMultiplier={1.2}
                 style={{
-                  fontSize: 10,
+                  fontSize: 11,
                   color: item.id === screen ? "#fff8e9" : "#345b49",
                   fontWeight: "600",
                 }}
