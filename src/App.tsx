@@ -175,9 +175,6 @@ export default function App() {
   const [miniHelp, setMiniHelp] = useState(false);
   const [questRequest, setQuestRequest] = useState(0);
   const [appearanceRequest, setAppearanceRequest] = useState(0);
-  const [miniTarget, setMiniTarget] = useState<
-    "match" | "hidden" | "tea" | null
-  >(null);
   const [questFocus, setQuestFocus] = useState<string | null>(null);
   const [decorationFocus, setDecorationFocus] = useState<number | undefined>();
   const [gardenEditing, setGardenEditing] = useState(false);
@@ -566,7 +563,6 @@ export default function App() {
       setAppearanceRequest(0);
       setWorldManagement(null);
     }
-    if (id !== "mini") setMiniTarget(null);
     setMiniHelp(false);
     setMenuOpen(false);
     setTouching(false);
@@ -649,15 +645,6 @@ export default function App() {
   };
   const earnMaterials = () => {
     go("play");
-  };
-  const startMiniGame = (kind: "match" | "hidden" | "tea") => {
-    setMini(kind);
-    setMiniId(uuid());
-    setMatch(matchForLevel(miniLevel));
-    setTea(teaForLevel(miniLevel));
-    setFound([]);
-    setMiniHub(false);
-    go("mini");
   };
   const resumeMiniGame = () => {
     const session = s.miniSession;
@@ -1842,12 +1829,10 @@ export default function App() {
               <>
                 {miniHub ? (
                   <MiniGameHub
-                    level={miniLevel}
-                    onLevel={setMiniLevel}
-                    onStart={startMiniGame}
+                    slots={s.miniProgress.slots}
+                    onStart={openMini}
                     onResume={resumeMiniGame}
                     saved={s.miniSession?.kind ?? null}
-                    target={miniTarget}
                   />
                 ) : !activeMini ? (
                   <View style={st.panel}>
