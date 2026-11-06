@@ -1580,7 +1580,8 @@ export default function App() {
                             justifyContent: "space-between",
                             alignItems: "flex-start",
                             flexWrap: "nowrap",
-                            zIndex: 1,
+                            zIndex: dragging ? 10 : 1,
+                            elevation: dragging ? 10 : 0,
                           },
                         ]}
                       >
@@ -1656,7 +1657,8 @@ export default function App() {
                         style={{
                           flexDirection: "row",
                           justifyContent: "space-between",
-                          zIndex: 2,
+                          zIndex: dragging ? 10 : 2,
+                          elevation: dragging ? 10 : 0,
                           marginTop: boardLayout.gap,
                           height: tableauHeight,
                         }}
