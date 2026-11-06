@@ -33,9 +33,9 @@ export const appStyles = StyleSheet.create({
   },
   resourceAmount: { fontSize: 18, fontWeight: "700", color: "#345b49" },
   iconButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
+    width: 56,
+    height: 56,
+    borderRadius: 16,
     backgroundColor: "#fff7e8ed",
     borderWidth: 1,
     borderColor: "#cdbd96",
@@ -43,7 +43,7 @@ export const appStyles = StyleSheet.create({
     justifyContent: "center",
   },
   tabDock: {
-    height: 54,
+    height: 66,
     marginHorizontal: 8,
     marginBottom: 4,
     padding: 4,
