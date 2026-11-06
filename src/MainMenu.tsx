@@ -20,9 +20,8 @@ export type MenuDestination =
   | "rules"
   | "challenge";
 const routes = {
-  games: ["play", "restartDeal", "rules", "challenge"],
-  garden: ["world", "quests", "decorations", "collection", "forest"],
-  materials: ["inventory"],
+  games: ["restartDeal", "rules", "challenge"],
+  garden: ["world", "quests", "decorations", "collection", "inventory", "forest"],
   player: ["statistics", "settings"],
 } as const;
 const legacy: Partial<Record<MenuDestination, string>> = {
@@ -54,13 +53,11 @@ export function MainMenu({
   const names = {
     games: "menuGames",
     garden: "menuGarden",
-    materials: "materials",
     player: "menuPlayer",
   };
   const icons = {
     games: "play",
     garden: "garden",
-    materials: "inventory",
     player: "profile",
   };
   const itemKeys: Partial<Record<MenuDestination, string>> = {
@@ -173,7 +170,7 @@ const s = StyleSheet.create({
     width: "100%",
     maxWidth: 700,
     height: "94%",
-    maxHeight: 390,
+    maxHeight: 460,
     backgroundColor: "#fff8eaf8",
     borderRadius: 22,
     borderWidth: 1,
