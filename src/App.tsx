@@ -1831,8 +1831,19 @@ export default function App() {
                   </>
                   <>
                     {button(
-                      tt("auto"),
-                      () => applyGame(autoComplete),
+                      language === "da" ? "Afslut automatisk" : "Auto finish",
+                      () => {
+                        const finished = autoComplete(s.game);
+                        if (finished === s.game) {
+                          setTip(
+                            language === "da"
+                              ? "Auto-afslutning bliver mulig, når trækbunken og bunken med åbne kort er tømt, og alle kort i kolonnerne er vendt med billedsiden opad."
+                              : "Auto finish becomes available when the stock and waste piles are empty and every card in the tableau is face up.",
+                          );
+                          return;
+                        }
+                        applyGame(() => finished);
+                      },
                       false,
                       true,
                     )}
