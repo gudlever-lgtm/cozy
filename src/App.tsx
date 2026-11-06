@@ -1536,7 +1536,7 @@ export default function App() {
                         );
                     }}
                   >
-                    <View style={st.board} testID="solitaire-board">
+                    <View pointerEvents={s.game.won ? "none" : "auto"} style={[st.board, s.game.won && { opacity: 0.16 }]} testID="solitaire-board">
                       <IdleFirefly
                         settings={{
                           ...idleSettings,
