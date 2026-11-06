@@ -160,7 +160,7 @@ export default function App() {
   const playing = screen === "play";
   const metrics = boardMetrics(
     width - insets.left - insets.right,
-    height - insets.top - insets.bottom - 58,
+    height - insets.top - insets.bottom - 70,
   );
   const railWidth = metrics.rail;
   const [menuOpen, setMenuOpen] = useState(false);
