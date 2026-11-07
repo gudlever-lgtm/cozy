@@ -19,3 +19,9 @@ export const cozyImages = {
   },
 } as const;
 export type CozySeason = keyof typeof cozyImages.seasons;
+
+/** Original dimensions, also used by the camera so 100% never crops the artwork. */
+export function gardenImageSize(season: CozySeason) {
+  if (season === "winter") return { width: 1672, height: 941 };
+  return { width: 836, height: season === "autumn" ? 471 : 470 };
+}

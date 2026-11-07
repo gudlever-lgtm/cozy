@@ -1,5 +1,5 @@
 import React, { useMemo, useRef } from "react";
-import { Animated, PanResponder, Text, View } from "react-native";
+import { Animated, PanResponder, View } from "react-native";
 import { decorationImages, type DecorationId } from "./assets/decorations";
 import {
   DECORATION_ANCHORS,
@@ -40,7 +40,7 @@ function DraggableDecoration({
   economy?: Economy;
   onPlace: Props["onPlace"];
 }) {
-  const { camera, draggingDecoration } = useGardenCamera();
+  const { sceneScale, draggingDecoration } = useGardenCamera();
   const box = decorationLayout(id, width, height);
   const x = position?.x ?? ((box.left + box.width / 2) / width) * 100;
   const y = position?.y ?? ((box.top + box.height) / height) * 100;
@@ -59,7 +59,7 @@ function DraggableDecoration({
           start.current = {
             x: latest.current.x,
             y: latest.current.y,
-            zoom: camera.current.zoom,
+            zoom: sceneScale.current,
             screenX: event.nativeEvent.pageX,
             screenY: event.nativeEvent.pageY,
           };
@@ -104,7 +104,7 @@ function DraggableDecoration({
           if (Math.hypot(dx, dy) >= 5) latest.current.onPlace(id, px, py);
         },
       }),
-    [height, id, width, camera, draggingDecoration],
+    [height, id, width, sceneScale, draggingDecoration],
   );
   return (
     <Animated.View
@@ -182,23 +182,6 @@ export function GardenEditOverlay({
             onPlace={onPlace}
           />
         ))}
-      <View
-        pointerEvents="none"
-        style={{
-          position: "absolute",
-          left: 10,
-          bottom: 60,
-          backgroundColor: "#fff9e9e8",
-          padding: 8,
-          borderRadius: 10,
-        }}
-      >
-        <Text style={{ color: "#315744", fontWeight: "600", fontSize: 12 }}>
-          {language === "da"
-            ? "Træk dekorationerne for at flytte dem"
-            : "Drag decorations to move them"}
-        </Text>
-      </View>
     </View>
   );
 }

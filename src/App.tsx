@@ -996,7 +996,8 @@ export default function App() {
         <Image
           source={cozyImages.seasons[season]}
           style={[StyleSheet.absoluteFill, { width: "100%", height: "100%" }]}
-          resizeMode="cover"
+          testID="garden-background-image"
+          resizeMode={hidden ? "cover" : "contain"}
           accessibilityIgnoresInvertColors
         />
       )}
@@ -1137,13 +1138,6 @@ export default function App() {
               </Pressable>
             ))
         : null}
-      {!hidden && !gardenEditing && (
-        <View style={st.sceneLabel}>
-          <Text style={st.sceneLabelText}>
-            {tt(worldSeason)} · {tt(s.preferences.time)}
-          </Text>
-        </View>
-      )}
     </View>
   );
   if (!s.profile)
@@ -1301,6 +1295,7 @@ export default function App() {
             {screen === "garden" &&
               (gardenEditing ? (
                 <GardenBuildScreen
+                  season={season}
                   save={s}
                   scene={gardenScene()}
                   onUpdate={act}
@@ -1308,6 +1303,7 @@ export default function App() {
                 />
               ) : (
                 <GardenHome
+                  season={season}
                   save={s}
                   scene={gardenScene()}
                   onPlay={() => go("play")}

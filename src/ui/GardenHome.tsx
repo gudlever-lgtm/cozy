@@ -1,3 +1,4 @@
+import { gardenImageSize, type CozySeason } from "../assets/images";
 import React from "react";
 import {
   View,
@@ -21,6 +22,7 @@ import type { MiniSlot } from "../engine/miniProgress";
 export function GardenHome({
   save,
   scene,
+  season,
   children,
   onPlay,
   onBuild,
@@ -32,6 +34,7 @@ export function GardenHome({
 }: {
   save: Save;
   scene: React.ReactNode;
+  season: CozySeason;
   children?: React.ReactNode;
   onPlay: () => void;
   onBuild: () => void;
@@ -49,6 +52,7 @@ export function GardenHome({
   return (
     <View testID="garden-fullscreen" style={s.root}>
       <GardenViewport
+        imageSize={gardenImageSize(season)}
         language={save.preferences.language}
         controlsBottom={
           insets.bottom + (portrait ? 204 : width < 720 ? 126 : 8)

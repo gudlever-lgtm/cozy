@@ -47,5 +47,5 @@ test("building keeps zoom controls available and clamps zoom to the garden edges
   fireEvent.press(screen.getByTestId("garden-reset-view"));
   for (let i = 0; i < 3; i++)
     fireEvent.press(screen.getByTestId("garden-zoom-out"));
-  expect(screen.getByTestId("garden-zoom-level")).toHaveTextContent("100%");
+  expect(screen.getByTestId("garden-zoom-level")).toHaveTextContent("50%");
 });

@@ -57,6 +57,34 @@ async function seed(page: Page, save = sample) {
   await page.goto(url, { waitUntil: "networkidle", timeout: 120000 });
   await page.getByTestId("garden-fullscreen").waitFor();
 }
+async function assertWholeGarden(page: Page) {
+  const viewport = (await page.getByTestId("garden-viewport").boundingBox())!;
+  const scene = (await page.getByTestId("garden-scene").boundingBox())!;
+  const dimensions = await page
+    .getByTestId("garden-background-image")
+    .locator("img")
+    .first()
+    .evaluate((image) => ({
+      width: image.naturalWidth,
+      height: image.naturalHeight,
+    }));
+  const fit = Math.min(
+    viewport.width / dimensions.width,
+    viewport.height / dimensions.height,
+  );
+  assert.ok(
+    Math.abs(scene.width - dimensions.width * fit) < 1 &&
+      Math.abs(scene.height - dimensions.height * fit) < 1,
+    "100% must fit the whole original image",
+  );
+  assert.ok(
+    scene.x >= viewport.x - 1 &&
+      scene.y >= viewport.y - 1 &&
+      scene.x + scene.width <= viewport.x + viewport.width + 1 &&
+      scene.y + scene.height <= viewport.y + viewport.height + 1,
+    "All four image edges must be visible",
+  );
+}
 async function menu(page: Page, id: string) {
   await page.getByRole("button", { name: "Hovedmenu", exact: true }).click();
   await page.getByTestId(`menu-${id}`).click();
@@ -81,6 +109,18 @@ async function main() {
       });
       await seed(page);
       await capture(page, `${name}-garden`);
+      await assertWholeGarden(page);
+      const fullImage = (await page.getByTestId("garden-scene").boundingBox())!;
+      await page.getByTestId("garden-zoom-out").click();
+      assert.equal(
+        await page.getByTestId("garden-zoom-level").textContent(),
+        "75%",
+      );
+      assert.ok(
+        (await page.getByTestId("garden-scene").boundingBox())!.width <
+          fullImage.width,
+      );
+      await page.getByTestId("garden-reset-view").click();
       const controls = await Promise.all([
         page.getByTestId("active-mini-pair").boundingBox(),
         page.getByTestId("garden-edit-toggle").boundingBox(),
@@ -131,17 +171,7 @@ async function main() {
       await menu(page, "decorations");
       await page.getByTestId("garden-build-screen").waitFor();
       await capture(page, `${name}-build`);
-      const buildBounds = (await page
-        .getByTestId("garden-build-screen")
-        .boundingBox())!;
-      const sceneBounds = (await page
-        .getByTestId("garden-scene")
-        .boundingBox())!;
-      assert.deepEqual(
-        sceneBounds,
-        buildBounds,
-        "Building scene must cover the complete workspace",
-      );
+      await assertWholeGarden(page);
       for (const id of [
         "garden-zoom-in",
         "garden-zoom-out",
@@ -169,6 +199,13 @@ async function main() {
         "100%",
       );
       await capture(page, `${name}-build-fullscreen`);
+      await page.getByTestId("garden-zoom-out").click();
+      assert.equal(
+        await page.getByTestId("garden-zoom-level").textContent(),
+        "75%",
+      );
+      await page.getByTestId("garden-reset-view").click();
+      await assertWholeGarden(page);
 
       assert.equal(await page.getByTestId("main-tabs").count(), 0);
       await page.getByRole("button", { name: "Færdig", exact: true }).click();
@@ -190,6 +227,9 @@ async function main() {
     await buildPage.getByTestId("build-catalog-toggle").click();
     for (let i = 0; i < 4; i++)
       await buildPage.getByTestId("garden-zoom-in").click();
+    const zoomedScene = (await buildPage
+      .getByTestId("garden-scene")
+      .boundingBox())!;
     const flower = (await buildPage
       .getByTestId("garden-edit-flowers")
       .boundingBox())!;
@@ -224,7 +264,7 @@ async function main() {
       () => JSON.parse(localStorage.getItem("cozy.save")!).placements[0],
     );
     assert.ok(
-      Math.abs(placement.x - (50 + (40 / 844) * 100)) < 0.2,
+      Math.abs(placement.x - (50 + (80 / zoomedScene.width) * 100)) < 0.2,
       "Zoomed drag must save garden coordinates",
     );
     assert.equal(placement.y, 65);
@@ -373,6 +413,8 @@ async function main() {
           undo: true,
           saveReload: true,
           buildFullscreen: true,
+          wholeOriginalImage: true,
+          zoomBelow100: true,
           buildZoomDrag: true,
           buildPinch: true,
           errors,

@@ -1,3 +1,4 @@
+import { gardenImageSize, type CozySeason } from "./assets/images";
 import { Timber } from "./ui/CozyButton";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { cozy } from "./ui/theme";
@@ -28,11 +29,13 @@ import {
 export function GardenBuildScreen({
   save,
   scene,
+  season,
   onUpdate,
   onDone,
 }: {
   save: Save;
   scene: React.ReactNode;
+  season: CozySeason;
   onUpdate: (change: (save: Save) => Save) => void;
   onDone: () => void;
 }) {
@@ -60,6 +63,7 @@ export function GardenBuildScreen({
     <View testID="garden-build-screen" style={styles.root}>
       <View testID="build-garden-preview" style={StyleSheet.absoluteFill}>
         <GardenViewport
+          imageSize={gardenImageSize(season)}
           editing
           language={language}
           controlsBottom={insets.bottom + 8}
@@ -117,6 +121,23 @@ export function GardenBuildScreen({
             {String(t(catalogOpen ? "hideBuildCatalog" : "showBuildCatalog"))}
           </Text>
         </Pressable>
+        {!catalogOpen && (
+          <Text
+            pointerEvents="none"
+            style={[
+              styles.text,
+              {
+                alignSelf: "flex-start",
+                backgroundColor: cozy.color.paperLight,
+                padding: 8,
+                borderRadius: 10,
+                maxWidth: 280,
+              },
+            ]}
+          >
+            {String(t("buildHelp"))}
+          </Text>
+        )}
         {catalogOpen && (
           <StrongScrollView
             testID="build-catalog"

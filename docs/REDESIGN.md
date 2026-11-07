@@ -33,7 +33,7 @@ Selve redesignet ændrer ikke spilreglerne. De nyere avatarfelter og deres gemme
 
 Fortryd viser en forklaring ved nul Undo-point. Den bruger ikke Lysglimt i stedet. Nyt spil er altid en aktiv handling; eventuelle konkrete adgangskrav til det valgte spil vises inde i dialogen. Auto-afslutning har samme sikkerhedskrav som engine-funktionen. Den eksisterende stack-picker bruges stadig, når alle kort ikke kan vises læseligt samtidigt.
 
-Havekameraet ændrer kun scenen. HUD, minispil, navigation og ressourcer følger ikke zoom/pan. Safe-area-insets er reserveret for handlingerne; selve havebilledet må gå helt til kanten. Byggeri og dialoger tager højde for safe area og korte skærme. Havebygning bruger hele skærmen til samme scene og placerede ting som forsiden. Kataloget ligger ovenpå og kan skjules uden at ændre scenens størrelse. Zoomknapper og pinch virker også under bygning; touch-flytning omregnes med kameraets zoom, så gemte positioner følger haven.
+Havekameraet ændrer kun scenen. HUD, minispil, navigation og ressourcer følger ikke zoom/pan. Safe-area-insets er reserveret for handlingerne; selve havebilledet må gå helt til kanten. Byggeri og dialoger tager højde for safe area og korte skærme. Havebygning bruger hele skærmen som arbejdsområde til samme scene og placerede ting som forsiden. Kataloget ligger ovenpå og kan skjules uden at ændre scenens størrelse. Zoomknapper og pinch virker også under bygning; touch-flytning omregnes med kameraets zoom, så gemte positioner følger haven.
 
 ## Reproducerbar designkontrol
 
@@ -60,6 +60,12 @@ Designkontrollen bruger lokale, konstruerede saves. Den tager 54 skærmbilleder 
 
 ### Fuldskærmsrettelse til havebygning
 
-Kataloget optager ikke længere plads ved siden af eller under scenen. Byggeri, køb, flytning og visningen efter “Færdig” bruger samme sceneareal. Havekameraet kan zoome fra 100 til 280 procent, nulstilles og panoreres, og baggrund og dekorationer transformeres sammen. Et træk i en dekoration overtages ikke af kameraets panorering. Skærmens trækafstand divideres med zoom før placeringen gemmes.
+Kataloget optager ikke længere plads ved siden af eller under scenen. Byggeri, køb, flytning og visningen efter “Færdig” bruger samme sceneareal. Havekameraet kan zoome fra 50 til 280 procent, nulstilles og panoreres, og baggrund og dekorationer transformeres sammen. Et træk i en dekoration overtages ikke af kameraets panorering. Skærmens trækafstand divideres med zoom før placeringen gemmes.
 
 Kontrolleret med 20 fokuserede native-tests på Android/iOS og browserkontrollen ovenfor, inklusive touch-flytning ved 200 procent zoom, pinch og genindlæsning af den gemte placering. Fysisk enhedstest er fortsat ikke udført.
+
+### Hele billedet ved 100 procent
+
+Kameraets 100 procent er nu et fit af hele sæsonbilledet i det tilgængelige vindue, med originalt højde/bredde-forhold. Scenen bruger billedets oprindelige koordinater, og baggrund og ting skaleres sammen. I portrait giver det rolige felter over og under det brede billede. Zoom ud virker også fra 100 procent til 75 og 50 procent; nulstilling viser hele haven igen. Instruktioner bliver i skærmstørrelse uden for billedfladen.
+
+Kontrolleret i fem størrelser på både forside og byggeri: alle fire billedkanter er inden for vinduet ved 100 procent, og billedet bliver mindre ved zoom ud. 92 logiktests og 20 fokuserede native-tests består; touch-flytning ved zoom og genindlæsning af placeringer består fortsat. Ikke afprøvet på fysisk enhed i denne session.

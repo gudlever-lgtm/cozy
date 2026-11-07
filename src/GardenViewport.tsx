@@ -15,13 +15,16 @@ import {
   View,
 } from "react-native";
 
+import { gardenCameraFit, gardenPanLimits } from "./presentation/gardenCamera";
+
 const GardenCameraContext = createContext({
   camera: { current: { zoom: 1, x: 0, y: 0 } },
   draggingDecoration: { current: false },
+  sceneScale: { current: 1 },
 });
 export const useGardenCamera = () => useContext(GardenCameraContext);
 
-const MIN_ZOOM = 1;
+const MIN_ZOOM = 0.5;
 const MAX_ZOOM = 2.8;
 const clamp = (n: number, min: number, max: number) =>
   Math.max(min, Math.min(max, n));
@@ -32,7 +35,7 @@ const distance = (
 
 /**
  * Native-only garden camera: one finger pans when zoomed in, two fingers pinch.
- * Keeping scale >= 1 avoids blank space outside the illustrated garden.
+ * 100% fits the complete original artwork; lower zoom leaves a quiet frame.
  * The decorative scene is transformed together, maintaining sprite alignment.
  */
 export function GardenViewport({
@@ -41,33 +44,40 @@ export function GardenViewport({
   editing = false,
   controlsBottom = 8,
   controlsRight = 8,
+  imageSize = { width: 836, height: 470 },
 }: {
   children: React.ReactNode;
   language?: "da" | "en";
   editing?: boolean;
   controlsBottom?: number;
   controlsRight?: number;
+  imageSize?: { width: number; height: number };
 }) {
   const [bounds, setBounds] = useState({ width: 0, height: 0 });
-  const scale = useRef(new Animated.Value(1)).current;
+  const fit = gardenCameraFit(bounds, imageSize);
+  const sceneScale = useRef(0);
+  const scale = useRef(new Animated.Value(0)).current;
   const dx = useRef(new Animated.Value(0)).current;
   const dy = useRef(new Animated.Value(0)).current;
   const camera = useRef({ zoom: 1, x: 0, y: 0 });
   const draggingDecoration = useRef(false);
-  const cameraContext = useMemo(() => ({ camera, draggingDecoration }), []);
+  const cameraContext = useMemo(
+    () => ({ camera, draggingDecoration, sceneScale }),
+    [],
+  );
   const start = useRef({ zoom: 1, x: 0, y: 0, pinch: 0, panX: 0, panY: 0 });
   const [, repaint] = useState(0);
   const commit = (zoom: number, x: number, y: number) => {
     const z = clamp(zoom, MIN_ZOOM, MAX_ZOOM);
-    const maxX = (bounds.width * (z - 1)) / 2;
-    const maxY = (bounds.height * (z - 1)) / 2;
+    const { x: maxX, y: maxY } = gardenPanLimits(bounds, imageSize, z);
     const next = {
       zoom: z,
       x: clamp(x, -maxX, maxX),
       y: clamp(y, -maxY, maxY),
     };
     camera.current = next;
-    scale.setValue(next.zoom);
+    sceneScale.current = fit * next.zoom;
+    scale.setValue(sceneScale.current);
     dx.setValue(next.x);
     dy.setValue(next.y);
     repaint((v) => v + 1);
@@ -78,7 +88,7 @@ export function GardenViewport({
   useEffect(() => {
     const c = camera.current;
     commit(c.zoom, c.x, c.y);
-  }, [bounds.width, bounds.height]);
+  }, [bounds.width, bounds.height, imageSize.width, imageSize.height]);
   const respond = useMemo(
     () =>
       PanResponder.create({
@@ -125,9 +135,9 @@ export function GardenViewport({
             const d = distance(touches[0], touches[1]);
             const ratio = base.pinch > 0 ? d / base.pinch : 1;
             const z = clamp(base.zoom * ratio, MIN_ZOOM, MAX_ZOOM);
-            const maxX = (bounds.width * (z - 1)) / 2;
-            const maxY = (bounds.height * (z - 1)) / 2;
-            scale.setValue(z);
+            const { x: maxX, y: maxY } = gardenPanLimits(bounds, imageSize, z);
+            sceneScale.current = fit * z;
+            scale.setValue(sceneScale.current);
             dx.setValue(clamp(base.x, -maxX, maxX));
             dy.setValue(clamp(base.y, -maxY, maxY));
             camera.current = {
@@ -137,8 +147,7 @@ export function GardenViewport({
             };
           } else if (camera.current.zoom > 1.01) {
             const z = camera.current.zoom;
-            const maxX = (bounds.width * (z - 1)) / 2,
-              maxY = (bounds.height * (z - 1)) / 2;
+            const { x: maxX, y: maxY } = gardenPanLimits(bounds, imageSize, z);
             const x = clamp(base.x + gesture.dx - base.panX, -maxX, maxX),
               y = clamp(base.y + gesture.dy - base.panY, -maxY, maxY);
             dx.setValue(x);
@@ -149,12 +158,23 @@ export function GardenViewport({
         onPanResponderRelease: () => repaint((v) => v + 1),
         onPanResponderTerminate: () => repaint((v) => v + 1),
       }),
-    [bounds.width, bounds.height, scale, dx, dy, editing],
+    [
+      bounds.width,
+      bounds.height,
+      imageSize.width,
+      imageSize.height,
+      fit,
+      scale,
+      dx,
+      dy,
+      editing,
+    ],
   );
   return (
     <View
       testID="garden-viewport"
       style={styles.root}
+      {...respond.panHandlers}
       onLayout={(e) => {
         // Copy native values before React can defer the state updater and release the event.
         const { width, height } = e.nativeEvent.layout;
@@ -175,10 +195,15 @@ export function GardenViewport({
       <Animated.View
         testID="garden-camera-content"
         style={[
-          StyleSheet.absoluteFill,
+          {
+            position: "absolute",
+            width: imageSize.width,
+            height: imageSize.height,
+            left: (bounds.width - imageSize.width) / 2,
+            top: (bounds.height - imageSize.height) / 2,
+          },
           { transform: [{ translateX: dx }, { translateY: dy }, { scale }] },
         ]}
-        {...respond.panHandlers}
       >
         <GardenCameraContext.Provider value={cameraContext}>
           {children}
@@ -239,7 +264,12 @@ export function GardenViewport({
   );
 }
 const styles = StyleSheet.create({
-  root: { flex: 1, overflow: "hidden", position: "relative" },
+  root: {
+    flex: 1,
+    overflow: "hidden",
+    position: "relative",
+    backgroundColor: "#e8ecdf",
+  },
   controls: {
     position: "absolute",
     right: 8,
