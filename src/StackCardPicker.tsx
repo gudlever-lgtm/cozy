@@ -1,3 +1,4 @@
+import { cozy } from "./ui/theme";
 import React, { useState } from "react";
 import {
   View,
@@ -90,7 +91,7 @@ export function StackCardPicker({
                 width: layout.cardWidth,
                 height: layout.cardHeight,
                 borderRadius: 8,
-                backgroundColor: "#fff9eb",
+                backgroundColor: cozy.color.paperLight,
                 borderWidth: 1,
                 borderColor: "#c9bb8e",
               }}
@@ -137,12 +138,12 @@ const styles = StyleSheet.create({
     padding: 12,
     gap: 8,
     borderRadius: 22,
-    backgroundColor: "#faf7ec",
+    backgroundColor: cozy.color.paper,
     borderWidth: 1,
     borderColor: "#d6c396",
   },
   header: { height: 44, flexDirection: "row", alignItems: "center", gap: 8 },
-  title: { flex: 1, fontSize: 22, fontFamily: "serif", color: "#294d3b" },
+  title: { flex: 1, fontSize: 22, fontFamily: "serif", color: cozy.color.ink },
   button: {
     width: 44,
     height: 44,
@@ -153,7 +154,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  arrow: { fontSize: 28, lineHeight: 32, color: "#345b49" },
+  arrow: { fontSize: 28, lineHeight: 32, color: cozy.color.ink },
   footer: {
     height: 44,
     flexDirection: "row",
@@ -161,6 +162,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 20,
   },
-  count: { fontSize: 14, fontWeight: "600", color: "#345b49" },
+  count: { fontSize: 14, fontWeight: "600", color: cozy.color.ink },
   disabled: { opacity: 0.3 },
 });

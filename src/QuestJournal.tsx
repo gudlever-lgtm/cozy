@@ -1,3 +1,4 @@
+import { cozy } from "./ui/theme";
 import React, { useEffect, useState } from "react";
 import { View, Text, Pressable, Image, Modal, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
@@ -255,7 +256,7 @@ export function QuestJournal({
                   onPress={() => setDetail(null)}
                   style={s.close}
                 >
-                  <Text style={{ fontSize: 26, color: "#345b49" }}>×</Text>
+                  <Text style={{ fontSize: 26, color: cozy.color.ink }}>×</Text>
                 </Pressable>
               </View>
               <View
@@ -380,12 +381,12 @@ const s = StyleSheet.create({
     height: 44,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#cdbd96",
+    borderColor: cozy.color.border,
     backgroundColor: "#fff8e9",
     alignItems: "center",
     justifyContent: "center",
   },
-  characterName: { fontSize: 10, lineHeight: 11, color: "#345b49" },
+  characterName: { fontSize: 10, lineHeight: 11, color: cozy.color.ink },
   card: {
     flex: 1,
     flexDirection: "row",
@@ -394,10 +395,15 @@ const s = StyleSheet.create({
     padding: 8,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#d2c295",
-    backgroundColor: "#fff8e9ed",
+    borderColor: cozy.color.border,
+    backgroundColor: cozy.color.glass,
   },
-  name: { fontSize: 13, lineHeight: 16, fontWeight: "600", color: "#345b49" },
+  name: {
+    fontSize: 13,
+    lineHeight: 16,
+    fontWeight: "600",
+    color: cozy.color.ink,
+  },
   small: { fontSize: 11, lineHeight: 14, color: "#597253" },
   track: {
     flex: 1,
@@ -409,7 +415,7 @@ const s = StyleSheet.create({
   scrim: {
     flex: 1,
     padding: 8,
-    backgroundColor: "#1b342a88",
+    backgroundColor: cozy.color.scrim,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -420,14 +426,14 @@ const s = StyleSheet.create({
     padding: 12,
     gap: 8,
     borderRadius: 22,
-    backgroundColor: "#faf7ec",
+    backgroundColor: cozy.color.paper,
   },
   header: { height: 44, flexDirection: "row", alignItems: "center", gap: 8 },
   title: {
     fontSize: 18,
     lineHeight: 22,
     fontFamily: "serif",
-    color: "#294d3b",
+    color: cozy.color.ink,
   },
   close: {
     width: 44,
@@ -462,7 +468,7 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 13,
-    backgroundColor: "#345b49",
+    backgroundColor: cozy.color.wood,
   },
   primaryText: { fontSize: 14, fontWeight: "600", color: "#fff8e9" },
 });

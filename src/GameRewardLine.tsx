@@ -1,3 +1,4 @@
+import { cozy } from "./ui/theme";
 import React from "react";
 import { View, Text } from "react-native";
 import { useTranslation } from "react-i18next";
@@ -29,7 +30,7 @@ export function GameRewardLine({
         alignItems: "center",
       }}
     >
-      <Text style={{ color: "#345b49", fontSize: compact ? 10 : 11 }}>
+      <Text style={{ color: cozy.color.ink, fontSize: compact ? 10 : 11 }}>
         {String(
           t(kind === "solitaire" ? "mainProgressReward" : "miniHelpReward", {
             count: level,
@@ -49,7 +50,7 @@ export function GameRewardLine({
           />
           <Text
             style={{
-              color: "#345b49",
+              color: cozy.color.ink,
               fontSize: compact ? 10 : 11,
               fontWeight: "600",
             }}

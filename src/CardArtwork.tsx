@@ -6,13 +6,13 @@ const palette = {
   classic: {
     ink: "#345b49",
     paper: "#fff9eb",
-    back: "#31584a",
+    back: "#456c98",
     gold: "#d7c48b",
   },
   botanical: {
     ink: "#55754e",
     paper: "#fffaf0",
-    back: "#607650",
+    back: "#547648",
     gold: "#e1cea0",
   },
   river: { ink: "#3b697d", paper: "#f8fbf5", back: "#3e6c7b", gold: "#d5e4d3" },

@@ -1,3 +1,4 @@
+import { cozy } from "./ui/theme";
 import React from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
@@ -10,7 +11,9 @@ export function GardenMiniPair({
   progress,
   onOpen,
   onHelp,
+  compact = false,
 }: {
+  compact?: boolean;
   progress: MiniProgress;
   onOpen: (slot: MiniSlot) => void;
   onHelp: () => void;
@@ -18,22 +21,24 @@ export function GardenMiniPair({
   const { t } = useTranslation();
   return (
     <View testID="active-mini-pair" style={styles.row}>
-      <View
-        accessible
-        accessibilityLabel={String(
-          t("firefliesBalance", { count: progress.fireflies }),
-        )}
-        style={styles.balance}
-      >
-        <GameIcon name="glimmer" size={18} />
-        <Text
-          numberOfLines={1}
-          maxFontSizeMultiplier={1.2}
-          style={styles.amount}
+      {!compact && (
+        <View
+          accessible
+          accessibilityLabel={String(
+            t("firefliesBalance", { count: progress.fireflies }),
+          )}
+          style={styles.balance}
         >
-          {progress.fireflies}
-        </Text>
-      </View>
+          <GameIcon name="glimmer" size={18} />
+          <Text
+            numberOfLines={1}
+            maxFontSizeMultiplier={1.2}
+            style={styles.amount}
+          >
+            {progress.fireflies}
+          </Text>
+        </View>
+      )}
       {progress.slots.map((slot) => (
         <Pressable
           key={slot.session.id}
@@ -42,7 +47,11 @@ export function GardenMiniPair({
           accessibilityLabel={`${t(slot.session.kind)}: ${slot.done ? t("questDone") : t("earnedMiniMoves", { count: slot.moves })}`}
           disabled={slot.done || slot.moves === 0}
           onPress={() => onOpen(slot)}
-          style={[styles.slot, slot.done && { opacity: 0.5 }]}
+          style={[
+            styles.slot,
+            compact && { width: 58 },
+            slot.done && { opacity: 0.5 },
+          ]}
         >
           <MiniArtwork
             kind={
@@ -95,7 +104,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff8e9ee",
     borderRadius: 12,
   },
-  amount: { flexShrink: 1, color: "#345b49", fontSize: 13, fontWeight: "700" },
+  amount: {
+    flexShrink: 1,
+    color: cozy.color.ink,
+    fontSize: 13,
+    fontWeight: "700",
+  },
   help: {
     width: 44,
     height: 44,

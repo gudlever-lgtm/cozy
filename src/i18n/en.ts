@@ -1,5 +1,17 @@
 import { expansionEn } from "./expansion-en";
 export const en = {
+  profileShort: "Player",
+  appearanceShort: "Look & feel",
+  audioShort: "Audio",
+  rulesShort: "Game",
+  undoEmptyTitle: "No Undo points left",
+  undoEmptyBody:
+    "Win a mini game to earn more Undo points. Your solitaire game is saved while you visit the garden.",
+  cozyTagline: "Play. Unwind. Discover.",
+  undoPoints: "Undo points",
+  yourMiniGames: "Your mini games",
+  menuSubtitle: "A little moment just for you",
+  returnToGame: "Back to your game",
   buildGarden: "Build your garden",
   buildDone: "Done building",
   buildHelp:
@@ -216,7 +228,7 @@ export const en = {
   newGame: "New deal",
   drawOne: "Draw one",
   drawThree: "Draw three",
-  auto: "Safe finish",
+  auto: "Auto-finish",
   moves: "{{count}} moves",
   moves_one: "{{count}} move",
   moves_other: "{{count}} moves",

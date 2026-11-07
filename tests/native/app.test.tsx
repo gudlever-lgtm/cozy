@@ -62,20 +62,10 @@ function press(name: string) {
       fireEvent.press(
         screen.getByRole("button", { name: String(i18n.t("mainMenu")) }),
       );
-      fireEvent.press(
-        screen.getByRole("button", {
-          name: String(
-            i18n.t(
-              route?.group ??
-                (name === i18n.t("gather")
-                  ? "materials"
-                  : name === i18n.t("exploreForest")
-                    ? "menuGarden"
-                    : "menuGames"),
-            ),
-          ),
-        }),
-      );
+      if (route && route.id !== "mini") {
+        fireEvent.press(screen.getByTestId(`menu-${route.id}`));
+        return;
+      }
       matches = screen.queryAllByRole("button", { name });
     }
   }
@@ -356,13 +346,13 @@ test("native illustrated card deal safely completes and pays a victory once acro
   await renderAsync(<App />);
   await screen.findByTestId("main-tabs");
   press("♠ Play Solitaire");
-  press("Safe finish");
+  press(String(i18n.t("auto")));
   await screen.findByText("A lovely win!");
   await waitFor(async () =>
     expect((await stored()).economy.wallet.glimmers).toBe(60),
   );
   press("Undo");
-  press("Safe finish");
+  press(String(i18n.t("auto")));
   await screen.findByText("A lovely win!");
   expect((await stored()).counters.solitaire).toBe(1);
 });

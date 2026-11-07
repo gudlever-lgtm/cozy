@@ -1,3 +1,4 @@
+import { cozy } from "./ui/theme";
 import React from "react";
 import { View, Text, Image, Pressable, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
@@ -341,16 +342,16 @@ const s = StyleSheet.create({
   },
   title: {
     fontSize: 20,
-    color: "#345b49",
+    color: cozy.color.ink,
     fontWeight: "600",
     backgroundColor: "#fff8e9e6",
     padding: 6,
     borderRadius: 10,
   },
-  heading: { fontSize: 16, color: "#345b49", fontWeight: "600" },
+  heading: { fontSize: 16, color: cozy.color.ink, fontWeight: "600" },
   text: { fontSize: 12, lineHeight: 18, color: "#6d795f" },
   button: {
-    backgroundColor: "#345b49",
+    backgroundColor: cozy.color.wood,
     padding: 10,
     minHeight: 44,
     borderRadius: 10,

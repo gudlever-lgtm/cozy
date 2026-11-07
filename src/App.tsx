@@ -1,3 +1,9 @@
+import { UndoHelp } from "./ui/UndoHelp";
+import { CozyButton, Timber } from "./ui/CozyButton";
+import { GardenHome } from "./ui/GardenHome";
+import { GameToolbar } from "./ui/GameToolbar";
+import { ResourceBadge } from "./ui/ResourceBadge";
+import { cozy } from "./ui/theme";
 import { GardenBuildScreen } from "./GardenBuildScreen";
 import { GardenMiniPair } from "./GardenMiniPair";
 import {
@@ -163,6 +169,7 @@ export default function App() {
   );
   const railWidth = metrics.rail;
   const [menuOpen, setMenuOpen] = useState(false);
+  const [undoHelp, setUndoHelp] = useState(false);
   const [settingsTab, setSettingsTab] = useState<
     "profile" | "appearance" | "audio" | "rules"
   >("profile");
@@ -180,6 +187,7 @@ export default function App() {
   const [questFocus, setQuestFocus] = useState<string | null>(null);
   const [decorationFocus, setDecorationFocus] = useState<number | undefined>();
   const [gardenEditing, setGardenEditing] = useState(false);
+  const [dealContentHeight, setDealContentHeight] = useState(160);
   const [dealError, setDealError] = useState<Key | null>(null);
 
   const [miniBounds, setMiniBounds] = useState({ width: 0, height: 0 });
@@ -455,7 +463,8 @@ export default function App() {
         pressed && { opacity: 0.65 },
       ]}
     >
-      <GameIcon name={icon} color={selected ? "#fff9eb" : "#345b49"} />
+      <Timber green={selected} />
+      <GameIcon name={icon} color={cozy.color.cream} size={24} />
     </Pressable>
   );
   const button = (
@@ -466,51 +475,15 @@ export default function App() {
     accessibilityLabel?: string,
     selected?: boolean,
   ) => {
-    const compact: Partial<Record<Key, string>> = {
-      undo: "undo",
-      hint: "hint",
-      help: "help",
-      auto: "auto",
-      restart: "restart",
-      newGame: "newGame",
-      saveContinue: "garden",
-      gather: "gather",
-      daily: "gift",
-      dailyDone: "gift",
-      pip: "friend",
-      cottage: "garden",
-      exploreForest: "world",
-    };
-    const key = (Object.keys(compact) as Key[]).find((k) => tt(k) === label);
-    if ((screen === "garden" || playing) && key && s?.profile)
-      return iconButton(
-        compact[key]!,
-        accessibilityLabel ?? label,
-        onPress,
-        disabled,
-        selected,
-      );
     return (
-      <Pressable
-        accessibilityRole="button"
-        disabled={disabled}
-        accessibilityLabel={accessibilityLabel ?? label}
-        accessibilityState={{
-          disabled,
-          ...(selected === undefined ? {} : { selected }),
-        }}
+      <CozyButton
+        label={label}
         onPress={onPress}
-        style={({ pressed }) => [
-          st.button,
-          quiet && st.quiet,
-          disabled && st.disabled,
-          pressed && { opacity: 0.65 },
-        ]}
-      >
-        <Text style={[st.buttonText, quiet && { color: "#345b49" }]}>
-          {label}
-        </Text>
-      </Pressable>
+        disabled={disabled}
+        quiet={quiet}
+        selected={selected}
+        accessibilityLabel={accessibilityLabel}
+      />
     );
   };
   const heading = (title: string, sub?: string) => (
@@ -1020,7 +993,7 @@ export default function App() {
       ) : (
         <Image
           source={cozyImages.seasons[season]}
-          style={StyleSheet.absoluteFill}
+          style={[StyleSheet.absoluteFill, { width: "100%", height: "100%" }]}
           resizeMode="cover"
           accessibilityIgnoresInvertColors
         />
@@ -1161,7 +1134,7 @@ export default function App() {
               </Pressable>
             ))
         : null}
-      {!hidden && (
+      {!hidden && !gardenEditing && (
         <View style={st.sceneLabel}>
           <Text style={st.sceneLabelText}>
             {tt(worldSeason)} · {tt(s.preferences.time)}
@@ -1218,6 +1191,7 @@ export default function App() {
     );
   return (
     <SafeAreaView
+      edges={screen === "garden" ? [] : ["top", "right", "bottom", "left"]}
       style={st.root}
       onTouchStart={() => {
         setTouching(true);
@@ -1232,6 +1206,16 @@ export default function App() {
         setIdleActivity((n) => n + 1);
       }}
     >
+      {undoHelp && (
+        <UndoHelp
+          visible
+          onClose={() => setUndoHelp(false)}
+          onEarn={() => {
+            setUndoHelp(false);
+            go("garden");
+          }}
+        />
+      )}
       <Audio
         music={s.preferences.music}
         sound={s.preferences.sound}
@@ -1246,7 +1230,7 @@ export default function App() {
           <Image
             source={cozyImages.seasons[season]}
             resizeMode="cover"
-            style={StyleSheet.absoluteFill}
+            style={[StyleSheet.absoluteFill, { width: "100%", height: "100%" }]}
           />
           {screen !== "garden" &&
             !(screen === "mini" && activeMini === "hidden") && (
@@ -1320,181 +1304,106 @@ export default function App() {
                   onDone={() => setGardenEditing(false)}
                 />
               ) : (
-                <View
-                  testID="garden-fullscreen"
-                  style={{ flex: 1, minHeight: 0 }}
+                <GardenHome
+                  save={s}
+                  scene={gardenScene()}
+                  onPlay={() => go("play")}
+                  onBuild={() => setGardenEditing(true)}
+                  onInventory={() => go("inventory")}
+                  onMini={openMini}
+                  onHelp={() => setTip(tt("miniProgressInfo"))}
+                  onMillie={() => setNpc("millie")}
+                  onMarmalade={() => setNpc("marmalade")}
                 >
-                  <View style={st.gardenHud}>
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={
-                        location === "cottage"
-                          ? tt("millie")
-                          : tt("welcome", { username: s.profile.username })
-                      }
-                      onPress={() =>
-                        location === "cottage"
-                          ? setNpc("millie")
-                          : setTip(
-                              tt("welcome", { username: s.profile!.username }),
-                            )
-                      }
-                    >
-                      <Image
-                        source={require("../assets/icon.png")}
-                        style={{ width: 44, height: 44, borderRadius: 14 }}
-                      />
-                    </Pressable>
-                    {location === "cottage" && (
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={tt("marmalade")}
-                        onPress={() => setNpc("marmalade")}
-                        style={{
-                          width: 48,
-                          height: 48,
-                          borderRadius: 24,
-                          backgroundColor: "#fff7e6e6",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          borderWidth: 1,
-                          borderColor: "#d2bd8d",
-                        }}
-                      >
-                        <CharacterIdle
-                          character="marmalade"
-                          enabled={s.preferences.animations}
-                          reducedMotion={s.preferences.reducedMotion}
-                          size={42}
-                        />
-                      </Pressable>
-                    )}
-                    <View
-                      accessible
-                      accessibilityLabel={
-                        "✦ " +
-                        number(s.economy.wallet.glimmers, language) +
-                        " " +
-                        tt("glimmers")
-                      }
-                      style={st.hudPill}
-                    >
-                      <GameIcon name="glimmer" color="#917133" size={22} />
-                      <Text style={st.currencyText}>
-                        {number(s.economy.wallet.glimmers, language)}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <View
-                    testID="garden-action-bar"
-                    style={{
-                      flexDirection: "row",
-                      flexWrap: "wrap",
-                      gap: 4,
-                      alignItems: "center",
-                      paddingHorizontal: 6,
-                      paddingBottom: 4,
-                      flexShrink: 0,
-                    }}
-                  >
-                    <GardenMiniPair
-                      progress={s.miniProgress}
-                      onOpen={openMini}
-                      onHelp={() => setTip(tt("miniProgressInfo"))}
+                  {location === "forest" && (
+                    <ForestGuide
+                      bottom={insets.bottom + (height > width ? 214 : 126)}
+                      availableHeight={Math.max(
+                        70,
+                        height -
+                          insets.top -
+                          insets.bottom -
+                          (height > width ? 340 : 245),
+                      )}
+                      save={s}
+                      onUpdate={act}
+                      onGather={earnMaterials}
+                      onGame={(kind) => {
+                        go("garden");
+                        setTip(tt("miniProgressInfo"));
+                      }}
+                      onManage={() => {
+                        setWorldManagement({
+                          serial: Date.now(),
+                          section: "buildings",
+                        });
+                        go("world");
+                      }}
+                      onNext={() => go("world")}
+                      onToast={setTip}
                     />
-                    {location === "cottage" && (
-                      <Pressable
-                        testID="garden-edit-toggle"
-                        accessibilityRole="button"
-                        accessibilityLabel={tt("buildGarden")}
-                        onPress={() => setGardenEditing(true)}
-                        style={{
-                          minHeight: 44,
-                          justifyContent: "center",
-                          backgroundColor: "#fff8e9ef",
-                          borderRadius: 16,
-                          paddingHorizontal: 10,
-                          paddingVertical: 6,
-                          borderWidth: 1,
-                          borderColor: "#c6ac82",
-                        }}
-                      >
-                        <Text
-                          numberOfLines={1}
-                          maxFontSizeMultiplier={1.2}
-                          style={{
-                            color: "#315744",
-                            fontWeight: "700",
-                            fontSize: 12,
-                          }}
-                        >
-                          {tt("buildGarden")}
-                        </Text>
-                      </Pressable>
-                    )}
-
-                    <MaterialRibbon
-                      wallet={s.economy.wallet}
-                      onOpen={() => go("inventory")}
-                    />
-                  </View>
-                  <View style={st.playCenter}>
-                    <GardenViewport language={language} editing={gardenEditing}>
-                      {gardenScene()}
-                    </GardenViewport>
-                    {location === "forest" && (
-                      <ForestGuide
-                        save={s}
-                        onUpdate={act}
-                        onGather={earnMaterials}
-                        onGame={(kind) => {
-                          go("garden");
-                          setTip(tt("miniProgressInfo"));
-                        }}
-                        onManage={() => {
-                          setWorldManagement({
-                            serial: Date.now(),
-                            section: "buildings",
-                          });
-                          go("world");
-                        }}
-                        onNext={() => go("world")}
-                        onToast={setTip}
-                      />
-                    )}
-                    {npc && (
-                      <Pressable
-                        onPress={() => setNpc(null)}
-                        style={st.dialogue}
-                      >
-                        <Text style={st.label}>{tt(npc)}</Text>
-                        <Text style={st.subtitle}>
-                          {tt((npc + "Hello") as Key, {
-                            username: s.profile.username,
-                          })}
-                        </Text>
-                        <View style={st.row}>
-                          {button(tt("quests"), () => go("quests"))}
-                          {button(tt("close"), () => setNpc(null), false, true)}
+                  )}
+                  {npc && (
+                    <Modal
+                      transparent
+                      visible
+                      animationType="fade"
+                      onRequestClose={() => setNpc(null)}
+                    >
+                      <View style={st.overlay}>
+                        <View style={st.modal}>
+                          <Text style={st.label}>{tt(npc)}</Text>
+                          <Text style={st.subtitle}>
+                            {tt((npc + "Hello") as Key, {
+                              username: s.profile.username,
+                            })}
+                          </Text>
+                          <View style={st.row}>
+                            {button(tt("quests"), () => go("quests"))}
+                            {button(
+                              tt("close"),
+                              () => setNpc(null),
+                              false,
+                              true,
+                            )}
+                          </View>
                         </View>
-                      </Pressable>
-                    )}
-                  </View>
-                </View>
+                      </View>
+                    </Modal>
+                  )}
+                </GardenHome>
               ))}
             {screen === "play" && (
-              <View style={st.playLayout} testID="landscape-play-layout">
-                <View style={st.playCenter}>
+              <View
+                style={[st.playLayout, { flexDirection: "column", padding: 4 }]}
+                testID="landscape-play-layout"
+              >
+                <View style={[st.playCenter, { zIndex: dragging ? 1000 : 1 }]}>
                   <View style={st.playStatus}>
-                    <GameIcon name="play" size={18} />
-                    <Text style={st.small}>
-                      {tt("moves", { count: s.game.moves })}
-                    </Text>
-                    <GameIcon name="glimmer" size={18} />
-                    <Text style={st.small}>
-                      {number(s.economy.wallet.glimmers, language)}
-                    </Text>
+                    <View style={{ flex: 1, minWidth: 0 }}>
+                      <Text
+                        numberOfLines={1}
+                        style={{ fontSize: 10, color: cozy.color.honey }}
+                      >
+                        {tt((s.game.variant ?? "klondike") as Key)}
+                      </Text>
+                      <Text
+                        numberOfLines={1}
+                        style={[st.small, { color: cozy.color.cream }]}
+                      >
+                        {tt("moves", { count: s.game.moves })}
+                      </Text>
+                    </View>
+                    <ResourceBadge
+                      icon="glimmer"
+                      label={tt("glimmers")}
+                      value={s.economy.wallet.glimmers}
+                    />
+                    <ResourceBadge
+                      icon="undo"
+                      label={tt("undoPoints")}
+                      value={s.miniProgress.undo}
+                    />
                   </View>
                   {s.game.won && (
                     <View
@@ -1734,36 +1643,16 @@ export default function App() {
                     </View>
                   </View>
                 </View>
-                <ScrollView
-                  nestedScrollEnabled
-                  style={[st.playRail, { width: railWidth }]}
-                  contentContainerStyle={[
-                    st.railContent,
-                    {
-                      flexDirection: "row",
-                      flexWrap: "wrap",
-                      gap: 4,
-                      justifyContent: "center",
-                    },
-                  ]}
-                >
-                  <>
-                    {button(
-                      tt("newGame"),
-                      () => {
-                        setPendingChallenge(null);
-                        setDialog("new");
-                      },
-                      false,
-                      true,
-                    )}
-                  </>
-                  <>
-                    {button(
-                      tt("undo"),
-                      () =>
-                        update((v) =>
-                          v.miniProgress.undo > 0
+                <GameToolbar
+                  onNew={() => {
+                    setPendingChallenge(null);
+                    setDialog("new");
+                  }}
+                  onUndo={() =>
+                    s.miniProgress.undo === 0
+                      ? setUndoHelp(true)
+                      : update((v) =>
+                          v.game.history.length && v.miniProgress.undo > 0
                             ? {
                                 ...v,
                                 game: undo(v.game),
@@ -1773,46 +1662,39 @@ export default function App() {
                                 },
                               }
                             : v,
-                        ),
-                      !s.game.history.length || s.miniProgress.undo === 0,
-                      true,
-                    )}
-                    {button(
-                      tt("hint"),
-                      () => {
-                        const h = hints(s.game)[0];
-                        setHint(h ?? null);
-                        setSelected(h?.from ?? null);
-                        setMessage(
-                          h
-                            ? tt("hintText", {
-                                card: cardName(cardsAt(s.game, h.from)[0]),
-                                destination: tt(
-                                  h.to.kind === "foundations"
-                                    ? "foundation"
-                                    : "tableau",
-                                  {
-                                    number:
-                                      h.to.kind === "waste" ? 0 : h.to.pile + 1,
-                                  },
-                                ),
-                              })
-                            : tt("noHint"),
-                        );
-                      },
-                      false,
-                      true,
-                    )}
-                  </>
-                  <>
-                    {button(
-                      tt("auto"),
-                      () => applyGame(autoComplete),
-                      false,
-                      true,
-                    )}
-                  </>
-                </ScrollView>
+                        )
+                  }
+                  onHint={() => {
+                    const h = hints(s.game)[0];
+                    setHint(h ?? null);
+                    setSelected(h?.from ?? null);
+                    setMessage(
+                      h
+                        ? tt("hintText", {
+                            card: cardName(cardsAt(s.game, h.from)[0]),
+                            destination: tt(
+                              h.to.kind === "foundations"
+                                ? "foundation"
+                                : "tableau",
+                              {
+                                number:
+                                  h.to.kind === "waste" ? 0 : h.to.pile + 1,
+                              },
+                            ),
+                          })
+                        : tt("noHint"),
+                    );
+                  }}
+                  onAuto={() => applyGame(autoComplete)}
+                  undo={s.miniProgress.undo}
+                  canUndo={!!s.game.history.length}
+                  canAuto={
+                    !s.game.won &&
+                    s.game.tableau.every((p) => p.every((c) => c.up)) &&
+                    !s.game.stock.length &&
+                    !s.game.waste.length
+                  }
+                />
               </View>
             )}
             {screen === "mini" && (
@@ -1872,6 +1754,7 @@ export default function App() {
                           borderRadius: 12,
                           backgroundColor: "#fff8e9f5",
                           flexDirection: "row",
+                          flexWrap: "wrap",
                           alignItems: "center",
                           gap: 10,
                         }}
@@ -2112,80 +1995,54 @@ export default function App() {
             )}
             {screen === "settings" && (
               <View style={{ flex: 1, minHeight: 0, padding: 8, gap: 8 }}>
-                <View
-                  style={{
-                    height: 44,
-                    flexDirection: "row",
-                    alignItems: "center",
-                    gap: 8,
-                    paddingHorizontal: 8,
-                    borderRadius: 12,
-                    backgroundColor: "#fff8e9e6",
-                  }}
-                >
+                <View style={{ gap: 8, flexShrink: 0 }}>
                   <Text
-                    style={[st.sectionTitle, { flex: 1 }]}
-                    numberOfLines={1}
+                    accessibilityRole="header"
+                    style={[
+                      st.sectionTitle,
+                      {
+                        color: cozy.color.cream,
+                        textShadowColor: cozy.color.woodDark,
+                        textShadowOffset: { width: 0, height: 1 },
+                        textShadowRadius: 3,
+                      },
+                    ]}
                   >
                     {tt("settings")}
                   </Text>
-                  {(["profile", "appearance", "audio", "rules"] as const).map(
-                    (tab) => (
-                      <Pressable
-                        key={tab}
-                        accessibilityRole="tab"
-                        accessibilityLabel={tt(
-                          tab === "appearance"
-                            ? "appearanceShortcut"
-                            : tab === "audio"
-                              ? "sound"
-                              : tab === "rules"
-                                ? "drawSetting"
-                                : "profile",
-                        )}
-                        accessibilityState={{ selected: settingsTab === tab }}
-                        onPress={() => setSettingsTab(tab)}
-                        onLongPress={() =>
-                          setTip(
-                            tt(
-                              tab === "appearance"
-                                ? "appearanceShortcut"
-                                : tab === "audio"
-                                  ? "sound"
-                                  : tab === "rules"
-                                    ? "drawSetting"
-                                    : "profile",
-                            ),
-                          )
-                        }
-                        style={[
-                          st.iconButton,
-                          settingsTab === tab && {
-                            borderColor: "#c7a458",
-                            borderWidth: 2,
-                          },
-                        ]}
-                      >
-                        {tab === "profile" ? (
-                          <Image
-                            source={require("../assets/icon.png")}
-                            style={{ width: 30, height: 30, borderRadius: 9 }}
-                          />
-                        ) : (
-                          <GameIcon
-                            name={
-                              tab === "appearance"
-                                ? "settings"
-                                : tab === "audio"
-                                  ? "music"
-                                  : "play"
-                            }
-                            size={28}
-                          />
-                        )}
-                      </Pressable>
-                    ),
-                  )}
+                  <View style={{ flexDirection: "row", gap: 5 }}>
+                    {(["profile", "appearance", "audio", "rules"] as const).map(
+                      (tab) => (
+                        <CozyButton
+                          key={tab}
+                          compact
+                          quiet
+                          role="tab"
+                          label={tt(
+                            tab === "appearance"
+                              ? "appearanceShort"
+                              : tab === "audio"
+                                ? "audioShort"
+                                : tab === "rules"
+                                  ? "rulesShort"
+                                  : "profileShort",
+                          )}
+                          accessibilityLabel={tt(
+                            tab === "appearance"
+                              ? "appearanceShortcut"
+                              : tab === "audio"
+                                ? "sound"
+                                : tab === "rules"
+                                  ? "drawSetting"
+                                  : "profile",
+                          )}
+                          selected={settingsTab === tab}
+                          onPress={() => setSettingsTab(tab)}
+                          style={{ flex: 1, minWidth: 0 }}
+                        />
+                      ),
+                    )}
+                  </View>
                 </View>
                 <ScrollView
                   testID="settings-scroll"
@@ -2195,12 +2052,23 @@ export default function App() {
                 >
                   {settingsTab === "profile" && (
                     <View
-                      style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}
+                      style={{
+                        flexDirection: width < 600 ? "column" : "row",
+                        flexWrap: width < 600 ? "nowrap" : "wrap",
+                        gap: 8,
+                        alignItems: "stretch",
+                      }}
                     >
                       <View
                         style={[
                           st.panel,
-                          { flex: 1, minWidth: 180, padding: 10, gap: 6 },
+                          {
+                            flex: width < 600 ? undefined : 1,
+                            width: width < 600 ? "100%" : undefined,
+                            minWidth: 180,
+                            padding: 12,
+                            gap: 8,
+                          },
                         ]}
                       >
                         <Text style={st.label}>{tt("profile")}</Text>
@@ -2233,7 +2101,13 @@ export default function App() {
                       <View
                         style={[
                           st.panel,
-                          { flex: 1, minWidth: 180, padding: 10, gap: 6 },
+                          {
+                            flex: width < 600 ? undefined : 1,
+                            width: width < 600 ? "100%" : undefined,
+                            minWidth: 180,
+                            padding: 12,
+                            gap: 8,
+                          },
                         ]}
                       >
                         <Text style={st.label}>{tt("language")}</Text>
@@ -2399,7 +2273,14 @@ export default function App() {
           testID="main-tabs"
           style={[
             st.tabDock,
-            { maxWidth: 500, width: "94%", alignSelf: "center" },
+            screen === "garden"
+              ? {
+                  position: "absolute",
+                  bottom: insets.bottom + 6,
+                  left: insets.left + 6,
+                  width: Math.min(520, width - insets.left - insets.right - 12),
+                }
+              : { maxWidth: 520, width: "96%", alignSelf: "center" },
           ]}
         >
           {(
@@ -2410,38 +2291,23 @@ export default function App() {
               { id: "menu", label: tt("mainMenu"), icon: "menu" },
             ] as const
           ).map((item) => (
-            <Pressable
+            <CozyButton
               key={item.id}
-              accessibilityRole="button"
+              label={item.id === "menu" ? tt("mainMenu") : tt(item.id)}
+              icon={item.icon}
               accessibilityLabel={item.label}
-              accessibilityState={{ selected: item.id === screen }}
+              compact
+              quiet
+              selected={item.id === screen}
+              style={{ flex: 1, minWidth: 0 }}
               onPress={() => {
                 if (item.id === "menu") setMenuOpen(true);
                 else {
                   if (item.id === "garden") setLocation("cottage");
                   go(item.id);
-                  setTip(tt(item.id));
                 }
               }}
-              style={[
-                st.tabButton,
-                { width: "31%", maxWidth: 150 },
-                item.id === screen && st.navActive,
-              ]}
-            >
-              <GameIcon name={item.icon} size={26} />
-              <Text
-                numberOfLines={1}
-                maxFontSizeMultiplier={1.2}
-                style={{
-                  fontSize: 10,
-                  color: item.id === screen ? "#fff8e9" : "#345b49",
-                  fontWeight: "600",
-                }}
-              >
-                {item.id === "menu" ? tt("mainMenu") : tt(item.id)}
-              </Text>
-            </Pressable>
+            />
           ))}
         </View>
       )}
@@ -2581,14 +2447,21 @@ export default function App() {
               style={[
                 st.modal,
                 {
-                  height:
-                    dialog === "new" ? "90%" : Math.min(240, height * 0.85),
+                  height: Math.min(
+                    height - insets.top - insets.bottom - 32,
+                    Math.max(160, dealContentHeight + 34),
+                  ),
                   maxHeight: "94%",
                 },
               ]}
             >
               <ScrollView
                 testID="deal-dialog-scroll"
+                onContentSizeChange={(_, h) =>
+                  setDealContentHeight((previous) =>
+                    previous === h ? previous : h,
+                  )
+                }
                 contentContainerStyle={{ gap: 8 }}
               >
                 <Text style={st.sectionTitle}>
@@ -2609,6 +2482,8 @@ export default function App() {
                           () => setNextSolitaire(kind.id),
                           kind.id !== "klondike" &&
                             !s.miniProgress.keys.includes(kind.id),
+                          true,
+                          undefined,
                           nextSolitaire === kind.id,
                         )}
                       </React.Fragment>
@@ -2626,12 +2501,16 @@ export default function App() {
                         tt("randomDeal"),
                         () => setGuaranteedDeal(false),
                         false,
+                        guaranteedDeal,
+                        undefined,
                         !guaranteedDeal,
                       )}
                       {button(
                         tt("winnableDeal"),
                         () => setGuaranteedDeal(true),
                         false,
+                        !guaranteedDeal,
+                        undefined,
                         guaranteedDeal,
                       )}
                     </View>

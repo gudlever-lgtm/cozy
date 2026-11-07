@@ -1,3 +1,4 @@
+import { cozy } from "./ui/theme";
 import React from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
@@ -64,7 +65,7 @@ const s = StyleSheet.create({
     borderRadius: 13,
     borderWidth: 1,
     borderColor: "#d7c28f",
-    backgroundColor: "#fff8e9ed",
+    backgroundColor: cozy.color.glass,
   },
   material: {
     minWidth: 28,
@@ -74,6 +75,11 @@ const s = StyleSheet.create({
     alignItems: "center",
     gap: 4,
   },
-  amount: { fontSize: 13, fontWeight: "700", color: "#345b49", flexShrink: 1 },
-  chevron: { fontSize: 22, color: "#345b49" },
+  amount: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: cozy.color.ink,
+    flexShrink: 1,
+  },
+  chevron: { fontSize: 22, color: cozy.color.ink },
 });

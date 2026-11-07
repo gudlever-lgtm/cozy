@@ -1,3 +1,4 @@
+import { cozy } from "./ui/theme";
 import React from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
@@ -42,7 +43,10 @@ export function MiniGameHub({
               onPress={() => onLevel(value)}
               style={[
                 s.button,
-                value === level && { borderColor: "#345b49", borderWidth: 2 },
+                value === level && {
+                  borderColor: cozy.color.ink,
+                  borderWidth: 2,
+                },
               ]}
             >
               <Text style={s.name}>{value}</Text>
@@ -53,7 +57,16 @@ export function MiniGameHub({
               accessibilityRole="button"
               accessibilityLabel={String(t("resumeMini"))}
               onPress={onResume}
-              style={[s.button, {width: 126, flexDirection: "row", gap: 5, backgroundColor: "#e0eedc", borderColor: "#8dac82"}]}
+              style={[
+                s.button,
+                {
+                  width: 126,
+                  flexDirection: "row",
+                  gap: 5,
+                  backgroundColor: "#e0eedc",
+                  borderColor: "#8dac82",
+                },
+              ]}
             >
               <GameIcon name="restart" size={22} />
               <Text style={s.name}>{String(t("resumeMini"))}</Text>
@@ -106,7 +119,7 @@ const s = StyleSheet.create({
     height: 44,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#cdbd96",
+    borderColor: cozy.color.border,
     backgroundColor: "#fff5df",
     alignItems: "center",
     justifyContent: "center",
@@ -119,9 +132,14 @@ const s = StyleSheet.create({
     padding: 8,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#d2c295",
-    backgroundColor: "#fff8e9ed",
+    borderColor: cozy.color.border,
+    backgroundColor: cozy.color.glass,
   },
-  name: { fontSize: 14, lineHeight: 18, fontWeight: "600", color: "#345b49" },
+  name: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: "600",
+    color: cozy.color.ink,
+  },
   note: { fontSize: 11, lineHeight: 14, color: "#597253" },
 });

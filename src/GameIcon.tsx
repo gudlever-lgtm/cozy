@@ -26,6 +26,8 @@ export function GameIcon({
     decorations: "flowers",
     statistics: "star",
     settings: "settings",
+    music: "music",
+    sound: "sound",
     undo: "undo",
     hint: "hint",
     help: "quests",

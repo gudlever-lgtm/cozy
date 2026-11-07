@@ -1,3 +1,4 @@
+import { cozy } from "./ui/theme";
 import React from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
@@ -8,6 +9,8 @@ import { GameIcon } from "./GameIcon";
 import { StrongScrollView } from "./StrongScrollView";
 export function ForestGuide({
   save,
+  bottom = 6,
+  availableHeight = 180,
   onUpdate,
   onGather,
   onGame,
@@ -16,6 +19,8 @@ export function ForestGuide({
   onToast,
 }: {
   save: Save;
+  bottom?: number;
+  availableHeight?: number;
   onUpdate: (fn: (s: Save) => Save) => void;
   onGather: () => void;
   onGame: (kind: MiniKind) => void;
@@ -62,7 +67,10 @@ export function ForestGuide({
           : "startMiniGame"
         : "buildings";
   return (
-    <View testID="forest-guide" style={s.root}>
+    <View
+      testID="forest-guide"
+      style={[s.root, { bottom, height: Math.min(180, availableHeight) }]}
+    >
       <StrongScrollView contentContainerStyle={{ gap: 6 }}>
         <View style={{ flexDirection: "row", gap: 6, alignItems: "center" }}>
           <GameIcon name="quests" size={26} />
@@ -141,16 +149,16 @@ const s = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     borderColor: "#d1b981",
-    backgroundColor: "#fff8e9ed",
+    backgroundColor: cozy.color.glass,
   },
-  title: { flex: 1, fontSize: 13, fontWeight: "700", color: "#345b49" },
+  title: { flex: 1, fontSize: 13, fontWeight: "700", color: cozy.color.ink },
   text: { fontSize: 11, lineHeight: 15, color: "#46624c" },
   button: {
     minHeight: 44,
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#345b49",
+    backgroundColor: cozy.color.wood,
     paddingHorizontal: 8,
   },
   buttonText: { color: "#fff8e9", fontWeight: "600", fontSize: 12 },

@@ -1,3 +1,4 @@
+import { cozy } from "./ui/theme";
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -125,7 +126,12 @@ export function ScreenPager({
 }
 const styles = StyleSheet.create({
   root: { flex: 1, minHeight: 0, padding: 8, gap: 8 },
-  title: { height: 30, fontSize: 22, fontFamily: "serif", color: "#294d3b" },
+  title: {
+    height: 30,
+    fontSize: 22,
+    fontFamily: "serif",
+    color: cozy.color.ink,
+  },
   footer: {
     height: 44,
     flexDirection: "row",

@@ -26,7 +26,7 @@ afterEach(async () => {
   jest.restoreAllMocks();
 });
 
-test("garden controls and navigation reserve space instead of covering each other", async () => {
+test("garden floating controls stay outside the camera while help remains available", async () => {
   await AsyncStorage.setItem(
     SAVE_KEY,
     JSON.stringify(setProfile(fresh("layout", "da"), "Haveven", "player")),
@@ -35,15 +35,8 @@ test("garden controls and navigation reserve space instead of covering each othe
   await screen.findByTestId("garden-action-bar");
   const bar = screen.getByTestId("garden-action-bar");
   expect(within(bar).getByTestId("active-mini-pair")).toBeOnTheScreen();
-  expect(within(bar).getByTestId("materials-ribbon")).toBeOnTheScreen();
+  expect(screen.getByTestId("materials-ribbon")).toBeOnTheScreen();
   expect(within(bar).getByTestId("garden-edit-toggle")).toBeOnTheScreen();
-  for (const node of [
-    bar,
-    screen.getByTestId("materials-ribbon"),
-    screen.getByTestId("main-tabs"),
-  ]) {
-    expect(StyleSheet.flatten(node.props.style)?.position).not.toBe("absolute");
-  }
   expect(
     within(screen.getByTestId("garden-camera-content")).queryByTestId(
       "active-mini-pair",
@@ -77,26 +70,35 @@ test("mini icons show actual artwork and large balances stay inside fixed touch 
   expect(onHelp).toHaveBeenCalledTimes(1);
 });
 
-test("five garden menu destinations use three bounded rows", async () => {
+test("the flat menu exposes every destination directly and retains scroll access", async () => {
+  const navigate = jest.fn();
   await renderAsync(
     <MainMenu
       visible
       onClose={jest.fn()}
-      onNavigate={jest.fn()}
+      onNavigate={navigate}
       forestUnlocked
     />,
   );
-  fireEvent.press(
-    screen.getByRole("button", { name: String(i18n.t("menuGarden")) }),
-  );
-  for (const button of screen
-    .getAllByRole("button")
-    .filter((node) => StyleSheet.flatten(node.props.style)?.width === "48%")) {
-    expect(StyleSheet.flatten(button.props.style)?.height).toBe("30%");
+  expect(screen.getByTestId("main-menu-scroll")).toBeOnTheScreen();
+  for (const id of [
+    "newDeal",
+    "garden",
+    "decorations",
+    "quests",
+    "world",
+    "settings",
+    "inventory",
+    "collection",
+    "statistics",
+    "restartDeal",
+    "rules",
+    "challenge",
+    "forest",
+  ]) {
+    fireEvent.press(screen.getByTestId(`menu-${id}`));
+    expect(navigate).toHaveBeenLastCalledWith(id);
   }
-  expect(
-    screen.getByRole("button", { name: String(i18n.t("exploreForest")) }),
-  ).toBeOnTheScreen();
 });
 
 test("solitaire type selection keeps confirmation controls in a bounded scroll dialog", async () => {

@@ -95,9 +95,9 @@ export function fitSolitaireBoard(
   const cardWidth = Math.max(
     1,
     Math.min(
-      88,
+      100,
       Math.floor((innerWidth - 24) / 7),
-      Math.floor((innerHeight - gap) / 4),
+      Math.floor((innerHeight - gap) / (1.44 * 2.05)),
     ),
   );
   const cardHeight = cardWidth * 1.44;
@@ -105,9 +105,24 @@ export function fitSolitaireBoard(
   const columns = piles.map((pile) => {
     const firstOpen = pile.findIndex((c) => c.up);
     const last = pile.length - 1;
+    const fullRunHeight = pile
+      .slice(0, -1)
+      .reduce(
+        (sum, card) =>
+          sum +
+          (card.up
+            ? Math.min(28, cardHeight * 0.32)
+            : Math.min(8, cardHeight * 0.12)),
+        0,
+      );
+    const hasRoomForFullRun =
+      fullRunHeight <= Math.max(0, tableauHeight - cardHeight);
     const hiddenIndices = pile
       .map((_, i) => i)
-      .filter((i) => firstOpen >= 0 && i > firstOpen && i < last);
+      .filter(
+        (i) =>
+          !hasRoomForFullRun && firstOpen >= 0 && i > firstOpen && i < last,
+      );
     const visibleIndices = pile
       .map((_, i) => i)
       .filter((i) => !hiddenIndices.includes(i));

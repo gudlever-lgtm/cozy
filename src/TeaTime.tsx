@@ -1,3 +1,4 @@
+import { cozy } from "./ui/theme";
 import React, { useState } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
@@ -198,7 +199,12 @@ const s = StyleSheet.create({
     paddingHorizontal: 10,
     gap: 8,
   },
-  instruction: { flex: 1, fontSize: 12, color: "#345b49", fontWeight: "600" },
+  instruction: {
+    flex: 1,
+    fontSize: 12,
+    color: cozy.color.ink,
+    fontWeight: "600",
+  },
   undo: {
     width: 44,
     height: 44,
@@ -227,7 +233,12 @@ const s = StyleSheet.create({
     backgroundColor: "#e7f1dfee",
     borderWidth: 3,
   },
-  number: { color: "#345b49", fontSize: 12, fontWeight: "700", height: 18 },
+  number: {
+    color: cozy.color.ink,
+    fontSize: 12,
+    fontWeight: "700",
+    height: 18,
+  },
   empty: {
     width: "55%",
     height: 3,

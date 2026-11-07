@@ -1,6 +1,18 @@
 import { expansionDa } from "./expansion-da";
 import type { en } from "./en";
 export const da: Record<keyof typeof en, string> = {
+  profileShort: "Spiller",
+  appearanceShort: "Udseende",
+  audioShort: "Lyd",
+  rulesShort: "Spil",
+  undoEmptyTitle: "Ikke flere Undo-point",
+  undoEmptyBody:
+    "Vind et minispil for at optjene flere Undo-point. Dit kabalespil bliver gemt, mens du besøger haven.",
+  cozyTagline: "Spil. Hyg. Opdag.",
+  undoPoints: "Undo-point",
+  yourMiniGames: "Dine minispil",
+  menuSubtitle: "Et lille øjeblik kun til dig",
+  returnToGame: "Tilbage til spillet",
   buildGarden: "Byg din have",
   buildDone: "Færdig",
   buildHelp:
@@ -219,7 +231,7 @@ export const da: Record<keyof typeof en, string> = {
   newGame: "Nyt spil",
   drawOne: "Træk ét",
   drawThree: "Træk tre",
-  auto: "Sikker afslutning",
+  auto: "Afslut automatisk",
   moves: "{{count}} træk",
   moves_one: "{{count}} træk",
   moves_other: "{{count}} træk",

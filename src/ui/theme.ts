@@ -1,0 +1,35 @@
+import { Platform } from "react-native";
+/** Cottage-garden materials shared by every screen. Values never represent game currency. */
+export const cozy = {
+  color: {
+    ink: "#3c2b1d",
+    muted: "#756249",
+    paper: "#fff1d3",
+    paperLight: "#fffae9",
+    paperShade: "#efdbb2",
+    wood: "#875127",
+    woodDark: "#57331c",
+    woodLight: "#bd8241",
+    honey: "#e6b85f",
+    border: "#c29550",
+    moss: "#4b702b",
+    mossDark: "#2a481f",
+    cream: "#fff8dc",
+    scrim: "#17271dcc",
+    glass: "#fff1d3ee",
+    shadow: "#271a0e",
+    danger: "#9c382c",
+    blue: "#526f82",
+    felt: "#203e31c9",
+  },
+  space: { xs: 4, sm: 8, md: 12, lg: 18, xl: 24 },
+  radius: { sm: 10, md: 16, lg: 24, pill: 99 },
+  font: { title: Platform.OS === "ios" ? "Georgia" : "serif", body: undefined },
+  shadow: {
+    shadowColor: "#271a0e",
+    shadowOpacity: 0.24,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 4,
+  },
+} as const;

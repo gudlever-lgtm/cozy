@@ -1,3 +1,4 @@
+import { cozy } from "./ui/theme";
 import React, { useState, useEffect } from "react";
 import { View, Text, Pressable, Modal, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
@@ -144,7 +145,7 @@ export function WorldNavigator({
               onPress={() => setManage(false)}
               style={s.icon}
             >
-              <Text style={{ fontSize: 28, color: "#345b49" }}>‹</Text>
+              <Text style={{ fontSize: 28, color: cozy.color.ink }}>‹</Text>
             </Pressable>
           }
           items={themes.map((theme) => (
@@ -185,7 +186,7 @@ export function WorldNavigator({
                 onPress={() => onUpdate((s) => chooseTheme(s, theme.id))}
                 style={s.icon}
               >
-                <Text style={{ fontSize: 24, color: "#345b49" }}>
+                <Text style={{ fontSize: 24, color: cozy.color.ink }}>
                   {save.world.theme === theme.id ? "✓" : "+"}
                 </Text>
               </Pressable>
@@ -218,7 +219,7 @@ export function WorldNavigator({
                 onPress={() => setSection(id)}
                 style={[
                   s.icon,
-                  section === id && { backgroundColor: "#345b49" },
+                  section === id && { backgroundColor: cozy.color.wood },
                 ]}
               >
                 <GameIcon
@@ -372,7 +373,7 @@ export function WorldNavigator({
                 onPress={() => setInspect(null)}
                 style={s.icon}
               >
-                <Text style={{ fontSize: 24, color: "#345b49" }}>×</Text>
+                <Text style={{ fontSize: 24, color: cozy.color.ink }}>×</Text>
               </Pressable>
             </View>
             <StrongScrollView
@@ -418,7 +419,7 @@ export function WorldNavigator({
                         {
                           color:
                             save.economy.wallet[r as keyof Wallet] >= n
-                              ? "#345b49"
+                              ? cozy.color.ink
                               : "#93503f",
                         },
                       ]}
@@ -449,17 +450,22 @@ const s = StyleSheet.create({
     padding: 8,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#d2c295",
-    backgroundColor: "#fff8e9ed",
+    borderColor: cozy.color.border,
+    backgroundColor: cozy.color.glass,
   },
-  name: { fontSize: 13, lineHeight: 16, color: "#345b49", fontWeight: "600" },
+  name: {
+    fontSize: 13,
+    lineHeight: 16,
+    color: cozy.color.ink,
+    fontWeight: "600",
+  },
   status: { fontSize: 11, color: "#647653" },
   icon: {
     width: 44,
     height: 44,
     borderRadius: 13,
     borderWidth: 1,
-    borderColor: "#cdbd96",
+    borderColor: cozy.color.border,
     backgroundColor: "#fff4df",
     alignItems: "center",
     justifyContent: "center",
@@ -480,7 +486,7 @@ const s = StyleSheet.create({
   },
   action: {
     minHeight: 44,
-    backgroundColor: "#345b49",
+    backgroundColor: cozy.color.wood,
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 9,
@@ -491,7 +497,7 @@ const s = StyleSheet.create({
   scrim: {
     flex: 1,
     padding: 10,
-    backgroundColor: "#1b342a88",
+    backgroundColor: cozy.color.scrim,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -502,8 +508,8 @@ const s = StyleSheet.create({
     padding: 12,
     gap: 8,
     borderRadius: 20,
-    backgroundColor: "#faf7ec",
+    backgroundColor: cozy.color.paper,
   },
-  detail: { fontSize: 14, lineHeight: 21, color: "#345b49" },
+  detail: { fontSize: 14, lineHeight: 21, color: cozy.color.ink },
   requirement: { flexDirection: "row", alignItems: "center", gap: 8 },
 });

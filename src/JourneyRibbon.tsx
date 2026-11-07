@@ -1,3 +1,4 @@
+import { cozy } from "./ui/theme";
 import React from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
@@ -119,7 +120,12 @@ const s = StyleSheet.create({
     backgroundColor: "#dce2ce",
     overflow: "hidden",
   },
-  text: { fontSize: 11, lineHeight: 14, fontWeight: "600", color: "#345b49" },
+  text: {
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: "600",
+    color: cozy.color.ink,
+  },
   wallet: { flexDirection: "row", gap: 3, alignItems: "center" },
   icon: {
     width: 38,

@@ -1,3 +1,4 @@
+import { cozy } from "./ui/theme";
 import React, { useState } from "react";
 import { View, Text, Pressable, Image, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
@@ -94,7 +95,7 @@ export function AnimationPanel({
                     s.button,
                     { width: 44, padding: 2 },
                     p.season === value && {
-                      borderColor: "#345b49",
+                      borderColor: cozy.color.ink,
                       borderWidth: 2,
                     },
                   ]}
@@ -214,7 +215,7 @@ export function AnimationPanel({
                   s.button,
                   { flex: 1 },
                   p.animationQuality === q && {
-                    borderColor: "#345b49",
+                    borderColor: cozy.color.ink,
                     borderWidth: 2,
                   },
                 ]}
@@ -236,10 +237,10 @@ const s = StyleSheet.create({
     padding: 12,
     gap: 10,
     borderRadius: 20,
-    backgroundColor: "#faf7ec",
+    backgroundColor: cozy.color.paper,
   },
   header: { height: 44, flexDirection: "row", alignItems: "center", gap: 8 },
-  title: { flex: 1, fontSize: 22, fontFamily: "serif", color: "#345b49" },
+  title: { flex: 1, fontSize: 22, fontFamily: "serif", color: cozy.color.ink },
   button: {
     minWidth: 44,
     height: 44,
@@ -264,6 +265,6 @@ const s = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: "#fff5df",
   },
-  label: { fontSize: 14, color: "#345b49", fontWeight: "600" },
+  label: { fontSize: 14, color: cozy.color.ink, fontWeight: "600" },
   note: { fontSize: 12, lineHeight: 16, color: "#526c50" },
 });

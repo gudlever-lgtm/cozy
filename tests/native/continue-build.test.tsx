@@ -111,7 +111,6 @@ test("Build your garden opens a focused workspace and saves purchases and placem
   press("buildDone");
   await screen.findByTestId("main-tabs");
   press("mainMenu");
-  press("menuGarden");
   fireEvent.press(
     within(screen.getByTestId("main-menu")).getByRole("button", {
       name: label("buildGarden"),
@@ -119,4 +118,24 @@ test("Build your garden opens a focused workspace and saves purchases and placem
   );
   expect(await screen.findByTestId("garden-build-screen")).toBeOnTheScreen();
   expect(screen.getByTestId("furniture-controls-flowers")).toBeOnTheScreen();
+});
+
+test("Undo help keeps Undo points separate from Glimmers and preserves the active deal", async () => {
+  const save = initial();
+  save.game = drawCards(save.game);
+  save.miniProgress.undo = 0;
+  save.economy.wallet.glimmers = 999;
+  await load(save);
+  fireEvent.press(screen.getByRole("button", { name: "♠ " + label("play") }));
+  press("undo");
+  expect(await screen.findByTestId("undo-help-dialog")).toBeOnTheScreen();
+  expect((await stored()).game).toEqual(save.game);
+  expect((await stored()).economy.wallet.glimmers).toBe(999);
+  fireEvent.press(
+    within(screen.getByTestId("undo-help-dialog")).getByRole("button", {
+      name: label("garden"),
+    }),
+  );
+  expect(await screen.findByTestId("garden-fullscreen")).toBeOnTheScreen();
+  expect((await stored()).miniProgress.undo).toBe(0);
 });

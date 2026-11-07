@@ -1,3 +1,5 @@
+import { CozyButton } from "./ui/CozyButton";
+import { cozy } from "./ui/theme";
 import React from "react";
 import { Pressable, Text, View } from "react-native";
 import {
@@ -30,30 +32,18 @@ export function FurnitureControls({
     save.economy.wallet.wood >= -(cost.wood ?? 0);
   const move = (sx: number, sy: number) => onMove(id, sx, sy);
   const action = (label: string, onPress: () => void, disabled = false) => (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      disabled={disabled}
+    <CozyButton
+      label={label}
       onPress={onPress}
-      style={{
-        paddingVertical: 7,
-        paddingHorizontal: 11,
-        borderRadius: 14,
-        borderWidth: 1,
-        borderColor: "#c5ab82",
-        backgroundColor: disabled ? "#e5e2d9" : "#fff8e9",
-        minHeight: 44,
-        justifyContent: "center",
-      }}
-    >
-      <Text style={{ color: "#315744", fontWeight: "600", fontSize: 13 }}>
-        {label}
-      </Text>
-    </Pressable>
+      disabled={disabled}
+      quiet
+      compact
+    />
   );
+
   return (
     <View testID={`furniture-controls-${id}`} style={{ gap: 8 }}>
-      <Text style={{ color: "#315744" }}>
+      <Text style={{ color: cozy.color.ink }}>
         {language === "da" ? "Niveau" : "Level"} {level}/3
       </Text>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 5 }}>

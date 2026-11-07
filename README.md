@@ -102,3 +102,17 @@ Preview 1.7.12 harmonizes all active world backgrounds, replaces both winter sce
 Preview 1.7.13 fixes Tea Time difficulty progression and preserves unreadable raw saves before an honestly labeled fresh start. See [repository review and validation](docs/REPO_REVIEW_1.7.13.md).
 
 The current engine uses compact schema-4 undo deltas, deduplicated saves with interval backups, conservative blocked-game guidance and round-seeded treasure positions. See [schema 4](docs/SAVE_SCHEMA_4.md) and [offline solver / verified deals](docs/SOLVER.md).
+
+## Cottage-garden redesign
+
+The first complete redesign introduces shared wood, parchment, honey and moss tokens; original scalable timber button artwork; an edge-to-edge garden; labelled solitaire actions below the board; separate Glimmer and Undo balances; a flat menu; compact responsive dialogs; and portrait support. Existing game engines, economy and save schema are retained. See `docs/REDESIGN.md` for the screen map, artwork provenance, validation and remaining limitations.
+
+To inspect the native components in a local browser:
+
+```sh
+npm run preview:design -- --port 8083
+# In another terminal, with Chromium installed:
+npm run test:design
+```
+
+This browser target is for design checks. Normal production builds still target iOS and Android. `CHROMIUM_PATH` and `COZY_PREVIEW_URL` can select a browser and a different local preview URL. The design check creates local sample progress and screenshots under ignored `work/design-checks/`; it does not alter any real player's saved game.

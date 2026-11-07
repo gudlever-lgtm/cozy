@@ -108,7 +108,11 @@ test("extending one column leaves all unrelated cards and columns stationary", (
   assert.equal(a.cardWidth, b.cardWidth);
   assert.equal(a.cardHeight, b.cardHeight);
   assert.deepEqual(a.columns.slice(1), b.columns.slice(1));
-  assert.ok(fitSolitaireBoard(440, 300, piles).cardWidth > a.cardWidth);
+  assert.ok(fitSolitaireBoard(440, 300, piles).cardWidth >= a.cardWidth);
+  assert.ok(
+    fitSolitaireBoard(844, 300, piles).cardWidth >
+      fitSolitaireBoard(844, 222, piles).cardWidth,
+  );
 });
 
 test("collapsed runs show the first exposed card and outermost card while keeping intermediate indices", () => {
@@ -520,4 +524,14 @@ test("Solitaire materials use the saved deal's draw mode, not a future selection
   assert.equal(b.economy.wallet.wood, 4);
   assert.equal(a.economy.wallet.glimmers, 60);
   assert.equal(b.economy.wallet.glimmers, 60);
+});
+
+test("portrait solitaire shows complete exposed runs when the viewport has room", () => {
+  const tall = fitSolitaireBoard(390, 620, [faceUp(10)]);
+  assert.equal(tall.columns[0].hiddenIndices.length, 0);
+  assert.deepEqual(
+    tall.columns[0].visibleIndices,
+    Array.from({ length: 10 }, (_, i) => i),
+  );
+  assert.ok(tall.usedHeight <= 620);
 });

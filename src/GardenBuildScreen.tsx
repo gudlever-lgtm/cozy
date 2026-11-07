@@ -1,5 +1,14 @@
+import { Timber } from "./ui/CozyButton";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { cozy } from "./ui/theme";
 import React from "react";
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  Pressable,
+  StyleSheet,
+  useWindowDimensions,
+} from "react-native";
 import { useTranslation } from "react-i18next";
 import { StrongScrollView } from "./StrongScrollView";
 import { GardenViewport } from "./GardenViewport";
@@ -28,6 +37,9 @@ export function GardenBuildScreen({
   onDone: () => void;
 }) {
   const { t } = useTranslation();
+  const { width, height } = useWindowDimensions();
+  const portrait = height > width;
+  const insets = useSafeAreaInsets();
   const language = save.preferences.language;
   const moveItem = (id: UpgradeId, dx: number, dy: number) =>
     onUpdate((current) => {
@@ -44,7 +56,18 @@ export function GardenBuildScreen({
       };
     });
   return (
-    <View testID="garden-build-screen" style={styles.root}>
+    <View
+      testID="garden-build-screen"
+      style={[
+        styles.root,
+        {
+          paddingTop: insets.top,
+          paddingBottom: insets.bottom,
+          paddingLeft: insets.left,
+          paddingRight: insets.right,
+        },
+      ]}
+    >
       <View style={styles.header}>
         <Text
           style={styles.title}
@@ -63,10 +86,11 @@ export function GardenBuildScreen({
           onPress={onDone}
           style={styles.button}
         >
+          <Timber />
           <Text style={styles.buttonText}>{String(t("buildDone"))}</Text>
         </Pressable>
       </View>
-      <View style={styles.workspace}>
+      <View style={[styles.workspace, portrait && { flexDirection: "column" }]}>
         <View testID="build-garden-preview" style={styles.preview}>
           <GardenViewport editing language={language}>
             {scene}
@@ -74,7 +98,15 @@ export function GardenBuildScreen({
         </View>
         <StrongScrollView
           testID="build-catalog"
-          style={styles.catalog}
+          style={[
+            styles.catalog,
+            portrait && {
+              width: "100%",
+              maxWidth: "100%",
+              minWidth: 0,
+              height: Math.min(270, height * 0.35),
+            },
+          ]}
           contentContainerStyle={{ gap: 8, padding: 8 }}
         >
           <Text style={styles.text}>{String(t("buildHelp"))}</Text>
@@ -151,6 +183,7 @@ export function GardenBuildScreen({
                           })
                         }
                       >
+                        <Timber green muted={!affordable} />
                         <Text style={styles.buttonText}>
                           {String(t("buildItem", { item: t(item.id) }))}
                         </Text>
@@ -180,9 +213,9 @@ const styles = StyleSheet.create({
     minWidth: 0,
     fontSize: 18,
     fontWeight: "700",
-    color: "#345b49",
+    color: cozy.color.ink,
   },
-  text: { fontSize: 12, color: "#345b49", flexShrink: 1 },
+  text: { fontSize: 12, color: cozy.color.ink, flexShrink: 1 },
   workspace: {
     flex: 1,
     minHeight: 0,
@@ -215,13 +248,14 @@ const styles = StyleSheet.create({
   },
   itemTitle: { flexDirection: "row", alignItems: "center", gap: 6 },
   button: {
+    ...cozy.shadow,
     minHeight: 44,
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 10,
-    backgroundColor: "#345b49",
+    backgroundColor: cozy.color.wood,
   },
   buttonText: { fontSize: 12, fontWeight: "600", color: "#fff8e9" },
 });

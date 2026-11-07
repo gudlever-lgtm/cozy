@@ -1,7 +1,16 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, Pressable, Modal, StyleSheet } from "react-native";
+import React from "react";
+import {
+  View,
+  Text,
+  Modal,
+  StyleSheet,
+  useWindowDimensions,
+} from "react-native";
 import { useTranslation } from "react-i18next";
-import { GameIcon } from "./GameIcon";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { StrongScrollView } from "./StrongScrollView";
+import { CozyButton } from "./ui/CozyButton";
+import { cozy } from "./ui/theme";
 export type MenuDestination =
   | "garden"
   | "play"
@@ -19,22 +28,6 @@ export type MenuDestination =
   | "restartDeal"
   | "rules"
   | "challenge";
-const routes = {
-  games: ["play", "restartDeal", "rules", "challenge"],
-  garden: ["world", "quests", "decorations", "collection", "forest"],
-  materials: ["inventory"],
-  player: ["statistics", "settings"],
-} as const;
-const legacy: Partial<Record<MenuDestination, string>> = {
-  play: "♠",
-  mini: "✿",
-  world: "◇",
-  quests: "☷",
-  decorations: "❀",
-  inventory: "▧",
-  statistics: "↗",
-  settings: "⚙",
-};
 export function MainMenu({
   visible,
   onClose,
@@ -46,41 +39,28 @@ export function MainMenu({
   onNavigate: (id: MenuDestination) => void;
   forestUnlocked: boolean;
 }) {
-  const { t } = useTranslation();
-  const [group, setGroup] = useState<keyof typeof routes | null>(null);
-  useEffect(() => {
-    if (visible) setGroup(null);
-  }, [visible]);
-  const names = {
-    games: "menuGames",
-    garden: "menuGarden",
-    materials: "materials",
-    player: "menuPlayer",
-  };
-  const icons = {
-    games: "play",
-    garden: "garden",
-    materials: "inventory",
-    player: "profile",
-  };
-  const itemKeys: Partial<Record<MenuDestination, string>> = {
-    newDeal: "newGame",
-    restartDeal: "restart",
-    rules: "help",
-    challenge: "challengeTitle",
-    forest: "exploreForest",
-    earn: "gather",
-    collection: "gardenCollection",
-    decorations: "buildGarden",
-  };
-  const title = (id: MenuDestination) => String(t(itemKeys[id] ?? id));
-  const itemIcons: Partial<Record<MenuDestination, string>> = {
-    newDeal: "newGame",
-    restartDeal: "restart",
-    rules: "hint",
-    forest: "world",
-    earn: "mini",
-  };
+  const { t } = useTranslation(),
+    { width } = useWindowDimensions(),
+    insets = useSafeAreaInsets();
+  const primary: { id: MenuDestination; key: string; icon: string }[] = [
+    { id: "newDeal", key: "newGame", icon: "newGame" },
+    { id: "garden", key: "garden", icon: "garden" },
+    { id: "decorations", key: "buildGarden", icon: "decorations" },
+    { id: "quests", key: "quests", icon: "quests" },
+    { id: "world", key: "world", icon: "world" },
+    { id: "settings", key: "settings", icon: "settings" },
+  ];
+  const secondary: typeof primary = [
+    { id: "collection", key: "gardenCollection", icon: "decorations" },
+    { id: "inventory", key: "inventory", icon: "inventory" },
+    { id: "statistics", key: "statistics", icon: "statistics" },
+    { id: "rules", key: "help", icon: "help" },
+    { id: "restartDeal", key: "restart", icon: "restart" },
+    { id: "challenge", key: "challengeTitle", icon: "challenge" },
+    ...(forestUnlocked
+      ? [{ id: "forest" as const, key: "exploreForest", icon: "world" }]
+      : []),
+  ];
   return (
     <Modal
       testID="main-menu-modal"
@@ -89,72 +69,59 @@ export function MainMenu({
       animationType="fade"
       statusBarTranslucent
       navigationBarTranslucent
-      onRequestClose={() => (group ? setGroup(null) : onClose())}
+      onRequestClose={onClose}
     >
-      <View style={s.scrim}>
+      <View
+        style={[
+          s.scrim,
+          {
+            paddingTop: insets.top + 10,
+            paddingBottom: insets.bottom + 10,
+            paddingLeft: insets.left + 12,
+            paddingRight: insets.right + 12,
+          },
+        ]}
+      >
         <View testID="main-menu" style={s.panel}>
           <View style={s.header}>
-            {group && (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={String(t("back"))}
-                onPress={() => setGroup(null)}
-                style={s.icon}
-              >
-                <Text style={s.arrow}>‹</Text>
-              </Pressable>
-            )}
-            <Text style={s.title}>
-              {String(t(group ? names[group] : "mainMenu"))}
-            </Text>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={String(t("close"))}
+            <View style={{ flex: 1 }}>
+              <Text style={s.brand}>Cozy Solitaire</Text>
+              <Text style={s.subtitle}>{String(t("menuSubtitle"))}</Text>
+            </View>
+            <CozyButton
+              label={String(t("close"))}
               onPress={onClose}
-              style={s.icon}
-            >
-              <GameIcon name="close" size={25} />
-            </Pressable>
+              quiet
+              compact
+            />
           </View>
-          <View style={s.grid}>
-            {!group
-              ? (Object.keys(routes) as (keyof typeof routes)[]).map((id) => (
-                  <Pressable
-                    key={id}
-                    accessibilityRole="button"
-                    accessibilityLabel={String(t(names[id]))}
-                    onPress={() => setGroup(id)}
-                    style={s.card}
-                  >
-                    <GameIcon name={icons[id]} size={38} />
-                    <Text style={s.label}>{String(t(names[id]))}</Text>
-                  </Pressable>
-                ))
-              : routes[group]
-                  .filter((id) => id !== "forest" || forestUnlocked)
-                  .map((id) => (
-                    <Pressable
-                      key={id}
-                      accessibilityRole="button"
-                      accessibilityLabel={
-                        (legacy[id] ? legacy[id] + " " : "") + title(id)
-                      }
-                      onPress={() => onNavigate(id)}
-                      style={[
-                        s.card,
-                        group && routes[group].length > 4 && { height: "30%" },
-                      ]}
-                    >
-                      <GameIcon name={itemIcons[id] ?? id} size={34} />
-                      <Text
-                        style={s.label}
-                        numberOfLines={2}
-                        maxFontSizeMultiplier={1.2}
-                      >
-                        {title(id)}
-                      </Text>
-                    </Pressable>
-                  ))}
+          <StrongScrollView
+            testID="main-menu-scroll"
+            contentContainerStyle={{ gap: 12, padding: 12 }}
+          >
+            <Text accessibilityRole="header" style={s.title}>
+              {String(t("mainMenu"))}
+            </Text>
+            <View style={s.grid}>
+              {[...primary, ...secondary].map((item, index) => (
+                <CozyButton
+                  key={item.id}
+                  testID={`menu-${item.id}`}
+                  label={String(t(item.key))}
+                  icon={item.icon}
+                  onPress={() => onNavigate(item.id)}
+                  quiet={index > 0}
+                  style={{ width: width < 350 ? "100%" : "48%", minHeight: 52 }}
+                />
+              ))}
+            </View>
+          </StrongScrollView>
+          <View style={{ padding: 10 }}>
+            <CozyButton
+              label={String(t("returnToGame"))}
+              onPress={onClose}
+              quiet
+            />
           </View>
         </View>
       </View>
@@ -164,51 +131,42 @@ export function MainMenu({
 const s = StyleSheet.create({
   scrim: {
     flex: 1,
-    backgroundColor: "#18392f88",
+    backgroundColor: cozy.color.scrim,
     padding: 12,
     justifyContent: "center",
     alignItems: "center",
   },
   panel: {
     width: "100%",
-    maxWidth: 700,
-    height: "94%",
-    maxHeight: 390,
-    backgroundColor: "#fff8eaf8",
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: "#d4bc86",
-    padding: 10,
-    gap: 8,
+    maxWidth: 680,
+    height: "96%",
+    maxHeight: 600,
+    borderRadius: 24,
+    borderWidth: 3,
+    borderColor: cozy.color.border,
+    backgroundColor: cozy.color.paper,
+    overflow: "hidden",
+    ...cozy.shadow,
   },
-  header: { height: 44, flexDirection: "row", alignItems: "center", gap: 8 },
-  title: { flex: 1, color: "#345b49", fontSize: 20, fontWeight: "700" },
-  icon: {
-    width: 44,
-    height: 44,
+  header: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    gap: 8,
+    padding: 14,
+    backgroundColor: cozy.color.woodDark,
   },
-  arrow: { color: "#345b49", fontSize: 30 },
+  brand: {
+    fontSize: 26,
+    fontFamily: cozy.font.title,
+    fontWeight: "700",
+    color: cozy.color.cream,
+  },
+  subtitle: { fontSize: 11, color: cozy.color.honey, marginTop: 3 },
+  title: { fontSize: 20, fontFamily: cozy.font.title, color: cozy.color.ink },
   grid: {
-    flex: 1,
-    minHeight: 0,
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
-  },
-  card: {
-    width: "48%",
-    height: "46%",
-    minHeight: 44,
-    flexDirection: "row",
-    alignItems: "center",
+    justifyContent: "space-between",
     gap: 10,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#d8c494",
-    backgroundColor: "#f6efdf",
-    paddingHorizontal: 12,
   },
-  label: { flex: 1, fontWeight: "600", color: "#345b49", fontSize: 14 },
 });

@@ -3,8 +3,8 @@
     "name": "Cozy Solitaire",
     "slug": "cozy-solitaire",
     "scheme": "cozysolitaire",
-    "version": "1.8.3",
-    "orientation": "landscape",
+    "version": "2.0.0",
+    "orientation": "default",
     "userInterfaceStyle": "light",
     "icon": "./assets/icon.png",
     "splash": {
@@ -15,7 +15,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.gudlever.cozy",
-      "buildNumber": "19",
+      "buildNumber": "20",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "UIStatusBarHidden": true
@@ -23,7 +23,7 @@
     },
     "android": {
       "package": "com.gudlever.cozy",
-      "versionCode": 19,
+      "versionCode": 20,
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#f6f2e8"
