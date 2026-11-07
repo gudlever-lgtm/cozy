@@ -1,0 +1,29 @@
+name: EAS Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      submit:
+        description: 'Also run eas submit after the build'
+        type: boolean
+        default: false
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: expo/expo-github-action@v8
+        with:
+          token: ${{ secrets.EXPO_TOKEN }}
+      - run: npm ci
+      - run: eas build --platform all --profile production --non-interactive
+      - if: ${{ inputs.submit == true }}
+        run: eas submit --platform all --profile production --non-interactive --latest

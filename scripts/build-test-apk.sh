@@ -25,6 +25,21 @@ if [[ ! -f android/gradlew || ! -f android/app/build.gradle ]]; then
   npx --no-install expo prebuild --platform android --no-install
 fi
 [[ -f android/gradlew ]] || { echo "Missing android/gradlew after prebuild" >&2; exit 1; }
+
+# Speed up local native builds: cache/parallelize Gradle and build only one
+# ABI (override with APK_ABI, e.g. "arm64-v8a,armeabi-v7a") instead of all four.
+set_gradle_property() {
+  local key="$1" value="$2" file="android/gradle.properties"
+  if grep -q "^${key}=" "$file" 2>/dev/null; then
+    sed -i "s/^${key}=.*/${key}=${value}/" "$file"
+  else
+    echo "${key}=${value}" >> "$file"
+  fi
+}
+set_gradle_property "org.gradle.caching" "true"
+set_gradle_property "org.gradle.parallel" "true"
+set_gradle_property "reactNativeArchitectures" "${APK_ABI:-arm64-v8a}"
+
 SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
 if [[ -z "$SDK" && -f android/local.properties ]]; then
   SDK="$(sed -n 's/^sdk.dir=//p' android/local.properties | head -n1)"

@@ -15,3 +15,12 @@ expo-env.d.ts
 # @end expo-cli
 # Local design references, previews and scratch assets
 work/
+
+# Signing material and service credentials
+*.jks
+*.keystore
+*.p8
+*.p12
+*.mobileprovision
+google-service-account*.json
+service-account*.json

@@ -89,6 +89,8 @@ import {
   migrate,
   loadSave,
   setProfile,
+  setAvatar,
+  AVATARS,
   setLanguage,
   saveQueue,
   SAVE_KEY,
@@ -1435,7 +1437,11 @@ export default function App() {
                         );
                     }}
                   >
-                    <View style={st.board} testID="solitaire-board">
+                    <View
+                      pointerEvents={s.game.won ? "none" : "auto"}
+                      style={[st.board, s.game.won && { opacity: 0.16 }]}
+                      testID="solitaire-board"
+                    >
                       <IdleFirefly
                         settings={{
                           ...idleSettings,
@@ -2072,6 +2078,40 @@ export default function App() {
                         ]}
                       >
                         <Text style={st.label}>{tt("profile")}</Text>
+                        <Text style={st.label}>{tt("chooseAvatar")}</Text>
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            flexWrap: "wrap",
+                            gap: 8,
+                          }}
+                        >
+                          {AVATARS.map((avatar) => (
+                            <Pressable
+                              key={avatar}
+                              testID={`avatar-option-${avatar}`}
+                              accessibilityRole="button"
+                              accessibilityLabel={`${tt("chooseAvatar")}: ${avatar}`}
+                              accessibilityState={{
+                                selected: s.profile?.avatar === avatar,
+                              }}
+                              onPress={() =>
+                                update((v) => setAvatar(v, avatar))
+                              }
+                              style={[
+                                st.iconButton,
+                                { width: 44, height: 44 },
+                                s.profile?.avatar === avatar && {
+                                  borderColor: cozy.color.honey,
+                                  borderWidth: 2,
+                                },
+                              ]}
+                            >
+                              <Text style={{ fontSize: 22 }}>{avatar}</Text>
+                            </Pressable>
+                          ))}
+                        </View>
+
                         <TextInput
                           accessibilityLabel={tt("username")}
                           value={name}

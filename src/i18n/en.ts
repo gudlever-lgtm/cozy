@@ -145,6 +145,8 @@ export const en = {
   begin: "Enter my garden",
   language: "Language",
   profile: "Player Profile",
+  avatar: "Avatar",
+  chooseAvatar: "Choose an avatar",
   rename: "Save player name",
   saved: "Saved",
   saveError:

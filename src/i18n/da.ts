@@ -148,6 +148,8 @@ export const da: Record<keyof typeof en, string> = {
   begin: "Gå ind i min have",
   language: "Sprog",
   profile: "Spillerprofil",
+  avatar: "Avatar",
+  chooseAvatar: "Vælg en avatar",
   rename: "Gem spillernavn",
   saved: "Gemt",
   saveError:

@@ -32,11 +32,13 @@ export type Language = "da" | "en";
 export type Profile = {
   id: string;
   username: string;
+  avatar: string | null;
   language: Language;
   createdAt: string;
   lastPlayedAt: string;
   progressRef: string;
 };
+export const AVATARS = ["🐱", "🐰", "🦊", "🦉", "🐻", "🐿️", "🦔", "🌸"];
 export type Preferences = {
   language: Language;
   season: Season | "auto";
@@ -127,12 +129,17 @@ export function setProfile(
       : {
           id,
           username,
+          avatar: null,
           language: s.preferences.language,
           createdAt: now,
           lastPlayedAt: now,
           progressRef: "local",
         },
   };
+}
+export function setAvatar(s: Save, avatar: string): Save {
+  if (!s.profile || !AVATARS.includes(avatar)) return s;
+  return { ...s, profile: { ...s.profile, avatar } };
 }
 export function setLanguage(s: Save, language: Language): Save {
   return {
@@ -247,6 +254,7 @@ export function migrate(
     ...old,
     version: 4,
     world: { ...newWorld(old.economy?.inventory ?? []), ...old.world },
+    profile: old.profile ? { avatar: null, ...old.profile } : null,
     miniSession: old.miniSession ?? null,
     miniProgress: old.miniProgress
       ? { ...newMiniProgress(), ...old.miniProgress }
@@ -293,6 +301,12 @@ export function migrate(
   )
     throw Error("saveError");
   if (s.profile && (!validateUsername(s.profile.username) || !s.profile.id))
+    throw Error("saveError");
+  if (
+    s.profile &&
+    s.profile.avatar !== null &&
+    !AVATARS.includes(s.profile.avatar)
+  )
     throw Error("saveError");
   if (old.version < 4 && s.game)
     s.game = { ...s.game, history: migrateHistory(s.game.history, s.game) };

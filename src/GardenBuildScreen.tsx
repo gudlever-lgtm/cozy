@@ -221,13 +221,11 @@ const styles = StyleSheet.create({
     minHeight: 0,
     flexDirection: "row",
     gap: 6,
-    padding: 6,
   },
   preview: {
     flex: 1,
     minWidth: 0,
     minHeight: 0,
-    borderRadius: 14,
     overflow: "hidden",
   },
   catalog: {

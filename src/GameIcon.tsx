@@ -38,7 +38,7 @@ export function GameIcon({
     challenge: "star",
   };
   if (original[name]) return <ArtIcon name={original[name]} size={size} />;
-  if (name === "play" || name === "newGame")
+  if (name === "play")
     return (
       <View pointerEvents="none" style={{ width: size, height: size * 1.15 }}>
         <CardArtwork
