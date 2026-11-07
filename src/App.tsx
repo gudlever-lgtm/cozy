@@ -7,6 +7,7 @@ import {
 } from "./engine/solitaire";
 import { finishMini } from "./engine/miniProgress";
 import { appStyles as st } from "./App.styles";
+import { colors } from "./theme";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   View,
@@ -455,7 +456,7 @@ export default function App() {
         pressed && { opacity: 0.65 },
       ]}
     >
-      <GameIcon name={icon} color={selected ? "#fff9eb" : "#345b49"} />
+      <GameIcon name={icon} color={selected ? colors.onPrimary : colors.leaf} />
     </Pressable>
   );
   const button = (
@@ -507,7 +508,7 @@ export default function App() {
           pressed && { opacity: 0.65 },
         ]}
       >
-        <Text style={[st.buttonText, quiet && { color: "#345b49" }]}>
+        <Text style={[st.buttonText, quiet && { color: colors.leaf }]}>
           {label}
         </Text>
       </Pressable>
