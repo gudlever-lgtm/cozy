@@ -2215,7 +2215,7 @@ export default function App() {
                     gap: 8,
                     paddingHorizontal: 8,
                     borderRadius: 12,
-                    backgroundColor: "#fff8e9e6",
+                    backgroundColor: colors.creamTile + "e6",
                   }}
                 >
                   <Text
@@ -2256,7 +2256,7 @@ export default function App() {
                         style={[
                           st.iconButton,
                           settingsTab === tab && {
-                            borderColor: "#c7a458",
+                            borderColor: colors.honey,
                             borderWidth: 2,
                           },
                         ]}
