@@ -84,12 +84,14 @@ import {
   migrate,
   loadSave,
   setProfile,
+  setAvatar,
   setLanguage,
   saveQueue,
   SAVE_KEY,
   deviceLanguage,
   reward,
   validateUsername,
+  AVATARS,
   type Save,
 } from "./engine/save";
 import { upgrades, place, seasonAt, type Season } from "./engine/world";
@@ -1336,24 +1338,70 @@ export default function App() {
                 >
                   <View style={st.gardenHud}>
                     <Pressable
+                      testID="player-avatar-button"
                       accessibilityRole="button"
                       accessibilityLabel={
                         location === "cottage"
                           ? tt("millie")
-                          : tt("welcome", { username: s.profile.username })
+                          : s.profile.avatar
+                            ? tt("welcome", { username: s.profile.username })
+                            : tt("chooseAvatar")
                       }
-                      onPress={() =>
-                        location === "cottage"
-                          ? setNpc("millie")
-                          : setTip(
-                              tt("welcome", { username: s.profile!.username }),
-                            )
-                      }
+                      onPress={() => {
+                        if (location === "cottage") return setNpc("millie");
+                        if (!s.profile!.avatar) {
+                          setSettingsTab("profile");
+                          return go("settings");
+                        }
+                        setTip(tt("welcome", { username: s.profile!.username }));
+                      }}
                     >
-                      <Image
-                        source={require("../assets/icon.png")}
-                        style={{ width: 44, height: 44, borderRadius: 14 }}
-                      />
+                      {location === "cottage" || s.profile.avatar ? (
+                        location === "cottage" ? (
+                          <Image
+                            source={require("../assets/icon.png")}
+                            style={{ width: 44, height: 44, borderRadius: 14 }}
+                          />
+                        ) : (
+                          <View
+                            style={{
+                              width: 44,
+                              height: 44,
+                              borderRadius: 14,
+                              alignItems: "center",
+                              justifyContent: "center",
+                              backgroundColor: "#fff8e9ee",
+                            }}
+                          >
+                            <Text style={{ fontSize: 24 }}>
+                              {s.profile.avatar}
+                            </Text>
+                          </View>
+                        )
+                      ) : (
+                        <View
+                          style={{
+                            width: 44,
+                            height: 44,
+                            borderRadius: 14,
+                            alignItems: "center",
+                            justifyContent: "center",
+                            backgroundColor: "#fff8e9ee",
+                            borderWidth: 1,
+                            borderColor: "#d2bd8d",
+                          }}
+                        >
+                          <Text
+                            style={{
+                              fontSize: 20,
+                              fontWeight: "700",
+                              color: "#917133",
+                            }}
+                          >
+                            ?
+                          </Text>
+                        </View>
+                      )}
                     </Pressable>
                     {location === "cottage" && (
                       <Pressable
@@ -2250,6 +2298,37 @@ export default function App() {
                         ]}
                       >
                         <Text style={st.label}>{tt("profile")}</Text>
+                        <Text style={st.small}>{tt("avatar")}</Text>
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            flexWrap: "wrap",
+                            gap: 6,
+                          }}
+                        >
+                          {AVATARS.map((emoji) => (
+                            <Pressable
+                              key={emoji}
+                              testID={`avatar-option-${emoji}`}
+                              accessibilityRole="button"
+                              accessibilityLabel={tt("chooseAvatar")}
+                              accessibilityState={{
+                                selected: s.profile?.avatar === emoji,
+                              }}
+                              onPress={() => update((v) => setAvatar(v, emoji))}
+                              style={[
+                                st.iconButton,
+                                { width: 44, height: 44 },
+                                s.profile?.avatar === emoji && {
+                                  borderColor: "#c7a458",
+                                  borderWidth: 2,
+                                },
+                              ]}
+                            >
+                              <Text style={{ fontSize: 22 }}>{emoji}</Text>
+                            </Pressable>
+                          ))}
+                        </View>
                         <TextInput
                           accessibilityLabel={tt("username")}
                           value={name}
