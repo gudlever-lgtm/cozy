@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { View, Text, Pressable, Modal, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
 import { GameIcon } from "./GameIcon";
+import { colors, radius, shadow, spacing, typography } from "./theme";
 export type MenuDestination =
   | "garden"
   | "play"
@@ -161,8 +162,8 @@ export function MainMenu({
 const s = StyleSheet.create({
   scrim: {
     flex: 1,
-    backgroundColor: "#18392f88",
-    padding: 12,
+    backgroundColor: colors.scrim,
+    padding: spacing.md,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -171,28 +172,35 @@ const s = StyleSheet.create({
     maxWidth: 700,
     height: "94%",
     maxHeight: 460,
-    backgroundColor: "#fff8eaf8",
-    borderRadius: 22,
+    backgroundColor: colors.creamPanel,
+    borderRadius: radius.xl,
     borderWidth: 1,
-    borderColor: "#d4bc86",
-    padding: 10,
-    gap: 8,
+    borderColor: colors.honeyDeep,
+    padding: spacing.sm,
+    gap: spacing.sm,
+    ...shadow.lifted,
   },
-  header: { height: 44, flexDirection: "row", alignItems: "center", gap: 8 },
-  title: { flex: 1, color: "#345b49", fontSize: 20, fontWeight: "700" },
+  header: { height: 44, flexDirection: "row", alignItems: "center", gap: spacing.sm },
+  title: {
+    ...typography.display,
+    flex: 1,
+    color: colors.leaf,
+    fontSize: 20,
+    fontWeight: "700",
+  },
   icon: {
     width: 44,
     height: 44,
     alignItems: "center",
     justifyContent: "center",
   },
-  arrow: { color: "#345b49", fontSize: 30 },
+  arrow: { color: colors.leaf, fontSize: 30 },
   grid: {
     flex: 1,
     minHeight: 0,
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
+    gap: spacing.sm,
   },
   card: {
     width: "48%",
@@ -201,11 +209,12 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    borderRadius: 16,
+    borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: "#d8c494",
-    backgroundColor: "#f6efdf",
-    paddingHorizontal: 12,
+    borderColor: colors.tan,
+    backgroundColor: colors.creamTile,
+    paddingHorizontal: spacing.md,
+    ...shadow.soft,
   },
-  label: { flex: 1, fontWeight: "600", color: "#345b49", fontSize: 14 },
+  label: { flex: 1, fontWeight: "600", color: colors.leaf, fontSize: 14 },
 });

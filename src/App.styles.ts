@@ -1,7 +1,8 @@
 import { Platform, StyleSheet } from "react-native";
+import { colors, radius, shadow, spacing } from "./theme";
 
 export const appStyles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#f6f2e8" },
+  root: { flex: 1, backgroundColor: colors.cream },
   fittedTile: {
     flex: 1,
     flexDirection: "row",
@@ -99,9 +100,10 @@ export const appStyles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    padding: 8,
-    borderRadius: 18,
-    backgroundColor: "#fff9eede",
+    padding: spacing.sm,
+    borderRadius: radius.lg,
+    backgroundColor: colors.creamTile + "de",
+    ...shadow.soft,
   },
   playStatus: {
     height: 24,
@@ -109,8 +111,8 @@ export const appStyles = StyleSheet.create({
     gap: 8,
     alignItems: "center",
     paddingHorizontal: 8,
-    backgroundColor: "#fff9eedd",
-    borderRadius: 10,
+    backgroundColor: colors.creamTile + "dd",
+    borderRadius: radius.sm,
   },
   shell: { flex: 1, minHeight: 0 },
   sidebar: {
@@ -120,12 +122,12 @@ export const appStyles = StyleSheet.create({
     borderRightWidth: 1,
     borderColor: "#dedfcd",
   },
-  logo: { fontSize: 48, color: "#3f6850" },
+  logo: { fontSize: 48, color: colors.leafSoft },
   brand: {
     fontFamily: Platform.OS === "ios" ? "Georgia" : "serif",
     fontSize: 32,
     lineHeight: 35,
-    color: "#254b3a",
+    color: colors.forest,
   },
   sideSubtitle: {
     fontSize: 12,
@@ -202,12 +204,12 @@ export const appStyles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 8,
     minHeight: 44,
-    borderRadius: 10,
-    backgroundColor: "#345b49",
+    borderRadius: radius.sm,
+    backgroundColor: colors.leaf,
     justifyContent: "center",
   },
   quiet: { backgroundColor: "#eeeddf", borderWidth: 1, borderColor: "#d9dfce" },
-  buttonText: { fontWeight: "600", fontSize: 13, color: "#fffbed" },
+  buttonText: { fontWeight: "600", fontSize: 13, color: colors.onPrimary },
   disabled: { opacity: 0.42 },
   scene: {
     width: "100%",
