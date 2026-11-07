@@ -3,6 +3,7 @@ import { View, Text } from "react-native";
 import { useTranslation } from "react-i18next";
 import { gameReward, type GameRewardKind } from "./engine/world";
 import { GameIcon } from "./GameIcon";
+import { colors } from "./theme";
 export function GameRewardLine({
   kind,
   level = 1,
@@ -29,7 +30,7 @@ export function GameRewardLine({
         alignItems: "center",
       }}
     >
-      <Text style={{ color: "#345b49", fontSize: compact ? 10 : 11 }}>
+      <Text style={{ color: colors.leaf, fontSize: compact ? 10 : 11 }}>
         {String(
           t(kind === "solitaire" ? "mainProgressReward" : "miniHelpReward", {
             count: level,
@@ -49,7 +50,7 @@ export function GameRewardLine({
           />
           <Text
             style={{
-              color: "#345b49",
+              color: colors.leaf,
               fontSize: compact ? 10 : 11,
               fontWeight: "600",
             }}
