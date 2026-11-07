@@ -7,3 +7,10 @@ test-results/
 android/
 ios/
 coverage/
+*.jks
+*.keystore
+*.p8
+*.p12
+*.mobileprovision
+google-service-account*.json
+service-account*.json

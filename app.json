@@ -1,7 +1,8 @@
 {
   "expo": {
     "name": "Cozy Solitaire",
-    "slug": "cozy-solitaire",
+    "slug": "games",
+    "owner": "osomanden",
     "scheme": "cozysolitaire",
     "version": "1.8.3",
     "orientation": "landscape",
@@ -65,6 +66,11 @@
     "androidNavigationBar": {
       "visible": "sticky-immersive",
       "backgroundColor": "#254b3a"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "8abb2d87-01df-4afc-8c5a-42557ac01b06"
+      }
     }
   }
 }
