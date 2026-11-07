@@ -108,8 +108,20 @@ test("Build your garden opens a focused workspace and saves purchases and placem
       25,
     ),
   );
+  expect(screen.getByTestId("garden-edit-flowers")).toBeOnTheScreen();
+  fireEvent.press(screen.getByTestId("build-catalog-toggle"));
+  expect(screen.queryByTestId("build-catalog")).toBeNull();
+  fireEvent.press(screen.getByTestId("garden-zoom-in"));
+  expect(screen.getByTestId("garden-zoom-level")).toHaveTextContent("125%");
   press("buildDone");
   await screen.findByTestId("main-tabs");
+  expect(
+    screen.getByTestId("garden-decoration-flowers", {
+      includeHiddenElements: true,
+    }),
+  ).toBeOnTheScreen();
+  fireEvent.press(screen.getByTestId("garden-zoom-in"));
+  expect(screen.getByTestId("garden-zoom-level")).toHaveTextContent("125%");
   press("mainMenu");
   fireEvent.press(
     within(screen.getByTestId("main-menu")).getByRole("button", {

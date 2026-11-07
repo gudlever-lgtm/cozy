@@ -13,6 +13,8 @@ export const en = {
   menuSubtitle: "A little moment just for you",
   returnToGame: "Back to your game",
   buildGarden: "Build your garden",
+  showBuildCatalog: "Show catalog",
+  hideBuildCatalog: "Hide catalog",
   buildDone: "Done building",
   buildHelp:
     "Build from the catalog. Drag objects in the garden or use the arrows to position them.",

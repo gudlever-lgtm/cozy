@@ -29,11 +29,11 @@ Det nye træmateriale er original, deterministisk SVG-grafik i `Timber`-komponen
 
 ## Funktioner der er bevaret
 
-Der er ingen ændringer i `src/engine/`. Save-format, profil-ID, migrering, backup, transaktionskvitteringer, økonomi, progression, regler for de tre kabaletyper, stock/waste, grundbunker, lovlige træk, hints, minispilspar, optjente træk, quests, historier, bygninger og belønninger er bevaret. Layoutberegningen er præsentationskode og ændrer ikke kortenes placering i spillets logiske tilstand.
+Selve redesignet ændrer ikke spilreglerne. De nyere avatarfelter og deres gemmemigrering fra main er bevaret. Save-format, profil-ID, migrering, backup, transaktionskvitteringer, økonomi, progression, regler for de tre kabaletyper, stock/waste, grundbunker, lovlige træk, hints, minispilspar, optjente træk, quests, historier, bygninger og belønninger er bevaret. Layoutberegningen er præsentationskode og ændrer ikke kortenes placering i spillets logiske tilstand.
 
 Fortryd viser en forklaring ved nul Undo-point. Den bruger ikke Lysglimt i stedet. Nyt spil er altid en aktiv handling; eventuelle konkrete adgangskrav til det valgte spil vises inde i dialogen. Auto-afslutning har samme sikkerhedskrav som engine-funktionen. Den eksisterende stack-picker bruges stadig, når alle kort ikke kan vises læseligt samtidigt.
 
-Havekameraet ændrer kun scenen. HUD, minispil, navigation og ressourcer følger ikke zoom/pan. Safe-area-insets er reserveret for handlingerne; selve havebilledet må gå helt til kanten. Byggeri og dialoger tager højde for safe area og korte skærme.
+Havekameraet ændrer kun scenen. HUD, minispil, navigation og ressourcer følger ikke zoom/pan. Safe-area-insets er reserveret for handlingerne; selve havebilledet må gå helt til kanten. Byggeri og dialoger tager højde for safe area og korte skærme. Havebygning bruger hele skærmen til samme scene og placerede ting som forsiden. Kataloget ligger ovenpå og kan skjules uden at ændre scenens størrelse. Zoomknapper og pinch virker også under bygning; touch-flytning omregnes med kameraets zoom, så gemte positioner følger haven.
 
 ## Reproducerbar designkontrol
 
@@ -46,14 +46,20 @@ npm run test:design
 
 `CHROMIUM_PATH` kan vælge en anden installeret Chromium-binær. `COZY_PREVIEW_URL` kan vælge en anden lokal serveradresse. React Native Web, React DOM og Playwright er udviklingsafhængigheder; browser-target aktiveres kun af preview-scriptet. Der er ikke udgivet en hjemmeside.
 
-Designkontrollen bruger lokale, konstruerede saves. Den tager 48 skærmbilleder under ignoreret `work/design-checks/` i 320×568, 568×320, 390×844, 844×390 og 1024×768. Den kontrollerer overlap mellem de vigtigste havehandlinger og mellem bræt, kabaleknapper og navigation. Have, kabale, dialog, menu, indstillinger, quests, lager, byggeri og minispil renderes. Et faktisk touch-træk, Fortryd og genindlæsning kontrollerer også korttilstand og bevarede balancer.
+Designkontrollen bruger lokale, konstruerede saves. Den tager 54 skærmbilleder under ignoreret `work/design-checks/` i 320×568, 568×320, 390×844, 844×390 og 1024×768. Den kontrollerer overlap mellem de vigtigste havehandlinger og mellem bræt, kabaleknapper og navigation. Have, kabale, dialog, menu, indstillinger, quests, lager, byggeri og minispil renderes. Et faktisk touch-træk, Fortryd og genindlæsning kontrollerer også korttilstand og bevarede balancer.
 
 ## Validering og kendte begrænsninger
 
 - TypeScript og formattering af ændrede kildefiler kontrolleres.
 - 90 logiktests består, inklusive den nye kontrol af fulde åbne sekvenser i portrait.
-- Browserkontrollen består i fem størrelser, med 48 skærmbilleder, ingen registrerede JavaScript-fejl, ingen fundne overlap i de testede områder og bestået touch-træk/Fortryd/gem/genindlæs.
+- Browserkontrollen består i fem størrelser, med 54 skærmbilleder, ingen registrerede JavaScript-fejl, ingen fundne overlap i de testede områder og bestået touch-træk/Fortryd/gem/genindlæs.
 - De 20 native kernesuiter består på Android og iOS: 100 tests for have, minispilspar, fuldskærm, layout, byggeri, Undo-hjælp, matcher, te, animationer og idle guides. Seks yderligere fokuserede kontroller af kortspil/profil, auto-afslutning og modal-navigation består også.
 - Den samlede native kørsel: 138 beståede og 48 fejlede tests (22 suiter). Fejlene ligger i `tests/native/app.test.tsx` på iOS og Android og omfatter gamle minispils-, menu- og dekorationsflows.
 - Den historiske `tests/native/app.test.tsx` indeholder stadig scenarier for den gamle frie minispilsmenu, de tidligere menugrupper og de gamle dekorationssider. Den samlede gamle native suite var allerede ikke grøn før redesignet. Disse tests er ikke skjult eller slået fra. De nye relevante navigations- og bevaringskontroller er opdateret til det aktuelle produktflow.
 - JS/Hermes-eksport til både Android og iOS består. En native JS/Hermes-eksport er ikke det samme som en installeret, fysisk enhedstest. Touch, safe area og visuel finjustering skal fortsat godkendes på faktiske Android-/iOS-enheder. Der er ikke bygget eller udgivet en ny APK i denne ændring.
+
+### Fuldskærmsrettelse til havebygning
+
+Kataloget optager ikke længere plads ved siden af eller under scenen. Byggeri, køb, flytning og visningen efter “Færdig” bruger samme sceneareal. Havekameraet kan zoome fra 100 til 280 procent, nulstilles og panoreres, og baggrund og dekorationer transformeres sammen. Et træk i en dekoration overtages ikke af kameraets panorering. Skærmens trækafstand divideres med zoom før placeringen gemmes.
+
+Kontrolleret med 20 fokuserede native-tests på Android/iOS og browserkontrollen ovenfor, inklusive touch-flytning ved 200 procent zoom, pinch og genindlæsning af den gemte placering. Fysisk enhedstest er fortsat ikke udført.

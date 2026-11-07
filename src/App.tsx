@@ -1000,7 +1000,7 @@ export default function App() {
           accessibilityIgnoresInvertColors
         />
       )}
-      {!hidden && location === "cottage" && (
+      {!hidden && location === "cottage" && !gardenEditing && (
         <GardenDecorations
           owned={s.economy.inventory}
           placements={s.placements}
@@ -1083,6 +1083,7 @@ export default function App() {
       {!hidden && <FestivalDecorations events={s.world.events} />}
       {!hidden && location === "cottage" && gardenEditing && (
         <GardenEditOverlay
+          economy={s.economy}
           owned={s.economy.inventory}
           placements={s.placements}
           width={sceneSize.width}

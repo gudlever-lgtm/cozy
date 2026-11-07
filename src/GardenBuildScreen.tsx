@@ -1,7 +1,7 @@
 import { Timber } from "./ui/CozyButton";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { cozy } from "./ui/theme";
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -39,6 +39,7 @@ export function GardenBuildScreen({
   const { t } = useTranslation();
   const { width, height } = useWindowDimensions();
   const portrait = height > width;
+  const [catalogOpen, setCatalogOpen] = useState(true);
   const insets = useSafeAreaInsets();
   const language = save.preferences.language;
   const moveItem = (id: UpgradeId, dx: number, dy: number) =>
@@ -56,150 +57,174 @@ export function GardenBuildScreen({
       };
     });
   return (
-    <View
-      testID="garden-build-screen"
-      style={[
-        styles.root,
-        {
-          paddingTop: insets.top,
-          paddingBottom: insets.bottom,
-          paddingLeft: insets.left,
-          paddingRight: insets.right,
-        },
-      ]}
-    >
-      <View style={styles.header}>
-        <Text
-          style={styles.title}
-          numberOfLines={1}
-          maxFontSizeMultiplier={1.2}
+    <View testID="garden-build-screen" style={styles.root}>
+      <View testID="build-garden-preview" style={StyleSheet.absoluteFill}>
+        <GardenViewport
+          editing
+          language={language}
+          controlsBottom={insets.bottom + 8}
+          controlsRight={insets.right + 8}
         >
-          {String(t("buildGarden"))}
-        </Text>
-        <GameIcon name="glimmer" size={20} />
-        <Text style={styles.text}>{save.economy.wallet.glimmers}</Text>
-        <GameIcon name="wood" size={20} />
-        <Text style={styles.text}>{save.economy.wallet.wood}</Text>
+          {scene}
+        </GardenViewport>
+      </View>
+      <View
+        pointerEvents="box-none"
+        style={[
+          styles.overlay,
+          {
+            top: insets.top + 6,
+            left: insets.left + 6,
+            right: insets.right + 6,
+            bottom: insets.bottom + 60,
+          },
+        ]}
+      >
+        <View style={styles.header}>
+          <Text
+            style={styles.title}
+            numberOfLines={1}
+            maxFontSizeMultiplier={1.2}
+          >
+            {String(t("buildGarden"))}
+          </Text>
+          <GameIcon name="glimmer" size={20} />
+          <Text style={styles.text}>{save.economy.wallet.glimmers}</Text>
+          <GameIcon name="wood" size={20} />
+          <Text style={styles.text}>{save.economy.wallet.wood}</Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={String(t("buildDone"))}
+            onPress={onDone}
+            style={styles.button}
+          >
+            <Timber />
+            <Text style={styles.buttonText}>{String(t("buildDone"))}</Text>
+          </Pressable>
+        </View>
         <Pressable
+          testID="build-catalog-toggle"
           accessibilityRole="button"
-          accessibilityLabel={String(t("buildDone"))}
-          onPress={onDone}
-          style={styles.button}
+          accessibilityLabel={String(
+            t(catalogOpen ? "hideBuildCatalog" : "showBuildCatalog"),
+          )}
+          accessibilityState={{ expanded: catalogOpen }}
+          onPress={() => setCatalogOpen((v) => !v)}
+          style={[styles.button, styles.catalogToggle]}
         >
           <Timber />
-          <Text style={styles.buttonText}>{String(t("buildDone"))}</Text>
+          <Text style={styles.buttonText}>
+            {String(t(catalogOpen ? "hideBuildCatalog" : "showBuildCatalog"))}
+          </Text>
         </Pressable>
-      </View>
-      <View style={[styles.workspace, portrait && { flexDirection: "column" }]}>
-        <View testID="build-garden-preview" style={styles.preview}>
-          <GardenViewport editing language={language}>
-            {scene}
-          </GardenViewport>
-        </View>
-        <StrongScrollView
-          testID="build-catalog"
-          style={[
-            styles.catalog,
-            portrait && {
-              width: "100%",
-              maxWidth: "100%",
-              minWidth: 0,
-              height: Math.min(270, height * 0.35),
-            },
-          ]}
-          contentContainerStyle={{ gap: 8, padding: 8 }}
-        >
-          <Text style={styles.text}>{String(t("buildHelp"))}</Text>
-          {upgrades
-            .filter((u) => u.id !== "cards")
-            .map((item) => {
-              const owned = save.economy.inventory.includes(item.id);
-              const affordable =
-                save.economy.wallet.glimmers >= item.cost &&
-                save.economy.wallet.wood >= item.wood;
-              return (
-                <View
-                  key={item.id}
-                  testID={`build-item-${item.id}`}
-                  style={styles.item}
-                >
-                  <View style={styles.itemTitle}>
-                    <DecorationArtwork id={item.id} size={36} />
-                    <Text style={[styles.text, { flex: 1 }]}>
-                      {String(t(item.id))}
-                    </Text>
-                  </View>
-                  {owned ? (
-                    <FurnitureControls
-                      save={save}
-                      id={item.id}
-                      language={language}
-                      onMove={moveItem}
-                      onUpgrade={(id) =>
-                        onUpdate((current) => ({
-                          ...current,
-                          economy: upgradeFurniture(current.economy, id),
-                        }))
-                      }
-                    />
-                  ) : (
-                    <>
-                      <View style={styles.itemTitle}>
-                        <GameIcon name="glimmer" size={18} />
-                        <Text style={styles.text}>{item.cost}</Text>
-                        <GameIcon name="wood" size={18} />
-                        <Text style={styles.text}>{item.wood}</Text>
-                      </View>
-                      <Pressable
-                        testID={`build-buy-${item.id}`}
-                        accessibilityRole="button"
-                        accessibilityLabel={String(
-                          t("buildItem", { item: t(item.id) }),
-                        )}
-                        disabled={!affordable}
-                        style={[
-                          styles.button,
-                          !affordable && { opacity: 0.45 },
-                        ]}
-                        onPress={() =>
-                          onUpdate((current) => {
-                            if (current.economy.inventory.includes(item.id))
-                              return current;
-                            const economy = transact(
-                              current.economy,
-                              `buy:${item.id}`,
-                              { glimmers: -item.cost, wood: -item.wood },
-                              item.id,
-                            );
-                            return {
-                              ...current,
-                              economy,
-                              placements: place(
-                                economy.inventory,
-                                current.placements,
-                                { id: item.id, x: item.x, y: item.y },
-                              ),
-                            };
-                          })
+        {catalogOpen && (
+          <StrongScrollView
+            testID="build-catalog"
+            style={[
+              styles.catalog,
+              portrait && {
+                width: "100%",
+                maxWidth: "100%",
+                minWidth: 0,
+                maxHeight: Math.min(270, height * 0.35),
+              },
+            ]}
+            contentContainerStyle={{ gap: 8, padding: 8 }}
+          >
+            <Text style={styles.text}>{String(t("buildHelp"))}</Text>
+            {upgrades
+              .filter((u) => u.id !== "cards")
+              .map((item) => {
+                const owned = save.economy.inventory.includes(item.id);
+                const affordable =
+                  save.economy.wallet.glimmers >= item.cost &&
+                  save.economy.wallet.wood >= item.wood;
+                return (
+                  <View
+                    key={item.id}
+                    testID={`build-item-${item.id}`}
+                    style={styles.item}
+                  >
+                    <View style={styles.itemTitle}>
+                      <DecorationArtwork id={item.id} size={36} />
+                      <Text style={[styles.text, { flex: 1 }]}>
+                        {String(t(item.id))}
+                      </Text>
+                    </View>
+                    {owned ? (
+                      <FurnitureControls
+                        save={save}
+                        id={item.id}
+                        language={language}
+                        onMove={moveItem}
+                        onUpgrade={(id) =>
+                          onUpdate((current) => ({
+                            ...current,
+                            economy: upgradeFurniture(current.economy, id),
+                          }))
                         }
-                      >
-                        <Timber green muted={!affordable} />
-                        <Text style={styles.buttonText}>
-                          {String(t("buildItem", { item: t(item.id) }))}
-                        </Text>
-                      </Pressable>
-                    </>
-                  )}
-                </View>
-              );
-            })}
-        </StrongScrollView>
+                      />
+                    ) : (
+                      <>
+                        <View style={styles.itemTitle}>
+                          <GameIcon name="glimmer" size={18} />
+                          <Text style={styles.text}>{item.cost}</Text>
+                          <GameIcon name="wood" size={18} />
+                          <Text style={styles.text}>{item.wood}</Text>
+                        </View>
+                        <Pressable
+                          testID={`build-buy-${item.id}`}
+                          accessibilityRole="button"
+                          accessibilityLabel={String(
+                            t("buildItem", { item: t(item.id) }),
+                          )}
+                          disabled={!affordable}
+                          style={[
+                            styles.button,
+                            !affordable && { opacity: 0.45 },
+                          ]}
+                          onPress={() =>
+                            onUpdate((current) => {
+                              if (current.economy.inventory.includes(item.id))
+                                return current;
+                              const economy = transact(
+                                current.economy,
+                                `buy:${item.id}`,
+                                { glimmers: -item.cost, wood: -item.wood },
+                                item.id,
+                              );
+                              return {
+                                ...current,
+                                economy,
+                                placements: place(
+                                  economy.inventory,
+                                  current.placements,
+                                  { id: item.id, x: item.x, y: item.y },
+                                ),
+                              };
+                            })
+                          }
+                        >
+                          <Timber green muted={!affordable} />
+                          <Text style={styles.buttonText}>
+                            {String(t("buildItem", { item: t(item.id) }))}
+                          </Text>
+                        </Pressable>
+                      </>
+                    )}
+                  </View>
+                );
+              })}
+          </StrongScrollView>
+        )}
       </View>
     </View>
   );
 }
 const styles = StyleSheet.create({
   root: { flex: 1, minHeight: 0 },
+  overlay: { position: "absolute", gap: 6 },
+  catalogToggle: { alignSelf: "flex-end" },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -207,6 +232,7 @@ const styles = StyleSheet.create({
     padding: 6,
     backgroundColor: "#fff8e9ee",
     minHeight: 52,
+    borderRadius: 14,
   },
   title: {
     flex: 1,
@@ -216,19 +242,9 @@ const styles = StyleSheet.create({
     color: cozy.color.ink,
   },
   text: { fontSize: 12, color: cozy.color.ink, flexShrink: 1 },
-  workspace: {
-    flex: 1,
-    minHeight: 0,
-    flexDirection: "row",
-    gap: 6,
-  },
-  preview: {
-    flex: 1,
-    minWidth: 0,
-    minHeight: 0,
-    overflow: "hidden",
-  },
   catalog: {
+    alignSelf: "flex-end",
+    flexShrink: 1,
     width: "34%",
     maxWidth: 270,
     minWidth: 165,

@@ -14,6 +14,8 @@ export const da: Record<keyof typeof en, string> = {
   menuSubtitle: "Et lille øjeblik kun til dig",
   returnToGame: "Tilbage til spillet",
   buildGarden: "Byg din have",
+  showBuildCatalog: "Vis katalog",
+  hideBuildCatalog: "Skjul katalog",
   buildDone: "Færdig",
   buildHelp:
     "Byg fra kataloget. Træk tingene i haven, eller brug pilene til at placere dem.",

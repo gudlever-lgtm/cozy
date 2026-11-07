@@ -131,12 +131,148 @@ async function main() {
       await menu(page, "decorations");
       await page.getByTestId("garden-build-screen").waitFor();
       await capture(page, `${name}-build`);
+      const buildBounds = (await page
+        .getByTestId("garden-build-screen")
+        .boundingBox())!;
+      const sceneBounds = (await page
+        .getByTestId("garden-scene")
+        .boundingBox())!;
+      assert.deepEqual(
+        sceneBounds,
+        buildBounds,
+        "Building scene must cover the complete workspace",
+      );
+      for (const id of [
+        "garden-zoom-in",
+        "garden-zoom-out",
+        "build-catalog-toggle",
+      ]) {
+        const box = (await page.getByTestId(id).boundingBox())!;
+        assert.ok(
+          box.x >= 0 &&
+            box.y >= 0 &&
+            box.x + box.width <= width + 1 &&
+            box.y + box.height <= height + 1,
+          `${name}: ${id} must stay on screen`,
+        );
+      }
+      await page.getByTestId("build-catalog-toggle").click();
+      assert.equal(await page.getByTestId("build-catalog").count(), 0);
+      await page.getByTestId("garden-zoom-in").click();
+      assert.equal(
+        await page.getByTestId("garden-zoom-level").textContent(),
+        "125%",
+      );
+      await page.getByTestId("garden-zoom-out").click();
+      assert.equal(
+        await page.getByTestId("garden-zoom-level").textContent(),
+        "100%",
+      );
+      await capture(page, `${name}-build-fullscreen`);
+
       assert.equal(await page.getByTestId("main-tabs").count(), 0);
       await page.getByRole("button", { name: "Færdig", exact: true }).click();
       await page.getByTestId("active-mini-match").click();
       await capture(page, `${name}-match`);
       await page.close();
     }
+    // Screen-space drags must be converted back to garden coordinates at 200% zoom.
+    const buildPage = await browser.newPage({
+      viewport: { width: 844, height: 390 },
+      hasTouch: true,
+    });
+    await seed(buildPage, {
+      ...sample,
+      economy: { ...sample.economy, inventory: ["flowers"] },
+      placements: [{ id: "flowers", x: 50, y: 65 }],
+    });
+    await buildPage.getByTestId("garden-edit-toggle").click();
+    await buildPage.getByTestId("build-catalog-toggle").click();
+    for (let i = 0; i < 4; i++)
+      await buildPage.getByTestId("garden-zoom-in").click();
+    const flower = (await buildPage
+      .getByTestId("garden-edit-flowers")
+      .boundingBox())!;
+    // The browser preview must not turn a native pinch into page magnification.
+    await buildPage.getByTestId("garden-viewport").evaluate((element) => {
+      element.style.touchAction = "none";
+    });
+    const touch = await buildPage.context().newCDPSession(buildPage);
+    const center = {
+      x: flower.x + flower.width / 2,
+      y: flower.y + flower.height / 2,
+    };
+    await touch.send("Input.dispatchTouchEvent", {
+      type: "touchStart",
+      touchPoints: [center],
+    });
+    for (let i = 1; i <= 10; i++) {
+      await touch.send("Input.dispatchTouchEvent", {
+        type: "touchMove",
+        touchPoints: [{ x: center.x + 8 * i, y: center.y }],
+      });
+      await buildPage.waitForTimeout(20);
+    }
+    await touch.send("Input.dispatchTouchEvent", {
+      type: "touchEnd",
+      touchPoints: [],
+    });
+    await buildPage.waitForFunction(
+      () => JSON.parse(localStorage.getItem("cozy.save")!).placements[0].x > 50,
+    );
+    const placement = await buildPage.evaluate(
+      () => JSON.parse(localStorage.getItem("cozy.save")!).placements[0],
+    );
+    assert.ok(
+      Math.abs(placement.x - (50 + (40 / 844) * 100)) < 0.2,
+      "Zoomed drag must save garden coordinates",
+    );
+    assert.equal(placement.y, 65);
+    await touch.send("Input.dispatchTouchEvent", {
+      type: "touchStart",
+      touchPoints: [
+        { x: 200, y: 180 },
+        { x: 300, y: 180 },
+      ],
+    });
+    for (let i = 1; i <= 5; i++) {
+      await touch.send("Input.dispatchTouchEvent", {
+        type: "touchMove",
+        touchPoints: [
+          { x: 200 - 5 * i, y: 180 },
+          { x: 300 + 5 * i, y: 180 },
+        ],
+      });
+      await buildPage.waitForTimeout(20);
+    }
+    await touch.send("Input.dispatchTouchEvent", {
+      type: "touchEnd",
+      touchPoints: [],
+    });
+    const pinchZoom = Number(
+      (await buildPage.getByTestId("garden-zoom-level").textContent())!.replace(
+        "%",
+        "",
+      ),
+    );
+    assert.ok(
+      pinchZoom > 200 && pinchZoom <= 280,
+      "Two-finger pinch must increase the camera zoom within its bounds",
+    );
+    await buildPage.getByTestId("garden-reset-view").click();
+    await capture(buildPage, "landscape-built-garden");
+    await buildPage
+      .getByRole("button", { name: "Færdig", exact: true })
+      .click();
+    await buildPage.getByTestId("garden-decoration-flowers").waitFor();
+    await buildPage.reload({ waitUntil: "networkidle" });
+    assert.deepEqual(
+      await buildPage.evaluate(
+        () => JSON.parse(localStorage.getItem("cozy.save")!).placements[0],
+      ),
+      placement,
+    );
+    await buildPage.close();
     const teaPage = await browser.newPage({
       viewport: { width: 390, height: 844 },
     });
@@ -232,10 +368,13 @@ async function main() {
       JSON.stringify(
         {
           viewports: 5,
-          screenshots: 48,
+          screenshots: 54,
           drag: true,
           undo: true,
           saveReload: true,
+          buildFullscreen: true,
+          buildZoomDrag: true,
+          buildPinch: true,
           errors,
         },
         null,
