@@ -1,6 +1,7 @@
+import { CozyPressable } from "./ui/CozyPressable";
 import { cozy } from "./ui/theme";
 import React from "react";
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
 import type { Save } from "./engine/save";
 import { journeyProgress } from "./presentation/journey";
@@ -22,7 +23,7 @@ export function JourneyRibbon({
       : String(t("world"));
   return (
     <View testID="journey-ribbon" style={s.root}>
-      <Pressable
+      <CozyPressable
         accessibilityRole="button"
         accessibilityLabel={String(t("journeyNext", { step: next }))}
         onPress={() => onNext(progress.next?.id)}
@@ -65,7 +66,7 @@ export function JourneyRibbon({
             />
           </View>
         </View>
-      </Pressable>
+      </CozyPressable>
       <View
         accessible
         accessibilityLabel={
@@ -80,14 +81,14 @@ export function JourneyRibbon({
           {number(save.economy.wallet.glimmers, i18n.language)}
         </Text>
       </View>
-      <Pressable
+      <CozyPressable
         accessibilityRole="button"
         accessibilityLabel={String(t("appearanceShortcut"))}
         onPress={onAppearance}
         style={s.icon}
       >
         <GameIcon name="settings" size={28} />
-      </Pressable>
+      </CozyPressable>
     </View>
   );
 }

@@ -15,66 +15,100 @@ import { cozy } from "./theme";
 export function Timber({
   green = false,
   muted = false,
+  paper = false,
 }: {
   green?: boolean;
   muted?: boolean;
+  paper?: boolean;
 }) {
   const id = useId().replace(/[^a-zA-Z0-9]/g, "");
-  const top = muted ? "#9b9580" : green ? "#8ba740" : "#c48b4d";
-  const bottom = muted ? "#726f63" : green ? "#38551e" : "#78401f";
+  const top = paper
+    ? muted
+      ? "#e3dfd1"
+      : green
+        ? "#e5efd1"
+        : "#fff8e4"
+    : muted
+      ? "#918979"
+      : green
+        ? "#6c8739"
+        : "#ad7645";
+  const bottom = paper
+    ? muted
+      ? "#cdc7b8"
+      : green
+        ? "#bdcf92"
+        : "#ead4a8"
+    : muted
+      ? "#6c665c"
+      : green
+        ? "#334f22"
+        : "#744125";
   return (
-    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-      <Svg
-        width="100%"
-        height="100%"
-        viewBox="0 0 180 56"
-        preserveAspectRatio="none"
+    <View
+      pointerEvents="none"
+      style={[
+        StyleSheet.absoluteFill,
+        {
+          borderRadius: 13,
+          borderWidth: 1.5,
+          borderColor: green ? "#536c2e" : paper ? "#b68d4e" : "#674023",
+          overflow: "hidden",
+          backgroundColor: bottom,
+        },
+      ]}
+    >
+      <View
+        style={[
+          StyleSheet.absoluteFill,
+          { borderRadius: 11, overflow: "hidden" },
+        ]}
       >
-        <Defs>
-          <LinearGradient id={id} x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor={top} />
-            <Stop offset="1" stopColor={bottom} />
-          </LinearGradient>
-        </Defs>
-        <Rect
-          x="1"
-          y="1"
-          width="178"
-          height="54"
-          rx="14"
-          fill={`url(#${id})`}
-          stroke="#593619"
-          strokeWidth="2"
-        />
-        <Rect
-          x="4"
-          y="4"
-          width="172"
-          height="47"
-          rx="11"
-          fill="none"
-          stroke="#ffdc8c"
-          strokeWidth="1"
-          opacity=".7"
-        />
-        {!green && (
-          <>
-            <Path
-              d="M10 15Q40 10 84 15T170 13M8 38Q65 44 112 37T170 40"
-              stroke="#f1bc73"
-              opacity=".16"
-              strokeWidth="1"
-              fill="none"
-            />
-            <Path
-              d="M20 47Q70 44 120 47T164 45"
-              stroke="#44250f"
-              opacity=".18"
-              fill="none"
-            />
-          </>
-        )}
-      </Svg>
+        <Svg
+          width="100%"
+          height="100%"
+          viewBox="0 0 180 56"
+          preserveAspectRatio="none"
+        >
+          <Defs>
+            <LinearGradient id={id} x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor={top} />
+              <Stop offset="1" stopColor={bottom} />
+            </LinearGradient>
+          </Defs>
+          <Rect x="0" y="0" width="180" height="56" fill={`url(#${id})`} />
+          {!green && (
+            <>
+              <Path
+                d="M10 15Q40 10 84 15T170 13M8 38Q65 44 112 37T170 40"
+                stroke="#f1bc73"
+                opacity=".16"
+                strokeWidth="1"
+                fill="none"
+              />
+              <Path
+                d="M20 47Q70 44 120 47T164 45"
+                stroke="#44250f"
+                opacity=".18"
+                fill="none"
+              />
+            </>
+          )}
+        </Svg>
+      </View>
+      <View
+        style={{
+          position: "absolute",
+          left: 3,
+          right: 3,
+          top: 3,
+          bottom: 3,
+          borderRadius: 9,
+          borderWidth: 1,
+          borderColor: paper ? "#fffdf1" : "#e6bd7d",
+          opacity: 0.65,
+        }}
+      />
     </View>
   );
 }

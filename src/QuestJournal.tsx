@@ -1,6 +1,14 @@
+import { CozyPressable } from "./ui/CozyPressable";
 import { cozy } from "./ui/theme";
 import React, { useEffect, useState } from "react";
-import { View, Text, Pressable, Image, Modal, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  Image,
+  Modal,
+  StyleSheet,
+  useWindowDimensions,
+} from "react-native";
 import { useTranslation } from "react-i18next";
 import { quests, claimQuest } from "./engine/world";
 import type { Save } from "./engine/save";
@@ -56,6 +64,8 @@ export function QuestJournal({
   const { t, i18n } = useTranslation(),
     tt = (key: Key, options?: Record<string, unknown>) =>
       String(t(key, options));
+  const { width, height } = useWindowDimensions();
+  const [showCompleted, setShowCompleted] = useState(false);
   const focused = quests.find((q) => q.id === focusQuest),
     initial = focused ?? recommendedQuest(save)?.quest ?? quests[0];
   const [npc, setNpc] = useState<Quest["npc"]>(initial.npc),
@@ -125,108 +135,171 @@ export function QuestJournal({
       <View style={{ flex: 1, minHeight: 0, padding: 8, gap: 8 }}>
         <View
           style={{
-            height: 44,
             flexDirection: "row",
             alignItems: "center",
-            gap: 8,
-            backgroundColor: "#fff8e9e6",
+            justifyContent: "space-between",
+            paddingHorizontal: 8,
+            minHeight: 44,
+            backgroundColor: cozy.color.paper,
             borderRadius: 12,
-            paddingHorizontal: 6,
           }}
         >
-          <Text style={[s.title, { flex: 1 }]} numberOfLines={1}>
+          <Text accessibilityRole="header" style={s.title}>
             {tt("quests")}
-          </Text>{" "}
-          <View style={{ flexDirection: "row", gap: 4 }}>
-            {(["millie", "marmalade", "pip"] as const).map((character) => (
-              <Pressable
-                key={character}
-                accessibilityRole="tab"
-                accessibilityLabel={tt(character)}
-                accessibilityState={{ selected: npc === character }}
-                onPress={() => setNpc(character)}
-                style={[
-                  s.character,
-                  npc === character && {
-                    borderColor: "#c7a458",
-                    borderWidth: 2,
-                    backgroundColor: "#e9eddc",
-                  },
-                ]}
-              >
-                <QuestPortrait npc={character} />
-                <Text numberOfLines={1} style={s.characterName}>
-                  {tt(character)}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
+          </Text>
+          <Text style={s.small}>
+            {save.completed.length}/{quests.length} {tt("questDone")}
+          </Text>
         </View>
-        <View style={{ flex: 1, minHeight: 0, flexDirection: "row", gap: 8 }}>
-          {quests
-            .filter((q) => q.npc === npc)
-            .map((quest) => {
-              const row = questView(save, quest),
-                next = row.next;
-              return (
-                <Pressable
-                  key={quest.id}
-                  testID={`quest-card-${quest.id}`}
-                  accessibilityRole="button"
-                  accessibilityLabel={tt(quest.id)}
-                  onPress={() => setDetail(quest.id)}
-                  style={[
-                    s.card,
-                    recommended?.quest.id === quest.id && {
-                      borderColor: "#c7a458",
-                      borderWidth: 2,
-                    },
-                  ]}
-                >
-                  <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
-                    <Text style={s.name} numberOfLines={1}>
-                      {short(quest)}
+        <View style={{ flexDirection: "row", gap: 6 }}>
+          {(["millie", "marmalade", "pip"] as const).map((character) => (
+            <CozyPressable
+              key={character}
+              accessibilityRole="tab"
+              accessibilityLabel={tt(character)}
+              accessibilityState={{ selected: npc === character }}
+              onPress={() => {
+                setNpc(character);
+                setShowCompleted(false);
+              }}
+              style={[
+                s.character,
+                { flex: 1, width: undefined, height: 62 },
+                npc === character && {
+                  borderColor: cozy.color.moss,
+                  borderWidth: 2,
+                  backgroundColor: "#e9eddc",
+                },
+              ]}
+            >
+              <QuestPortrait npc={character} />
+              <Text style={s.characterName}>{tt(character).split(" ")[0]}</Text>
+            </CozyPressable>
+          ))}
+        </View>
+        <StrongScrollView
+          testID="quest-list-scroll"
+          style={{ flex: 1, minHeight: 0 }}
+          contentContainerStyle={{ gap: 10, paddingBottom: 10 }}
+        >
+          {(["current", "upcoming", "completed"] as const).map((group) => {
+            const rows = quests
+              .filter((q) => q.npc === npc)
+              .map((q) => questView(save, q))
+              .filter((row) =>
+                group === "current"
+                  ? row.status === "active" || row.status === "ready"
+                  : group === "upcoming"
+                    ? row.status === "locked"
+                    : row.status === "completed",
+              );
+            if (!rows.length) return null;
+            return (
+              <View key={group} style={{ gap: 8 }}>
+                {group === "completed" ? (
+                  <CozyPressable
+                    testID="quest-completed-toggle"
+                    accessibilityRole="button"
+                    accessibilityLabel={tt("questCompleted")}
+                    accessibilityState={{ expanded: showCompleted }}
+                    onPress={() => setShowCompleted((v) => !v)}
+                    style={s.completedToggle}
+                  >
+                    <Text style={s.name}>
+                      {tt("questCompleted")} ({rows.length}){" "}
+                      {showCompleted ? "−" : "+"}
                     </Text>
-                    <Text style={s.info} numberOfLines={2}>
-                      {tt((quest.id + "Info") as Key)}
-                    </Text>
-                    <Text style={s.small} numberOfLines={1}>
-                      {row.status === "active" && next
-                        ? label(next.objective)
-                        : tt(stateKey[row.status])}
-                    </Text>
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        gap: 6,
-                      }}
+                  </CozyPressable>
+                ) : (
+                  <Text
+                    accessibilityRole="header"
+                    style={[
+                      s.name,
+                      {
+                        backgroundColor: cozy.color.paper,
+                        padding: 8,
+                        borderRadius: 8,
+                      },
+                    ]}
+                  >
+                    {tt(group === "current" ? "questCurrent" : "questUpcoming")}
+                  </Text>
+                )}
+                {(group !== "completed" || showCompleted) &&
+                  rows.map((row) => (
+                    <CozyPressable
+                      key={row.quest.id}
+                      testID={`quest-card-${row.quest.id}`}
+                      accessibilityRole="button"
+                      accessibilityLabel={tt(row.quest.id)}
+                      onPress={() => setDetail(row.quest.id)}
+                      style={[
+                        s.card,
+                        recommended?.quest.id === row.quest.id && {
+                          borderColor: cozy.color.honey,
+                          borderWidth: 2,
+                        },
+                      ]}
                     >
-                      <Text style={s.small}>
-                        {row.progress.done}/{row.progress.total}
-                      </Text>
-                      <View style={s.track}>
+                      <View style={{ flex: 1, minWidth: 0, gap: 6 }}>
                         <View
                           style={{
-                            width: `${(row.progress.done / row.progress.total) * 100}%`,
-                            height: 5,
-                            borderRadius: 3,
-                            backgroundColor:
-                              row.status === "ready" ? "#c7a458" : "#588166",
+                            flexDirection: "row",
+                            gap: 8,
+                            alignItems: "center",
                           }}
-                        />
+                        >
+                          <QuestPortrait npc={npc} />
+                          <Text style={[s.name, { flex: 1 }]}>
+                            {short(row.quest)}
+                          </Text>
+                          <GameIcon
+                            name={row.status === "ready" ? "gift" : "quests"}
+                            size={25}
+                          />
+                        </View>
+                        <Text style={s.info}>
+                          {tt((row.quest.id + "Info") as Key)}
+                        </Text>
+                        {row.status !== "completed" &&
+                          row.objectives.map((goal, index) => (
+                            <Text key={index} style={s.small}>
+                              {label(goal.objective)} · {goal.done}/{goal.total}
+                            </Text>
+                          ))}
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            gap: 8,
+                          }}
+                        >
+                          <View style={s.track}>
+                            <View
+                              style={{
+                                height: 5,
+                                width: `${(row.progress.done / row.progress.total) * 100}%`,
+                                backgroundColor:
+                                  row.status === "ready"
+                                    ? cozy.color.honey
+                                    : cozy.color.moss,
+                              }}
+                            />
+                          </View>
+                          <Text style={s.small}>
+                            {tt(stateKey[row.status])}
+                          </Text>
+                        </View>
+                        <Text style={[s.small, { fontWeight: "600" }]}>
+                          {tt("questRewards")}: {rewardText(row.quest)}
+                        </Text>
                       </View>
-                      <Text style={s.small}>{tt(stateKey[row.status])}</Text>
-                    </View>
-                  </View>
-                  <GameIcon
-                    name={row.status === "ready" ? "gift" : "quests"}
-                    size={32}
-                  />
-                </Pressable>
-              );
-            })}
-        </View>
+                    </CozyPressable>
+                  ))}
+              </View>
+            );
+          })}
+        </StrongScrollView>
       </View>
       <Modal
         testID="quest-details-modal"
@@ -246,21 +319,26 @@ export function QuestJournal({
                   <Text style={s.small}>
                     {tt(chosen.npc)} · {tt(stateKey[view.status])}
                   </Text>
-                  <Text style={s.title} numberOfLines={1}>
+                  <Text style={s.title} numberOfLines={2}>
                     {short(chosen)}
                   </Text>
                 </View>
-                <Pressable
+                <CozyPressable
                   accessibilityRole="button"
                   accessibilityLabel={tt("close")}
                   onPress={() => setDetail(null)}
                   style={s.close}
                 >
                   <Text style={{ fontSize: 26, color: cozy.color.ink }}>×</Text>
-                </Pressable>
+                </CozyPressable>
               </View>
               <View
-                style={{ flex: 1, minHeight: 0, flexDirection: "row", gap: 12 }}
+                style={{
+                  flex: 1,
+                  minHeight: 0,
+                  flexDirection: height > width ? "column" : "row",
+                  gap: 12,
+                }}
               >
                 <StrongScrollView
                   style={{ flex: 1 }}
@@ -337,7 +415,8 @@ export function QuestJournal({
                   ))}
                 </StrongScrollView>
               </View>
-              <Pressable
+              <CozyPressable
+                variant="wood"
                 accessibilityRole="button"
                 accessibilityLabel={tt(
                   view.status === "ready"
@@ -367,7 +446,7 @@ export function QuestJournal({
                           : "questGoObjective",
                   )}
                 </Text>
-              </Pressable>
+              </CozyPressable>
             </View>
           )}
         </View>
@@ -387,8 +466,15 @@ const s = StyleSheet.create({
     justifyContent: "center",
   },
   characterName: { fontSize: 10, lineHeight: 11, color: cozy.color.ink },
+  completedToggle: {
+    minHeight: 44,
+    padding: 10,
+    justifyContent: "center",
+    borderRadius: 12,
+    backgroundColor: cozy.color.paperShade,
+  },
   card: {
-    flex: 1,
+    minHeight: 120,
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
@@ -428,7 +514,7 @@ const s = StyleSheet.create({
     borderRadius: 22,
     backgroundColor: cozy.color.paper,
   },
-  header: { height: 44, flexDirection: "row", alignItems: "center", gap: 8 },
+  header: { minHeight: 58, flexDirection: "row", alignItems: "center", gap: 8 },
   title: {
     fontSize: 18,
     lineHeight: 22,

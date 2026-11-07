@@ -1,6 +1,7 @@
+import { CozyPressable } from "./ui/CozyPressable";
 import { cozy } from "./ui/theme";
 import React from "react";
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
 import type { Save } from "./engine/save";
 import { stories, storyProgress, claimStory } from "./engine/progression";
@@ -112,7 +113,8 @@ export function ForestGuide({
         ) : (
           <Text style={s.text}>{String(t("forestFreeExplore"))}</Text>
         )}
-        <Pressable
+        <CozyPressable
+          variant="wood"
           testID="forest-next-action"
           accessibilityRole="button"
           accessibilityLabel={String(
@@ -130,7 +132,7 @@ export function ForestGuide({
               }),
             )}
           </Text>
-        </Pressable>
+        </CozyPressable>
       </StrongScrollView>
     </View>
   );

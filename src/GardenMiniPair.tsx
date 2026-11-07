@@ -1,6 +1,7 @@
+import { CozyPressable } from "./ui/CozyPressable";
 import { cozy } from "./ui/theme";
 import React from "react";
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
 import { MiniArtwork } from "./MiniArtwork";
 import { GameIcon } from "./GameIcon";
@@ -40,7 +41,7 @@ export function GardenMiniPair({
         </View>
       )}
       {progress.slots.map((slot) => (
-        <Pressable
+        <CozyPressable
           key={slot.session.id}
           testID={`active-mini-${slot.session.kind}`}
           accessibilityRole="button"
@@ -68,9 +69,9 @@ export function GardenMiniPair({
           >
             {slot.done ? "✓" : slot.moves}
           </Text>
-        </Pressable>
+        </CozyPressable>
       ))}
-      <Pressable
+      <CozyPressable
         testID="mini-progress-help"
         accessibilityRole="button"
         accessibilityLabel={String(t("help"))}
@@ -78,7 +79,7 @@ export function GardenMiniPair({
         style={styles.help}
       >
         <GameIcon name="help" size={22} />
-      </Pressable>
+      </CozyPressable>
     </View>
   );
 }

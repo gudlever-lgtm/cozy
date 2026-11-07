@@ -4,7 +4,7 @@
     "slug": "games",
     "owner": "osomanden",
     "scheme": "cozysolitaire",
-    "version": "2.0.2",
+    "version": "2.1.0",
     "orientation": "default",
     "userInterfaceStyle": "light",
     "icon": "./assets/icon.png",
@@ -16,7 +16,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.gudlever.cozy",
-      "buildNumber": "22",
+      "buildNumber": "23",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "UIStatusBarHidden": true
@@ -24,7 +24,7 @@
     },
     "android": {
       "package": "com.gudlever.cozy",
-      "versionCode": 22,
+      "versionCode": 23,
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#f6f2e8"

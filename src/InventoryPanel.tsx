@@ -1,6 +1,7 @@
+import { CozyPressable } from "./ui/CozyPressable";
 import { cozy } from "./ui/theme";
 import React, { useEffect, useState } from "react";
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
 import type { Save } from "./engine/save";
 import { resourceGains, type ResourceGain } from "./engine/world";
@@ -61,7 +62,7 @@ export function InventoryPanel({
       )
       .join(" · ");
   const arrow = (back: boolean, disabled: boolean, action: () => void) => (
-    <Pressable
+    <CozyPressable
       accessibilityRole="button"
       accessibilityLabel={String(t(back ? "previousPage" : "nextPage"))}
       onPress={action}
@@ -70,7 +71,7 @@ export function InventoryPanel({
       style={[s.arrowButton, disabled && { opacity: 0.3 }]}
     >
       <Text style={s.arrow}>{back ? "‹" : "›"}</Text>
-    </Pressable>
+    </CozyPressable>
   );
   return (
     <View
@@ -78,12 +79,12 @@ export function InventoryPanel({
       onLayout={(e) => setHeight(e.nativeEvent.layout.height)}
       style={s.root}
     >
-      <View style={[s.header, { height: compact ? 32 : 36 }]}>
+      <View style={[s.header, { height: 52 }]}>
         <Text accessibilityRole="header" numberOfLines={1} style={s.title}>
           {String(t("inventory"))}
         </Text>
         {(["materials", "owned"] as const).map((id) => (
-          <Pressable
+          <CozyPressable
             key={id}
             accessibilityRole="tab"
             accessibilityLabel={String(t(id))}
@@ -92,17 +93,17 @@ export function InventoryPanel({
             hitSlop={5}
             style={[s.tab, tab === id && s.selected]}
           >
-            <Text style={[s.tabText, tab === id && { color: "#fff8e9" }]}>
+            <Text style={[s.tabText, tab === id && { color: cozy.color.ink }]}>
               {String(t(id))}
             </Text>
-          </Pressable>
+          </CozyPressable>
         ))}
       </View>
       {tab === "materials" ? (
         <>
           <View testID="compact-inventory" style={s.resources}>
             {Object.entries(save.economy.wallet).map(([key, value]) => (
-              <Pressable
+              <CozyPressable
                 key={key}
                 accessibilityRole="button"
                 accessibilityLabel={
@@ -120,7 +121,7 @@ export function InventoryPanel({
                 <Text numberOfLines={1} adjustsFontSizeToFit style={s.label}>
                   {resource(key)}
                 </Text>
-              </Pressable>
+              </CozyPressable>
             ))}
           </View>
           <View style={[s.historyHeader, { height: compact ? 28 : 32 }]}>
@@ -144,7 +145,7 @@ export function InventoryPanel({
               {gains
                 .slice(shownPage * rows, shownPage * rows + rows)
                 .map((gain) => (
-                  <Pressable
+                  <CozyPressable
                     key={gain.id}
                     testID="material-gain-row"
                     accessibilityRole="button"
@@ -173,7 +174,7 @@ export function InventoryPanel({
                         </View>
                       ))}
                     </View>
-                  </Pressable>
+                  </CozyPressable>
                 ))}
             </View>
           ) : (
@@ -188,7 +189,7 @@ export function InventoryPanel({
           <View style={s.items}>
             {arrow(true, page === 0, () => setPage((p) => p - 1))}
             {owned.slice(page * 4, page * 4 + 4).map((id) => (
-              <Pressable
+              <CozyPressable
                 key={id}
                 accessibilityRole="button"
                 accessibilityLabel={String(t(id))}
@@ -206,7 +207,7 @@ export function InventoryPanel({
                 <Text style={s.label} numberOfLines={2}>
                   {String(t(id))}
                 </Text>
-              </Pressable>
+              </CozyPressable>
             ))}
             {arrow(false, page + 1 >= pages, () => setPage((p) => p + 1))}
           </View>

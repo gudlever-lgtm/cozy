@@ -1,5 +1,6 @@
+import { CozyPressable } from "./ui/CozyPressable";
 import React from "react";
-import { Pressable, Text, StyleSheet, StyleProp, ViewStyle } from "react-native";
+import { Text, StyleSheet, StyleProp, ViewStyle } from "react-native";
 import { colors, radius, shadow, spacing } from "./theme";
 
 type Variant = "primary" | "wood" | "secondary" | "quiet";
@@ -7,7 +8,11 @@ type Variant = "primary" | "wood" | "secondary" | "quiet";
 const fills: Record<Variant, { bg: string; border: string; text: string }> = {
   primary: { bg: colors.leaf, border: colors.leafSoft, text: colors.onPrimary },
   wood: { bg: colors.wood, border: colors.woodDark, text: colors.onPrimary },
-  secondary: { bg: colors.creamTile, border: colors.honeyDeep, text: colors.leaf },
+  secondary: {
+    bg: colors.creamTile,
+    border: colors.honeyDeep,
+    text: colors.leaf,
+  },
   quiet: { bg: "transparent", border: "transparent", text: colors.leaf },
 };
 
@@ -33,7 +38,8 @@ export function Button({
 }) {
   const fill = fills[variant];
   return (
-    <Pressable
+    <CozyPressable
+      variant={variant === "primary" || variant === "wood" ? "wood" : "paper"}
       testID={testID}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? title}
@@ -53,7 +59,7 @@ export function Button({
       <Text style={[s.text, { color: fill.text }]} numberOfLines={1}>
         {title}
       </Text>
-    </Pressable>
+    </CozyPressable>
   );
 }
 

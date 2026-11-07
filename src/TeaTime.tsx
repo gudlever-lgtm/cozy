@@ -1,3 +1,4 @@
+import { CozyPressable } from "./ui/CozyPressable";
 import { cozy } from "./ui/theme";
 import React, { useState } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
@@ -79,7 +80,7 @@ export function TeaTime({
               ),
             )}
         </Text>
-        <Pressable
+        <CozyPressable
           accessibilityRole="button"
           accessibilityLabel={String(t("undo"))}
           disabled={disabled || !history.length}
@@ -95,7 +96,7 @@ export function TeaTime({
           }}
         >
           <GameIcon name="undo" size={28} />
-        </Pressable>
+        </CozyPressable>
       </View>
       <View
         testID="tea-trays"

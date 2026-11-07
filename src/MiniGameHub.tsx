@@ -1,5 +1,6 @@
+import { CozyPressable } from "./ui/CozyPressable";
 import React from "react";
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
 import { ScreenPager } from "./ScreenPager";
 import { MiniArtwork } from "./MiniArtwork";
@@ -25,7 +26,7 @@ export function MiniGameHub({
       title={String(t("mini"))}
       actions={
         saved ? (
-          <Pressable
+          <CozyPressable
             accessibilityRole="button"
             accessibilityLabel={String(t("resumeMini"))}
             onPress={onResume}
@@ -33,7 +34,7 @@ export function MiniGameHub({
           >
             <GameIcon name="restart" size={22} />
             <Text style={s.resumeText}>{String(t("resumeMini"))}</Text>
-          </Pressable>
+          </CozyPressable>
         ) : null
       }
       items={slots.map((slot) => {
@@ -58,7 +59,7 @@ export function MiniGameHub({
                   : String(t("moves", { count: slot.moves }))}
               </Text>
             </View>
-            <Pressable
+            <CozyPressable
               testID={`mini-start-${kind}`}
               accessibilityRole="button"
               accessibilityLabel={String(t("startMiniGame", { game: t(kind) }))}
@@ -68,7 +69,7 @@ export function MiniGameHub({
               style={[s.button, unavailable && s.disabled]}
             >
               <GameIcon name="play" size={26} />
-            </Pressable>
+            </CozyPressable>
           </View>
         );
       })}

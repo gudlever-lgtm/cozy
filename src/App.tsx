@@ -1,3 +1,4 @@
+import { CozyPressable } from "./ui/CozyPressable";
 import { UndoHelp } from "./ui/UndoHelp";
 import { CozyButton, Timber } from "./ui/CozyButton";
 import { GardenHome } from "./ui/GardenHome";
@@ -1908,6 +1909,8 @@ export default function App() {
                     );
                     go("decorations");
                     setTip(tt("questUnlockItem", { item: tt(objective.item) }));
+                  } else if (objective.type === "solitaire") {
+                    go("play");
                   } else if (objective.type === "gather") {
                     earnMaterials();
                     setTip(tt("gatherHint"));
@@ -1950,7 +1953,7 @@ export default function App() {
                       ["questsDone", s.completed.length, "quests"],
                     ] as const
                   ).map(([key, value, icon]) => (
-                    <Pressable
+                    <CozyPressable
                       key={key}
                       style={st.fittedTile}
                       accessibilityRole="button"
@@ -1970,9 +1973,9 @@ export default function App() {
                           {tt(key)}
                         </Text>
                       </View>
-                    </Pressable>
+                    </CozyPressable>
                   )),
-                  <Pressable
+                  <CozyPressable
                     key="achievement"
                     style={st.fittedTile}
                     accessibilityRole="button"
@@ -1992,7 +1995,7 @@ export default function App() {
                         )}
                       </Text>
                     </View>
-                  </Pressable>,
+                  </CozyPressable>,
                 ]}
               />
             )}
@@ -2084,7 +2087,7 @@ export default function App() {
                           }}
                         >
                           {AVATARS.map((avatar) => (
-                            <Pressable
+                            <CozyPressable
                               key={avatar}
                               testID={`avatar-option-${avatar}`}
                               accessibilityRole="button"
@@ -2105,7 +2108,7 @@ export default function App() {
                               ]}
                             >
                               <Text style={{ fontSize: 22 }}>{avatar}</Text>
-                            </Pressable>
+                            </CozyPressable>
                           ))}
                         </View>
 

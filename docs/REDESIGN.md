@@ -69,3 +69,13 @@ Kontrolleret med 20 fokuserede native-tests på Android/iOS og browserkontrollen
 Kameraets 100 procent er nu et fit af hele sæsonbilledet i det tilgængelige vindue, med originalt højde/bredde-forhold. Scenen bruger billedets oprindelige koordinater, og baggrund og ting skaleres sammen. I portrait giver det rolige felter over og under det brede billede. Zoom ud virker også fra 100 procent til 75 og 50 procent; nulstilling viser hele haven igen. Instruktioner bliver i skærmstørrelse uden for billedfladen.
 
 Kontrolleret i fem størrelser på både forside og byggeri: alle fire billedkanter er inden for vinduet ved 100 procent, og billedet bliver mindre ved zoom ud. 92 logiktests og 20 fokuserede native-tests består; touch-flytning ved zoom og genindlæsning af placeringer består fortsat. Ikke afprøvet på fysisk enhed i denne session.
+
+### Verdenskort, opgavebog og knapper
+
+Verdenskortet bruger kompakte, scrollbar billedrækker med områdets navn, status og bevarede handlinger for adgang, oplåsning og administration. Det benytter de bundtede billeder af den aktuelle årstid. Der er ikke længere to store tomme destinationskort pr. side.
+
+Opgavebogen indeholder nu 18 opgaver: seks til hver ven. De oprindelige seks opgaver og deres belønninger er bevaret. Tolv nye kapitler kombinerer kabalesejre, minispil, materialer og de nye havemøbler. Målene er kumulative, afhængighederne håndhæves, og belønninger kan kun hentes én gang. Gamle saves kræver ingen ny schema-version. Aktuelle, kommende og afsluttede opgaver vises i en scrollbar liste; afsluttede kan foldes ud. Detaljedialogen bruger lodret opstilling på stående skærme.
+
+Knapmaterialerne bruger nu faste native kanter og indre kantlys, så de ikke strækkes på brede knapper. Træ, mosgrøn markering og pergament følger samme palette. `CozyPressable` giver samme materiale, mindst 44-punkts trykflader samt valgt, trykket og deaktiveret tilstand til ikoner og specialkontroller. Kort og brikker beholder deres eget spilgrafik.
+
+94 logiktests og 106 fokuserede native-tests består. Den nye integrationstest gennemfører alle 18 opgaver via belønninger og køb og kontrollerer både genåbning af gamle gemte opgaver og beskyttelse mod gentagne belønninger.

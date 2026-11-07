@@ -1,6 +1,7 @@
+import { CozyPressable } from "./ui/CozyPressable";
 import { cozy } from "./ui/theme";
 import React from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 import { upgrades, furnitureLevel } from "./engine/world";
 import type { Save } from "./engine/save";
 import { DecorationArtwork } from "./GardenDecorations";
@@ -62,7 +63,7 @@ export function GardenCollection({
           }}
         />
       </View>
-      <Pressable
+      <CozyPressable
         accessibilityRole="button"
         testID="collection-next-goal"
         onPress={() =>
@@ -92,7 +93,7 @@ export function GardenCollection({
                 ? "Se flere dekorationer"
                 : "Explore more decorations"}
         </Text>
-      </Pressable>
+      </CozyPressable>
       <ScrollView
         contentContainerStyle={{
           flexDirection: "row",
@@ -173,7 +174,7 @@ export function GardenCollection({
                   </Text>
                 )}
               {!owned && (
-                <Pressable
+                <CozyPressable
                   onPress={() =>
                     onPlay(
                       item.id === "birdhouse"
@@ -194,7 +195,7 @@ export function GardenCollection({
                   >
                     {da ? "Find genstanden" : "Find this item"}
                   </Text>
-                </Pressable>
+                </CozyPressable>
               )}
               {!owned && (
                 <Text

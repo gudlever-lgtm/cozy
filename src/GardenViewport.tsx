@@ -1,3 +1,4 @@
+import { CozyPressable } from "./ui/CozyPressable";
 import React, {
   createContext,
   useContext,
@@ -6,14 +7,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import {
-  Animated,
-  PanResponder,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Animated, PanResponder, StyleSheet, Text, View } from "react-native";
 
 import { gardenCameraFit, gardenPanLimits } from "./presentation/gardenCamera";
 
@@ -216,7 +210,7 @@ export function GardenViewport({
         ]}
         pointerEvents="box-none"
       >
-        <Pressable
+        <CozyPressable
           testID="garden-zoom-in"
           accessibilityRole="button"
           accessibilityLabel={language === "da" ? "Zoom ind" : "Zoom in"}
@@ -230,8 +224,8 @@ export function GardenViewport({
           style={styles.button}
         >
           <Text style={styles.symbol}>+</Text>
-        </Pressable>
-        <Pressable
+        </CozyPressable>
+        <CozyPressable
           testID="garden-reset-view"
           accessibilityRole="button"
           accessibilityLabel={
@@ -243,8 +237,8 @@ export function GardenViewport({
           <Text testID="garden-zoom-level" style={styles.small}>
             {Math.round(camera.current.zoom * 100)}%
           </Text>
-        </Pressable>
-        <Pressable
+        </CozyPressable>
+        <CozyPressable
           testID="garden-zoom-out"
           accessibilityRole="button"
           accessibilityLabel={language === "da" ? "Zoom ud" : "Zoom out"}
@@ -258,7 +252,7 @@ export function GardenViewport({
           style={styles.button}
         >
           <Text style={styles.symbol}>−</Text>
-        </Pressable>
+        </CozyPressable>
       </View>
     </View>
   );

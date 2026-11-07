@@ -1,6 +1,7 @@
+import { CozyPressable } from "./ui/CozyPressable";
 import { cozy } from "./ui/theme";
 import React from "react";
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
 import { GameIcon } from "./GameIcon";
 import type { Wallet } from "./engine/world";
@@ -16,7 +17,7 @@ export function MaterialRibbon({
   const keys = ["wood", "stone", "flowers", "seeds"] as const;
   return (
     <View testID="materials-ribbon" pointerEvents="box-none" style={s.root}>
-      <Pressable
+      <CozyPressable
         onPress={onOpen}
         accessibilityRole="button"
         accessibilityLabel={
@@ -45,7 +46,7 @@ export function MaterialRibbon({
           </View>
         ))}
         <Text style={s.chevron}>›</Text>
-      </Pressable>
+      </CozyPressable>
     </View>
   );
 }

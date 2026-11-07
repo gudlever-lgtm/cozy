@@ -1,3 +1,4 @@
+import { CozyPressable } from "./ui/CozyPressable";
 import { cozy } from "./ui/theme";
 import React, { useState } from "react";
 import {
@@ -58,14 +59,14 @@ export function StackCardPicker({
         >
           {String(t("stackTitle"))}
         </Text>
-        <Pressable
+        <CozyPressable
           accessibilityRole="button"
           accessibilityLabel={String(t("close"))}
           onPress={onClose}
           style={styles.button}
         >
           <Text style={styles.arrow}>×</Text>
-        </Pressable>
+        </CozyPressable>
       </View>
       <View
         testID="stack-card-row"
@@ -103,7 +104,7 @@ export function StackCardPicker({
           ))}
       </View>
       <View style={styles.footer}>
-        <Pressable
+        <CozyPressable
           accessibilityRole="button"
           accessibilityLabel={String(t("previousPage"))}
           accessibilityState={{ disabled: page === 0 }}
@@ -112,11 +113,11 @@ export function StackCardPicker({
           style={[styles.button, page === 0 && styles.disabled]}
         >
           <Text style={styles.arrow}>‹</Text>
-        </Pressable>
+        </CozyPressable>
         <Text style={styles.count}>
           {page + 1} / {pages}
         </Text>
-        <Pressable
+        <CozyPressable
           accessibilityRole="button"
           accessibilityLabel={String(t("nextPage"))}
           accessibilityState={{ disabled: page + 1 >= pages }}
@@ -125,7 +126,7 @@ export function StackCardPicker({
           style={[styles.button, page + 1 >= pages && styles.disabled]}
         >
           <Text style={styles.arrow}>›</Text>
-        </Pressable>
+        </CozyPressable>
       </View>
     </View>
   );

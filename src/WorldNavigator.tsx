@@ -1,6 +1,14 @@
+import { CozyPressable } from "./ui/CozyPressable";
 import { cozy } from "./ui/theme";
 import React, { useState, useEffect } from "react";
-import { View, Text, Pressable, Modal, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  Image,
+  Modal,
+  StyleSheet,
+  useWindowDimensions,
+} from "react-native";
 import { useTranslation } from "react-i18next";
 import type { Save } from "./engine/save";
 import {
@@ -14,6 +22,10 @@ import {
 } from "./engine/progression";
 import type { Wallet } from "./engine/world";
 import { number, type Key } from "./i18n";
+import { cozyImages } from "./assets/images";
+import { areaImages } from "./assets/areas";
+import { forestImages } from "./assets/forest";
+import { seasonAt } from "./engine/world";
 import { ScreenPager } from "./ScreenPager";
 import { WorldPanel } from "./WorldPanel";
 import { StrongScrollView } from "./StrongScrollView";
@@ -47,6 +59,23 @@ export function WorldNavigator({
   const { t, i18n } = useTranslation(),
     tt = (key: Key, options?: Record<string, unknown>) =>
       String(t(key, options));
+  const { width } = useWindowDimensions();
+  const season =
+    save.preferences.season === "auto"
+      ? seasonAt(new Date())
+      : save.preferences.season;
+  const areaImage = (id: AreaId) =>
+    id === "cottage"
+      ? cozyImages.seasons[season]
+      : id === "forest"
+        ? forestImages[season]
+        : areaImages[
+            id === "river" && season === "winter"
+              ? "riverWinter"
+              : id === "village" && season === "winter"
+                ? "villageWinter"
+                : (id as "river" | "village" | "winterland")
+          ];
   const [animationOpen, setAnimationOpen] = useState(false);
   useEffect(() => {
     if (appearanceRequest > 0) setAnimationOpen(true);
@@ -123,14 +152,15 @@ export function WorldNavigator({
     } else if (ready) openManage(selected.id);
   };
   const button = (label: string, onPress: () => void) => (
-    <Pressable
+    <CozyPressable
       accessibilityRole="button"
       accessibilityLabel={label}
       onPress={onPress}
+      variant="wood"
       style={s.action}
     >
       <Text style={s.actionText}>{label}</Text>
-    </Pressable>
+    </CozyPressable>
   );
   return (
     <View testID="world-navigator" style={{ flex: 1, minHeight: 0 }}>
@@ -139,14 +169,14 @@ export function WorldNavigator({
           id="themes"
           title={tt("cardThemes")}
           actions={
-            <Pressable
+            <CozyPressable
               accessibilityRole="button"
               accessibilityLabel={tt("back")}
               onPress={() => setManage(false)}
               style={s.icon}
             >
               <Text style={{ fontSize: 28, color: cozy.color.ink }}>‹</Text>
-            </Pressable>
+            </CozyPressable>
           }
           items={themes.map((theme) => (
             <View
@@ -179,7 +209,7 @@ export function WorldNavigator({
                         .join(" · ")}
                 </Text>
               </View>
-              <Pressable
+              <CozyPressable
                 accessibilityRole="button"
                 accessibilityLabel={tt("chooseTheme")}
                 accessibilityState={{ selected: save.world.theme === theme.id }}
@@ -189,7 +219,7 @@ export function WorldNavigator({
                 <Text style={{ fontSize: 24, color: cozy.color.ink }}>
                   {save.world.theme === theme.id ? "✓" : "+"}
                 </Text>
-              </Pressable>
+              </CozyPressable>
             </View>
           ))}
         />
@@ -211,7 +241,7 @@ export function WorldNavigator({
                 "worldAchievements",
               ] as Section[]
             ).map((id, i) => (
-              <Pressable
+              <CozyPressable
                 key={id}
                 accessibilityRole="tab"
                 accessibilityLabel={tt(id)}
@@ -226,7 +256,7 @@ export function WorldNavigator({
                   name={["garden", "quests", "gift", "play", "challenge"][i]}
                   size={30}
                 />
-              </Pressable>
+              </CozyPressable>
             ))}
           </View>
           <StrongScrollView
@@ -242,96 +272,128 @@ export function WorldNavigator({
           </StrongScrollView>
         </>
       ) : (
-        <ScreenPager
-          id="world"
-          title={tt("world")}
-          actions={
-            <>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={tt("cardThemes")}
-                onPress={() => {
-                  setSection("cardThemes");
-                  setManage(true);
-                }}
-                style={s.icon}
-              >
-                <GameIcon name="play" size={30} />
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={tt("animations")}
-                onPress={() => setAnimationOpen(true)}
-                style={s.icon}
-              >
-                <GameIcon name="settings" size={30} />
-              </Pressable>
-            </>
-          }
-          items={areas.map((area) => {
-            const isOwned = areaOwned(save, area.id),
-              isReady = areaReady(save, area.id) && afford(area.cost);
-            return (
-              <View
-                key={area.id}
-                testID={`world-area-${area.id}`}
-                style={s.tile}
-              >
-                <GameIcon
-                  name={area.id === "cottage" ? "garden" : "world"}
-                  size={36}
-                />
-                <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
-                  <Text style={s.name} numberOfLines={2}>
-                    {tt(("area_" + area.id) as Key)}
-                  </Text>
-                  <Text style={s.status}>
-                    {tt(
-                      isOwned
-                        ? "areaAvailable"
-                        : isReady
-                          ? "areaCanOpen"
-                          : "areaLockedShort",
-                    )}
-                  </Text>
-                </View>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={tt(
-                    isOwned
-                      ? "enterArea"
-                      : isReady
-                        ? "unlockArea"
-                        : "seeRequirements",
-                  )}
-                  onPress={() => {
-                    if (isOwned) {
-                      onUpdate((s) => enterArea(s, area.id));
-                      onNavigate("garden");
-                    } else if (isReady) openManage(area.id);
-                    else setInspect(area.id);
-                  }}
-                  style={s.icon}
+        <View
+          testID="world-pages"
+          style={{ flex: 1, minHeight: 0, padding: 8, gap: 8 }}
+        >
+          <View
+            style={[
+              s.header,
+              {
+                backgroundColor: cozy.color.paper,
+                borderRadius: 12,
+                paddingHorizontal: 8,
+              },
+            ]}
+          >
+            <Text accessibilityRole="header" style={s.areaTitle}>
+              {tt("world")}
+            </Text>
+            <CozyPressable
+              accessibilityRole="button"
+              accessibilityLabel={tt("cardThemes")}
+              onPress={() => {
+                setSection("cardThemes");
+                setManage(true);
+              }}
+              style={s.icon}
+            >
+              <GameIcon name="play" size={30} />
+            </CozyPressable>
+            <CozyPressable
+              accessibilityRole="button"
+              accessibilityLabel={tt("animations")}
+              onPress={() => setAnimationOpen(true)}
+              style={s.icon}
+            >
+              <GameIcon name="settings" size={30} />
+            </CozyPressable>
+          </View>
+          <StrongScrollView
+            testID="world-areas-scroll"
+            style={{ flex: 1, minHeight: 0 }}
+            contentContainerStyle={{
+              flexDirection: "row",
+              flexWrap: "wrap",
+              alignItems: "flex-start",
+              gap: 8,
+              paddingBottom: 8,
+            }}
+          >
+            {areas.map((area) => {
+              const isOwned = areaOwned(save, area.id),
+                isReady = areaReady(save, area.id) && afford(area.cost);
+              return (
+                <View
+                  key={area.id}
+                  testID={`world-area-${area.id}`}
+                  style={[s.areaTile, { width: width >= 760 ? "49%" : "100%" }]}
                 >
-                  <GameIcon
-                    name={isOwned ? "garden" : isReady ? "gather" : "hint"}
-                    size={30}
+                  <Image
+                    testID={`world-area-image-${area.id}`}
+                    source={areaImage(area.id)}
+                    resizeMode="cover"
+                    style={s.areaImage}
+                    accessible={false}
                   />
-                </Pressable>
-                {isOwned && (
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={tt("manageArea")}
-                    onPress={() => openManage(area.id)}
-                    style={s.icon}
-                  >
-                    <GameIcon name="settings" size={30} />
-                  </Pressable>
-                )}
-              </View>
-            );
-          })}
-        />
+                  <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
+                    <Text style={s.name} numberOfLines={2}>
+                      {tt(("area_" + area.id) as Key)}
+                    </Text>
+                    <Text style={s.status}>
+                      {tt(
+                        isOwned
+                          ? "areaAvailable"
+                          : isReady
+                            ? "areaCanOpen"
+                            : "areaLockedShort",
+                      )}
+                    </Text>
+                    <View
+                      style={{ flexDirection: "row", gap: 8, marginTop: 4 }}
+                    >
+                      <CozyPressable
+                        accessibilityRole="button"
+                        accessibilityLabel={tt(
+                          isOwned
+                            ? "enterArea"
+                            : isReady
+                              ? "unlockArea"
+                              : "seeRequirements",
+                        )}
+                        onPress={() => {
+                          if (isOwned) {
+                            onUpdate((s) => enterArea(s, area.id));
+                            onNavigate("garden");
+                          } else if (isReady) openManage(area.id);
+                          else setInspect(area.id);
+                        }}
+                        style={s.icon}
+                      >
+                        <GameIcon
+                          name={
+                            isOwned ? "garden" : isReady ? "gather" : "hint"
+                          }
+                          size={30}
+                        />
+                      </CozyPressable>
+                      {isOwned && (
+                        <CozyPressable
+                          accessibilityRole="button"
+                          accessibilityLabel={tt("manageArea")}
+                          onPress={() => openManage(area.id)}
+                          style={s.icon}
+                        >
+                          <GameIcon name="settings" size={30} />
+                        </CozyPressable>
+                      )}
+                    </View>
+                  </View>
+                </View>
+              );
+            })}
+          </StrongScrollView>
+        </View>
       )}
       <Modal
         transparent
@@ -367,14 +429,14 @@ export function WorldNavigator({
               >
                 {selected ? tt(("area_" + selected.id) as Key) : ""}
               </Text>
-              <Pressable
+              <CozyPressable
                 accessibilityRole="button"
                 accessibilityLabel={tt("close")}
                 onPress={() => setInspect(null)}
                 style={s.icon}
               >
                 <Text style={{ fontSize: 24, color: cozy.color.ink }}>×</Text>
-              </Pressable>
+              </CozyPressable>
             </View>
             <StrongScrollView
               style={{ flex: 1 }}
@@ -442,6 +504,23 @@ export function WorldNavigator({
   );
 }
 const s = StyleSheet.create({
+  areaTile: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    padding: 8,
+    minHeight: 120,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: cozy.color.border,
+    backgroundColor: cozy.color.paperLight,
+  },
+  areaImage: {
+    width: 96,
+    height: 104,
+    borderRadius: 10,
+    backgroundColor: cozy.color.paperShade,
+  },
   tile: {
     flex: 1,
     flexDirection: "row",

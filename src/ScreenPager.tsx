@@ -1,12 +1,7 @@
+import { CozyPressable } from "./ui/CozyPressable";
 import { cozy } from "./ui/theme";
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  Pressable,
-  useWindowDimensions,
-  StyleSheet,
-} from "react-native";
+import { View, Text, useWindowDimensions, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
 import { pageGeometry } from "./presentation/paging";
 /** Finite viewport pages: all items remain reachable without nesting a ScrollView. */
@@ -97,7 +92,7 @@ export function ScreenPager({
           ))}
       </View>
       <View style={styles.footer}>
-        <Pressable
+        <CozyPressable
           accessibilityRole="button"
           accessibilityLabel={String(t("previousPage"))}
           accessibilityState={{ disabled: page === 0 }}
@@ -106,11 +101,11 @@ export function ScreenPager({
           style={[styles.button, page === 0 && styles.disabled]}
         >
           <Text style={styles.arrow}>‹</Text>
-        </Pressable>
+        </CozyPressable>
         <Text style={styles.count}>
           {page + 1} / {pages}
         </Text>
-        <Pressable
+        <CozyPressable
           accessibilityRole="button"
           accessibilityLabel={String(t("nextPage"))}
           accessibilityState={{ disabled: page + 1 >= pages }}
@@ -119,7 +114,7 @@ export function ScreenPager({
           style={[styles.button, page + 1 >= pages && styles.disabled]}
         >
           <Text style={styles.arrow}>›</Text>
-        </Pressable>
+        </CozyPressable>
       </View>
     </View>
   );

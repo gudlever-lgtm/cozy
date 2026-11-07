@@ -1,6 +1,7 @@
+import { CozyPressable } from "./ui/CozyPressable";
 import { cozy } from "./ui/theme";
 import React, { useState } from "react";
-import { View, Text, Pressable, Image, StyleSheet } from "react-native";
+import { View, Text, Image, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
 import type { Save } from "./engine/save";
 import { seasonAt } from "./engine/world";
@@ -33,14 +34,14 @@ export function AnimationPanel({
     <View testID="animation-panel" style={s.dialog}>
       <View style={s.header}>
         <Text style={s.title}>{String(t("animations"))}</Text>
-        <Pressable
+        <CozyPressable
           accessibilityRole="button"
           accessibilityLabel={String(t("close"))}
           onPress={onClose}
           style={s.button}
         >
           <Text style={s.label}>×</Text>
-        </Pressable>
+        </CozyPressable>
       </View>
       <View style={{ flex: 1, minHeight: 0, flexDirection: "row", gap: 12 }}>
         <View style={{ flex: 1, minWidth: 0, gap: 6 }}>
@@ -76,7 +77,7 @@ export function AnimationPanel({
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 3 }}>
             {(["auto", "spring", "summer", "autumn", "winter"] as const).map(
               (value) => (
-                <Pressable
+                <CozyPressable
                   key={value}
                   accessibilityRole="button"
                   accessibilityLabel={
@@ -109,7 +110,7 @@ export function AnimationPanel({
                       style={{ width: 36, height: 32, borderRadius: 7 }}
                     />
                   )}
-                </Pressable>
+                </CozyPressable>
               ),
             )}
           </View>
@@ -125,7 +126,7 @@ export function AnimationPanel({
           style={{ flex: 1 }}
           contentContainerStyle={{ gap: 8, padding: 2 }}
         >
-          <Pressable
+          <CozyPressable
             accessibilityRole="button"
             accessibilityLabel={
               String(t("animations")) +
@@ -147,8 +148,8 @@ export function AnimationPanel({
             <Text style={s.label}>
               {String(t(p.animations ? "on" : "off"))}
             </Text>
-          </Pressable>
-          <Pressable
+          </CozyPressable>
+          <CozyPressable
             accessibilityRole="button"
             accessibilityLabel={
               String(t("reducedMotion")) +
@@ -170,8 +171,8 @@ export function AnimationPanel({
             <Text style={s.label}>
               {String(t(p.reducedMotion ? "on" : "off"))}
             </Text>
-          </Pressable>
-          <Pressable
+          </CozyPressable>
+          <CozyPressable
             accessibilityRole="button"
             accessibilityLabel={
               String(t("weather")) + ": " + Math.round(p.weather * 100) + "%"
@@ -194,11 +195,11 @@ export function AnimationPanel({
           >
             <Text style={s.note}>{String(t("weather"))}</Text>
             <Text style={s.label}>{Math.round(p.weather * 100)}%</Text>
-          </Pressable>
+          </CozyPressable>
           <Text style={s.note}>{String(t("animationQuality"))}</Text>
           <View style={{ flexDirection: "row", gap: 4 }}>
             {(["low", "medium", "high"] as const).map((q) => (
-              <Pressable
+              <CozyPressable
                 key={q}
                 accessibilityRole="button"
                 accessibilityLabel={
@@ -221,7 +222,7 @@ export function AnimationPanel({
                 ]}
               >
                 <Text style={s.note}>{String(t(q))}</Text>
-              </Pressable>
+              </CozyPressable>
             ))}
           </View>
         </StrongScrollView>

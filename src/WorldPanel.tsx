@@ -1,6 +1,7 @@
+import { CozyPressable } from "./ui/CozyPressable";
 import { cozy } from "./ui/theme";
 import React from "react";
-import { View, Text, Image, Pressable, StyleSheet } from "react-native";
+import { View, Text, Image, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
 import type { Key } from "./i18n";
 import { number } from "./i18n";
@@ -64,7 +65,8 @@ export function WorldPanel({
     disabled = false,
     selected?: boolean,
   ) => (
-    <Pressable
+    <CozyPressable
+      variant="wood"
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{
@@ -80,7 +82,7 @@ export function WorldPanel({
       ]}
     >
       <Text style={s.buttonText}>{label}</Text>
-    </Pressable>
+    </CozyPressable>
   );
   return (
     <View style={{ gap: 18 }}>

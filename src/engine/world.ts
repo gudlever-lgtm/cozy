@@ -113,17 +113,30 @@ export function furnitureLevel(e: Economy, id: string): number {
   }
   return level;
 }
-export function furnitureUpgradeCost(id: string, nextLevel: number): Partial<Wallet> {
-  const item = upgrades.find(u => u.id === id);
-  if (!item || id === "cards" || !Number.isInteger(nextLevel) || nextLevel < 2 || nextLevel > MAX_FURNITURE_LEVEL)
+export function furnitureUpgradeCost(
+  id: string,
+  nextLevel: number,
+): Partial<Wallet> {
+  const item = upgrades.find((u) => u.id === id);
+  if (
+    !item ||
+    id === "cards" ||
+    !Number.isInteger(nextLevel) ||
+    nextLevel < 2 ||
+    nextLevel > MAX_FURNITURE_LEVEL
+  )
     throw Error("invalidTransaction");
-  return { glimmers: -(item.cost * nextLevel), wood: -(Math.max(1,item.wood) * (nextLevel - 1)) };
+  return {
+    glimmers: -(item.cost * nextLevel),
+    wood: -(Math.max(1, item.wood) * (nextLevel - 1)),
+  };
 }
 export function upgradeFurniture(e: Economy, id: string): Economy {
   const level = furnitureLevel(e, id);
-  if (level < 1 || level >= MAX_FURNITURE_LEVEL) throw Error("invalidTransaction");
+  if (level < 1 || level >= MAX_FURNITURE_LEVEL)
+    throw Error("invalidTransaction");
   const next = level + 1;
-  return transact(e, `furniture:${id}:${next}`, furnitureUpgradeCost(id,next));
+  return transact(e, `furniture:${id}:${next}`, furnitureUpgradeCost(id, next));
 }
 export type UpgradeId = (typeof upgrades)[number]["id"];
 export type Placement = { id: UpgradeId; x: number; y: number };
@@ -202,6 +215,126 @@ export const quests = [
       { type: "upgrade", item: "forest", count: 1 },
     ],
     reward: { glimmers: 50, stone: 5 },
+  },
+  {
+    id: "millie3",
+    npc: "millie",
+    requires: ["millie2"],
+    objectives: [
+      { type: "solitaire", count: 3 },
+      { type: "match", count: 2 },
+    ],
+    reward: { glimmers: 35, seeds: 3 },
+  },
+  {
+    id: "millie4",
+    npc: "millie",
+    requires: ["millie3"],
+    objectives: [
+      { type: "upgrade", item: "birdhouse", count: 1 },
+      { type: "solitaire", count: 6 },
+    ],
+    reward: { glimmers: 45, wood: 3 },
+  },
+  {
+    id: "millie5",
+    npc: "millie",
+    requires: ["millie4"],
+    objectives: [
+      { type: "match", count: 5 },
+      { type: "solitaire", count: 10 },
+    ],
+    reward: { glimmers: 55, flowers: 4 },
+  },
+  {
+    id: "millie6",
+    npc: "millie",
+    requires: ["millie5"],
+    objectives: [
+      { type: "upgrade", item: "teaTable", count: 1 },
+      { type: "solitaire", count: 15 },
+    ],
+    reward: { glimmers: 70, stone: 4 },
+  },
+  {
+    id: "marmalade3",
+    npc: "marmalade",
+    requires: ["marmalade2"],
+    objectives: [
+      { type: "solitaire", count: 4 },
+      { type: "tea", count: 2 },
+    ],
+    reward: { glimmers: 35, wood: 3 },
+  },
+  {
+    id: "marmalade4",
+    npc: "marmalade",
+    requires: ["marmalade3"],
+    objectives: [
+      { type: "tea", count: 4 },
+      { type: "gather", count: 8 },
+    ],
+    reward: { glimmers: 45, seeds: 4 },
+  },
+  {
+    id: "marmalade5",
+    npc: "marmalade",
+    requires: ["marmalade4"],
+    objectives: [
+      { type: "upgrade", item: "teaTable", count: 1 },
+      { type: "solitaire", count: 9 },
+    ],
+    reward: { glimmers: 55, flowers: 4 },
+  },
+  {
+    id: "marmalade6",
+    npc: "marmalade",
+    requires: ["marmalade5"],
+    objectives: [
+      { type: "tea", count: 7 },
+      { type: "solitaire", count: 16 },
+    ],
+    reward: { glimmers: 70, stone: 5 },
+  },
+  {
+    id: "pip3",
+    npc: "pip",
+    requires: ["pip2"],
+    objectives: [
+      { type: "solitaire", count: 3 },
+      { type: "hidden", count: 2 },
+    ],
+    reward: { glimmers: 35, stone: 3 },
+  },
+  {
+    id: "pip4",
+    npc: "pip",
+    requires: ["pip3"],
+    objectives: [
+      { type: "hidden", count: 4 },
+      { type: "gather", count: 10 },
+    ],
+    reward: { glimmers: 45, wood: 4 },
+  },
+  {
+    id: "pip5",
+    npc: "pip",
+    requires: ["pip4"],
+    objectives: [
+      { type: "upgrade", item: "birdhouse", count: 1 },
+      { type: "solitaire", count: 11 },
+    ],
+    reward: { glimmers: 55, seeds: 5 },
+  },
+  {
+    id: "pip6",
+    npc: "pip",
+    requires: ["pip5"],
+    objectives: [
+      { type: "hidden", count: 7 },
+      { type: "solitaire", count: 18 },
+    ],
+    reward: { glimmers: 75, stone: 6 },
   },
 ] as const;
 export function questProgress(

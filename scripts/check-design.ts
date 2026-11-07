@@ -65,8 +65,8 @@ async function assertWholeGarden(page: Page) {
     .locator("img")
     .first()
     .evaluate((image) => ({
-      width: image.naturalWidth,
-      height: image.naturalHeight,
+      width: (image as HTMLImageElement).naturalWidth,
+      height: (image as HTMLImageElement).naturalHeight,
     }));
   const fit = Math.min(
     viewport.width / dimensions.width,
@@ -164,8 +164,36 @@ async function main() {
       await capture(page, `${name}-menu`);
       await page.getByTestId("menu-settings").click();
       await capture(page, `${name}-settings`);
+      await menu(page, "world");
+      await capture(page, `${name}-world`);
+      for (const area of [
+        "cottage",
+        "forest",
+        "river",
+        "village",
+        "winterland",
+      ]) {
+        const row = (await page
+          .getByTestId(`world-area-${area}`)
+          .boundingBox())!;
+        assert.ok(row.height <= 150, "World destinations must stay compact");
+        assert.ok(
+          (await page.getByTestId(`world-area-image-${area}`).boundingBox())!
+            .width > 0,
+        );
+      }
+      await page.getByTestId("world-area-winterland").scrollIntoViewIfNeeded();
       await menu(page, "quests");
       await capture(page, `${name}-quests`);
+      assert.ok(
+        (await page.getByTestId("quest-card-millie1").boundingBox())!.width >
+          250,
+        "Quest cards must use readable full-width rows",
+      );
+      await page.getByTestId("quest-card-millie6").scrollIntoViewIfNeeded();
+      await page.getByRole("tab", { name: /Marmalade/ }).click();
+      await page.getByTestId("quest-card-marmalade6").scrollIntoViewIfNeeded();
+
       await menu(page, "inventory");
       await capture(page, `${name}-inventory`);
       await menu(page, "decorations");
@@ -408,13 +436,15 @@ async function main() {
       JSON.stringify(
         {
           viewports: 5,
-          screenshots: 54,
+          screenshots: 59,
           drag: true,
           undo: true,
           saveReload: true,
           buildFullscreen: true,
           wholeOriginalImage: true,
           zoomBelow100: true,
+          compactWorldRows: true,
+          expandedQuestList: true,
           buildZoomDrag: true,
           buildPinch: true,
           errors,

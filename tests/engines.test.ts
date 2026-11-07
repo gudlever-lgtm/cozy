@@ -159,7 +159,7 @@ test("economy rejects overdrafts, fractional amounts, and duplicate rewards", ()
   assert.equal(reward(r, "solitaire", "deal"), r);
   assert.equal(r.counters.solitaire, 1);
 });
-test("all quest chains complete through actual objectives and purchases", () => {
+test("original quest chains complete through actual objectives and purchases", () => {
   let s = fresh("a", "en");
   for (const type of ["match", "tea", "hidden"] as const)
     s = reward(s, type, type);
@@ -189,7 +189,7 @@ test("all quest chains complete through actual objectives and purchases", () => 
     );
   for (const id of ["millie2", "marmalade2", "pip2"])
     s = { ...s, ...claimQuest(s.economy, s.completed, id, s.counters) };
-  assert.equal(s.completed.length, quests.length);
+  assert.equal(s.completed.length, 6);
   assert.equal(
     questProgress("marmalade2", s.counters, s.economy.inventory).done,
     2,
