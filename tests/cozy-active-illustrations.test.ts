@@ -22,8 +22,9 @@ test("illustrated menu, primary controls, and portrait garden use bundled art", 
   const images = read("src/assets/images.ts");
   assert.match(button, /cozyRedesignImages\.ui_flower_corner_left_webp/);
   assert.match(button, /!compact && !quiet && !disabled/);
-  assert.match(garden, /portrait && season === "spring" \? cozyImages\.gardenPortrait/);
+  assert.match(garden, /gardenImageSize\(season, portrait && cottage\)/);
   assert.match(images, /gardenPortrait: cozyRedesignImages\.backgrounds_garden_home_spring_webp/);
+  assert.match(read("src/App.tsx"), /\? cozyImages\.gardenPortrait/);
 });
 
 test("solitaire toolbar icons use separate transparent production graphics", () => {
