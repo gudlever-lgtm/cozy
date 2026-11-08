@@ -117,6 +117,24 @@ async function main() {
       await seed(page);
       await capture(page, `${name}-garden`);
       await assertWholeGarden(page);
+      // Regression: character portraits must remain inside their top-bar
+      // buttons. The previously unbounded image covered most of the garden.
+      for (const character of ["millie", "marmalade"] as const) {
+        const image = (await page
+          .getByTestId(`living-character-${character}`)
+          .boundingBox())!;
+        const button = (await page
+          .getByRole("button", { name: character === "millie" ? "Millie" : "Marmalade" })
+          .boundingBox())!;
+        assert.ok(image && button, `${name}: missing ${character} portrait`);
+        assert.ok(
+          image.width <= 44 && image.height <= 44 &&
+            image.x >= button.x - 1 && image.y >= button.y - 1 &&
+            image.x + image.width <= button.x + button.width + 1 &&
+            image.y + image.height <= button.y + button.height + 1,
+          `${name}: ${character} portrait escapes the top-bar button`,
+        );
+      }
       const fullImage = (await page.getByTestId("garden-scene").boundingBox())!;
       await page.getByTestId("garden-zoom-out").click();
       assert.equal(
