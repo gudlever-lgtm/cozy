@@ -1695,7 +1695,18 @@ export default function App() {
                         : tt("noHint"),
                     );
                   }}
-                  onAuto={() => applyGame(autoComplete)}
+                  onAuto={() => {
+                    const ready =
+                      !s.game.won &&
+                      s.game.tableau.every((pile) => pile.every((card) => card.up)) &&
+                      !s.game.stock.length &&
+                      !s.game.waste.length;
+                    if (!ready) {
+                      setTip(tt("autoNotReady"));
+                      return;
+                    }
+                    applyGame(autoComplete);
+                  }}
                   undo={s.miniProgress.undo}
                   canUndo={true}
                   canAuto={
