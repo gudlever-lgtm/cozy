@@ -3,6 +3,7 @@ import {
   View,
   Text,
   Pressable,
+  Image,
   StyleSheet,
   type StyleProp,
   type ViewStyle,
@@ -10,6 +11,7 @@ import {
 import Svg, { Defs, LinearGradient, Stop, Rect, Path } from "react-native-svg";
 import { GameIcon } from "../GameIcon";
 import { cozy } from "./theme";
+import { cozyRedesignImages } from "../assets/cozyRedesignImages";
 
 /** Original scalable material artwork. No raster text, atlas slicing or downloaded assets. */
 export function Timber({
@@ -163,6 +165,14 @@ export function CozyButton({
         green={selected === true || (!quiet && selected === undefined)}
         muted={disabled}
       />
+      {!compact && !quiet && !disabled && (
+        <Image
+          source={cozyRedesignImages.ui_flower_corner_left_webp}
+          style={styles.flowerAccent}
+          resizeMode="contain"
+          accessible={false}
+        />
+      )}
       {icon && (
         <GameIcon
           name={icon}
@@ -201,6 +211,7 @@ const styles = StyleSheet.create({
     ...cozy.shadow,
   },
   compact: { minHeight: 44, paddingHorizontal: 9, paddingVertical: 7 },
+  flowerAccent: { position: "absolute", left: 1, bottom: 1, width: 24, height: 24, opacity: 0.86 },
   label: {
     fontSize: 14,
     fontWeight: "700",
