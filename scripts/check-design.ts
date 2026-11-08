@@ -68,21 +68,28 @@ async function assertWholeGarden(page: Page) {
       width: (image as HTMLImageElement).naturalWidth,
       height: (image as HTMLImageElement).naturalHeight,
     }));
+  // Landscape seasonal artwork is intentionally cropped within the portrait
+  // camera plane. The camera itself must still fit the viewport at 100%.
+  const screen = page.viewportSize();
+  const plane =
+    screen && screen.height > screen.width
+      ? { width: 941, height: 1672 }
+      : dimensions;
   const fit = Math.min(
-    viewport.width / dimensions.width,
-    viewport.height / dimensions.height,
+    viewport.width / plane.width,
+    viewport.height / plane.height,
   );
   assert.ok(
-    Math.abs(scene.width - dimensions.width * fit) < 1 &&
-      Math.abs(scene.height - dimensions.height * fit) < 1,
-    "100% must fit the whole original image",
+    Math.abs(scene.width - plane.width * fit) < 1 &&
+      Math.abs(scene.height - plane.height * fit) < 1,
+    "100% must fit the garden camera plane",
   );
   assert.ok(
     scene.x >= viewport.x - 1 &&
       scene.y >= viewport.y - 1 &&
       scene.x + scene.width <= viewport.x + viewport.width + 1 &&
       scene.y + scene.height <= viewport.y + viewport.height + 1,
-    "All four image edges must be visible",
+    "All four camera plane edges must be visible",
   );
 }
 async function menu(page: Page, id: string) {
