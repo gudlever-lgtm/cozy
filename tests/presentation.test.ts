@@ -442,7 +442,18 @@ test("new decoration and forest artwork is bundled PNG with verified provenance 
             : "src/assets/forest.ts",
       "utf8",
     );
-    assert.ok(catalog.includes(`require("../../${asset.native_path}")`));
+    const upgradedDecoration = asset.kind === "decoration" &&
+      ["bridge", "bench", "lantern", "flowers"].find((id) =>
+        asset.native_path.endsWith("/" + id + ".png"),
+      );
+    if (upgradedDecoration) {
+      assert.ok(
+        catalog.includes(`${upgradedDecoration}: cozyRedesignImages.decorations_`),
+        "Active decoration must use the upgraded V2 art: " + upgradedDecoration,
+      );
+    } else {
+      assert.ok(catalog.includes(`require("../../${asset.native_path}")`));
+    }
   }
 });
 
