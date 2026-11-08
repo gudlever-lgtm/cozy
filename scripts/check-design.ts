@@ -124,7 +124,7 @@ async function main() {
           .getByTestId(`living-character-${character}`)
           .boundingBox())!;
         const button = (await page
-          .getByRole("button", { name: character === "millie" ? "Millie" : "Marmalade" })
+          .getByRole("button", { name: character === "millie" ? /Millie/ : /Marmalade/ })
           .boundingBox())!;
         assert.ok(image && button, `${name}: missing ${character} portrait`);
         assert.ok(
