@@ -275,6 +275,7 @@ export const en = {
   drawOne: "Draw one",
   drawThree: "Draw three",
   auto: "Auto-finish",
+  autoNotReady: "Auto-finish is available when the stock and waste are empty and all tableau cards are face up.",
   moves: "{{count}} moves",
   moves_one: "{{count}} move",
   moves_other: "{{count}} moves",
