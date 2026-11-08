@@ -166,8 +166,13 @@ export function GardenHome({
           s.play,
           {
             bottom,
-            left: portrait ? 16 : width / 2 - (width < 720 ? 85 : 115),
-            right: portrait ? 16 : width / 2 - (width < 720 ? 85 : 115),
+            // Keep the primary action prominent, not full screen width on phones.
+            left: portrait
+              ? Math.max(16, (width - 300) / 2)
+              : width / 2 - (width < 720 ? 85 : 115),
+            right: portrait
+              ? Math.max(16, (width - 300) / 2)
+              : width / 2 - (width < 720 ? 85 : 115),
           },
         ]}
       >
