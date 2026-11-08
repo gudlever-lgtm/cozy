@@ -76,13 +76,15 @@ export const CharacterIdle = memo(function CharacterIdle({
           resizeMode="contain"
           accessible={false}
         />
-        <Animated.Image
-          testID={`living-character-pose-${character}`}
-          source={alternate}
-          style={[StyleSheet.absoluteFill, alternateStyle]}
-          resizeMode="contain"
-          accessible={false}
-        />
+        {moving && (
+          <Animated.Image
+            testID={`living-character-pose-${character}`}
+            source={alternate}
+            style={[StyleSheet.absoluteFill, alternateStyle]}
+            resizeMode="contain"
+            accessible={false}
+          />
+        )}
       </Animated.View>
     </View>
   );
