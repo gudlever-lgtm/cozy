@@ -182,28 +182,35 @@ export function CozyButton({
           accessible={false}
         />
       )}
-      {icon && (
-        <GameIcon
-          name={icon}
-          color={quiet || disabled ? cozy.color.woodDark : cozy.color.cream}
-          size={compact ? 20 : 23}
-        />
-      )}
-      {label.length > 0 && (
-        <Text
-          numberOfLines={2}
-          maxFontSizeMultiplier={1.25}
-          style={[
-            styles.label,
-            (quiet || disabled) && styles.paperLabel,
-            compact && { fontSize: 11 },
-          ]}
-        >
-          {label}
-        </Text>
-      )}
+      <View pointerEvents="none" style={styles.content}>
+        {icon && (
+          <View style={styles.iconSlot}>
+            <GameIcon
+              name={icon}
+              color={quiet || disabled ? cozy.color.woodDark : cozy.color.cream}
+              size={compact ? 20 : 23}
+            />
+          </View>
+        )}
+        {label.length > 0 && (
+          <Text
+            testID={testID ? `${testID}-label` : undefined}
+            numberOfLines={2}
+            maxFontSizeMultiplier={1.2}
+            adjustsFontSizeToFit
+            style={[
+              styles.label,
+              (quiet || disabled) && styles.paperLabel,
+              compact && styles.compactLabel,
+              icon && styles.labelWithIcon,
+            ]}
+          >
+            {label}
+          </Text>
+        )}
+      </View>
       {badge !== undefined && (
-        <View style={styles.badge}>
+        <View pointerEvents="none" style={styles.badge}>
           <Text allowFontScaling={false} style={styles.badgeText}>
             {badge}
           </Text>
@@ -227,7 +234,25 @@ const styles = StyleSheet.create({
     gap: 7,
     ...cozy.shadow,
   },
-  compact: { minHeight: 44, paddingHorizontal: 9, paddingVertical: 7 },
+  compact: { minHeight: 44, paddingHorizontal: 5, paddingVertical: 5 },
+  content: {
+    width: "100%",
+    minHeight: 28,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  iconSlot: {
+    position: "absolute",
+    left: 2,
+    top: 0,
+    bottom: 0,
+    justifyContent: "center",
+    alignItems: "center",
+    width: 25,
+  },
+  labelWithIcon: { marginHorizontal: 30 },
+  compactLabel: { fontSize: 11, lineHeight: 14 },
   flowerAccent: { position: "absolute", left: 1, bottom: 1, width: 24, height: 24, opacity: 0.86 },
   label: {
     fontSize: 14,
@@ -235,11 +260,16 @@ const styles = StyleSheet.create({
     color: cozy.color.cream,
     flexShrink: 1,
     textAlign: "center",
+    textAlignVertical: "center",
+    includeFontPadding: false,
     textShadowColor: "#3b2818",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 1,
   },
   badge: {
+    position: "absolute",
+    right: 2,
+    top: 2,
     minWidth: 23,
     minHeight: 23,
     paddingHorizontal: 5,
