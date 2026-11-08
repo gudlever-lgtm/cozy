@@ -26,6 +26,7 @@ export function GardenHome({
   save,
   scene,
   season,
+  cottage = true,
   children,
   onPlay,
   onBuild,
@@ -38,6 +39,7 @@ export function GardenHome({
   save: Save;
   scene: React.ReactNode;
   season: CozySeason;
+  cottage?: boolean;
   children?: React.ReactNode;
   onPlay: () => void;
   onBuild: () => void;
@@ -56,7 +58,7 @@ export function GardenHome({
     <View testID="garden-fullscreen" style={s.root}>
       <GardenBackdrop season={season} />
       <GardenViewport
-        imageSize={gardenImageSize(season)}
+        imageSize={gardenImageSize(season, portrait && cottage)}
         language={save.preferences.language}
         controlsBottom={
           insets.bottom + (portrait ? 204 : width < 720 ? 126 : 8)
