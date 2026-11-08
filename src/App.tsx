@@ -1344,7 +1344,10 @@ export default function App() {
                       onUpdate={act}
                       onGather={earnMaterials}
                       onGame={(kind) => {
-                        go("garden");
+                        // Open the earnable game hub from forest objectives;
+                        // returning to the same garden left the action inert.
+                        setMiniHub(true);
+                        go("mini");
                         setTip(tt("miniProgressInfo"));
                       }}
                       onManage={() => {
