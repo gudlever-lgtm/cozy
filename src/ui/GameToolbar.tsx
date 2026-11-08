@@ -56,9 +56,9 @@ export function GameToolbar({
         label={String(t("auto"))}
         icon="auto"
         onPress={onAuto}
-        disabled={!canAuto}
+        selected={canAuto ? true : undefined}
         compact={!narrow}
-        quiet
+        quiet={!canAuto}
         style={actionStyle}
       />
     </View>
