@@ -75,7 +75,7 @@ export function MiniGameHub({
             </CozyPressable>
           </CozyPanel>
         );
-      })
+      })}
     />
   );
 }
