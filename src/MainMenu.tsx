@@ -122,7 +122,7 @@ export function MainMenu({
                   label={String(t(item.key))}
                   icon={item.icon}
                   onPress={() => onNavigate(item.id)}
-                  quiet={index > 0}
+                  quiet={index >= primary.length}
                   style={{ width: width < 350 ? "100%" : "48%", minHeight: 52 }}
                 />
               ))}
