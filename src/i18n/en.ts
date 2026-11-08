@@ -171,6 +171,7 @@ export const en = {
   receivedMaterials: "Reward",
   noRecentMaterials: "Your next finds will appear here.",
   mainMenu: "Main menu",
+  menuMore: "More options",
   menuGames: "Games",
   menuGarden: "Garden and quests",
   menuPlayer: "Player",
