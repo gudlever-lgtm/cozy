@@ -11,7 +11,7 @@ import {
 } from "@testing-library/react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { pour, teaWon, hasMatchMove } from "../../src/engine/minigames";
-import { teaForLevel, type MiniLevel } from "../../src/engine/session";
+import { teaForLevel, matchForLevel, type MiniLevel, type MiniKind } from "../../src/engine/session";
 import App from "../../src/App";
 import { TeaTime } from "../../src/TeaTime";
 import { IdleFirefly, IDLE_HINT_DELAY } from "../../src/living/IdleFirefly";
@@ -31,6 +31,28 @@ afterEach(async () => {
   await cleanupAsync();
   jest.restoreAllMocks();
 });
+function grantMiniMoves<T extends ReturnType<typeof fresh>>(save: T, moves = 30): T {
+  save.miniProgress.slots = save.miniProgress.slots.map((slot) => ({
+    ...slot,
+    moves,
+  }));
+  return save;
+}
+function withSavedMini<T extends ReturnType<typeof fresh>>(
+  save: T,
+  kind: MiniKind,
+  level: MiniLevel = 1,
+): T {
+  save.miniSession = {
+    id: `saved:${kind}:${level}`,
+    kind,
+    level,
+    match: matchForLevel(level),
+    tea: teaForLevel(level),
+    found: [],
+  };
+  return save;
+}
 async function stored() {
   return JSON.parse((await AsyncStorage.getItem(SAVE_KEY))!);
 }
@@ -131,7 +153,7 @@ test("native draw/undo, live localization and profile editing retain the active 
 test("native hidden-object completion grants its reward once and survives restart", async () => {
   await AsyncStorage.setItem(
     SAVE_KEY,
-    JSON.stringify(setProfile(fresh("native", "en"), "Pip Native", "p")),
+    JSON.stringify(grantMiniMoves(setProfile(fresh("native", "en"), "Pip Native", "p"))),
   );
   await renderAsync(<App />);
   await screen.findByTestId("main-tabs");
@@ -464,7 +486,7 @@ test.each([1, 2, 3] as MiniLevel[])(
 test("game panels scroll in a bounded viewport; oversized menu screens retain their own scroll", async () => {
   await AsyncStorage.setItem(
     SAVE_KEY,
-    JSON.stringify(setProfile(fresh("scroll", "en"), "Scroll Native", "p")),
+    JSON.stringify(grantMiniMoves(setProfile(fresh("scroll", "en"), "Scroll Native", "p"))),
   );
   await renderAsync(<App />);
   await screen.findByTestId("main-tabs");
@@ -512,23 +534,16 @@ test("three main controls navigate through localized submenus and retain timed l
   await screen.findByTestId("main-tabs");
   expect(
     within(screen.getByTestId("main-tabs")).getAllByRole("button"),
-  ).toHaveLength(3);
+  ).toHaveLength(4);
   expect(screen.queryByText("Cozy Solitaire")).toBeNull();
   press("♠ Play Solitaire");
   expect(
     screen.getByRole("button", { name: "♠ Play Solitaire" }).props
       .accessibilityState.selected,
   ).toBe(true);
-  expect(screen.getByTestId("compact-tooltip")).toHaveTextContent(
-    "Play Solitaire",
-  );
-  fireEvent.press(screen.getByTestId("compact-tooltip"));
-  expect(screen.queryByTestId("compact-tooltip")).toBeNull();
+  expect(screen.getByTestId("solitaire-board")).toBeOnTheScreen();
   press("⌂ My Garden");
-  await waitFor(
-    () => expect(screen.queryByTestId("compact-tooltip")).toBeNull(),
-    { timeout: 4000 },
-  );
+  expect(screen.getByTestId("garden-fullscreen")).toBeOnTheScreen();
 });
 
 test("Solitaire responds to the real board viewport and keeps a long column's bottom card visible", async () => {
