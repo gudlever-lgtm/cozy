@@ -1,6 +1,6 @@
 import { cozy } from "./ui/theme";
 import React from "react";
-import { View, Text } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
 import { gameReward, type GameRewardKind } from "./engine/world";
 import { GameIcon } from "./GameIcon";
@@ -23,14 +23,9 @@ export function GameRewardLine({
       testID={`repeat-rewards-${kind}`}
       accessible
       accessibilityLabel={String(t("repeatRewards")) + ": " + label}
-      style={{
-        flexDirection: "row",
-        gap: compact ? 4 : 8,
-        flexWrap: "wrap",
-        alignItems: "center",
-      }}
+      style={[styles.row, { gap: compact ? 4 : 8 }]}
     >
-      <Text style={{ color: cozy.color.ink, fontSize: compact ? 10 : 11 }}>
+      <Text style={[styles.description, { fontSize: compact ? 11 : 13 }]}>
         {String(
           t(kind === "solitaire" ? "mainProgressReward" : "miniHelpReward", {
             count: level,
@@ -40,7 +35,7 @@ export function GameRewardLine({
       {entries.map(([r, n]) => (
         <View
           key={r}
-          style={{ flexDirection: "row", alignItems: "center", gap: 2 }}
+          style={[styles.chip, compact && styles.compactChip]}
         >
           <GameIcon
             name={
@@ -49,11 +44,7 @@ export function GameRewardLine({
             size={compact ? 14 : 18}
           />
           <Text
-            style={{
-              color: cozy.color.ink,
-              fontSize: compact ? 10 : 11,
-              fontWeight: "600",
-            }}
+            style={[styles.amount, { fontSize: compact ? 11 : 13 }]}
           >
             +{n}
           </Text>
@@ -62,3 +53,21 @@ export function GameRewardLine({
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  row: { flexDirection: "row", flexWrap: "wrap", alignItems: "center" },
+  description: { color: cozy.color.ink, fontWeight: "600", flexShrink: 1 },
+  chip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    minHeight: 30,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: cozy.color.border,
+    backgroundColor: cozy.color.paperLight,
+  },
+  compactChip: { minHeight: 24, paddingHorizontal: 5 },
+  amount: { color: cozy.color.ink, fontWeight: "700" },
+});
