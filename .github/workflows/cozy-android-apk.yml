@@ -1,12 +1,9 @@
 name: Cozy Android test APK (native Gradle, latest)
 # Requested test build v2.1.1 b24: installed version label and original illustrated button assets.
 
+# APK creation is a deliberate action. Source pushes must never trigger it.
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/cozy-android-apk.yml'
 
 permissions:
   contents: write
@@ -38,8 +35,19 @@ jobs:
         run: npm ci --include=dev --no-audit --no-fund
       - name: Typecheck
         run: npm run typecheck
-      - name: Tests
+      - name: Engine and presentation tests
         run: npm test
+      - name: Native Android and iOS component tests
+        run: npm run test:native
+      - name: Verify bundled artwork
+        run: npm run audit:art
+      - name: Check formatting
+        run: npm run format:check
+      - name: Native JS asset export
+        run: npm run export:native
+        env:
+          EXPO_NO_TELEMETRY: '1'
+          CI: '1'
       - name: Generate Android native project locally
         run: npx --no-install expo prebuild --platform android --no-install
         env:
@@ -81,7 +89,7 @@ jobs:
           set -euo pipefail
           if gh release view cozy-android-test >/dev/null 2>&1; then
             gh release upload cozy-android-test out/* --clobber
-            gh release edit cozy-android-test --notes "Testing build from commit ${GITHUB_SHA}. Version and Android build in BUILD_INFO.txt. This is not a production release; native integration tests may still fail."
+            gh release edit cozy-android-test --notes "Testing build from commit ${GITHUB_SHA}. Version and Android build in BUILD_INFO.txt. This is not a production release; native automated checks passed but physical device QA is still required."
           else
             gh release create cozy-android-test out/* \
               --title "Cozy Solitaire Android test APK" --notes "Development/testing build; signed with the Android project test configuration. Not a Play Store release." --prerelease
