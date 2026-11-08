@@ -65,7 +65,6 @@ function Particle({ item, index }: { item: (typeof PARTICLES)[number]; index: nu
       source={image}
       resizeMode="contain"
       accessible={false}
-      pointerEvents="none"
       style={[
         {
           position: "absolute",
