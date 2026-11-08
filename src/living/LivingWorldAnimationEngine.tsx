@@ -12,6 +12,7 @@ import Animated, {
 } from "react-native-reanimated";
 import {
   createAmbientObjects,
+  ambientViewportBudget,
   curve,
   imagePoint,
   LIGHT_ANCHORS,
@@ -242,6 +243,8 @@ export function LivingWorldAnimationEngine({
 }: LivingWorldProps) {
   const active = useMotionPolicy(enabled, reducedMotion);
   const objects = useMemo(() => {
+    const budget = ambientViewportBudget(quality, width, height, surface);
+    if (budget === 0) return [];
     const all = createAmbientObjects(season, quality, intensity).map(
       (object, index) =>
         preview
@@ -256,7 +259,7 @@ export function LivingWorldAnimationEngine({
           : object,
     );
     if (surface !== "board")
-      return preview
+      return (preview
         ? all
         : all.map((object, index) => ({
             ...object,
@@ -267,12 +270,11 @@ export function LivingWorldAnimationEngine({
               object.kind === "bird"
                 ? object.pause
                 : Math.min(object.pause, 2600),
-          }));
-    const limit = quality === "low" ? 2 : quality === "medium" ? 4 : 6;
+          }))).slice(0, budget);
     return all
       .filter((object) => object.kind !== "bird" && object.kind !== "butterfly")
-      .slice(0, limit);
-  }, [season, quality, intensity, preview, surface]);
+      .slice(0, budget);
+  }, [season, quality, intensity, preview, surface, width, height]);
   return (
     <View
       testID={surface === "board" ? "living-world-board" : "living-world"}
