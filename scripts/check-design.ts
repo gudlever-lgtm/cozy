@@ -163,6 +163,27 @@ async function main() {
             `${name}: garden control overlap ${i}/${j}`,
           );
         }
+      // The illustrated button image and its label must share the same
+      // horizontal centre, regardless of an icon at the leading edge.
+      const buildButton = (await page
+        .getByTestId("garden-edit-toggle")
+        .boundingBox())!;
+      const buildLabel = (await page
+        .getByTestId("garden-edit-toggle-label")
+        .boundingBox())!;
+      assert.ok(buildButton && buildLabel, `${name}: missing build button text`);
+      assert.ok(
+        Math.abs(
+          buildLabel.x + buildLabel.width / 2 -
+            (buildButton.x + buildButton.width / 2),
+        ) <= 2,
+        `${name}: build button label is not horizontally centred`,
+      );
+      assert.ok(
+        buildLabel.y >= buildButton.y - 1 &&
+          buildLabel.y + buildLabel.height <= buildButton.y + buildButton.height + 1,
+        `${name}: build button text escapes artwork`,
+      );
       await page
         .getByRole("button", { name: "♠ Spil kabale", exact: true })
         .click();
