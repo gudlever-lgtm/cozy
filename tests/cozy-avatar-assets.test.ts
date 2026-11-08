@@ -23,8 +23,13 @@ test("new Cozy character portraits are real offline WebP assets", () => {
     assert.ok(staticManifest.includes(`"${key}"`), "Missing static Metro require: " + key);
     assert.ok(registry.includes(`cozyRedesignImages.${key}`), "Image registry must expose the active pose: " + key);
     assert.ok(
-      garden.includes(`cozyImages.avatars.${character}`),
-      "Garden should use the new character pose: " + character,
+      garden.includes(`<CharacterIdle character="${character}"`),
+      "Garden must mount the animated character portrait: " + character,
+    );
+    const characterSource = fs.readFileSync("src/living/CharacterIdle.tsx", "utf8");
+    assert.ok(
+      characterSource.includes(`cozyImages.avatars.${character}`),
+      "Animated character must retain the new idle pose: " + character,
     );
   }
 });
