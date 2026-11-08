@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
-import { Text, View } from "react-native";
+import { View, Image } from "react-native";
+import { cozyRedesignImages } from "../assets/cozyRedesignImages";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -13,19 +14,19 @@ import Animated, {
 import { useMotionPolicy } from "./useMotionPolicy";
 
 const PARTICLES = [
-  { x: 5, y: 38, glyph: "✦", color: "#e6b84f", size: 24 },
-  { x: 13, y: 12, glyph: "✿", color: "#df8eaa", size: 21 },
-  { x: 21, y: 48, glyph: "✧", color: "#f1d77d", size: 25 },
-  { x: 29, y: 18, glyph: "✦", color: "#d5a85c", size: 18 },
-  { x: 37, y: 43, glyph: "❀", color: "#d98aa5", size: 22 },
-  { x: 45, y: 8, glyph: "✧", color: "#f1d77d", size: 24 },
-  { x: 53, y: 45, glyph: "✦", color: "#e6b84f", size: 20 },
-  { x: 61, y: 15, glyph: "✿", color: "#df8eaa", size: 23 },
-  { x: 69, y: 48, glyph: "✧", color: "#f1d77d", size: 19 },
-  { x: 77, y: 10, glyph: "✦", color: "#d5a85c", size: 24 },
-  { x: 85, y: 42, glyph: "❀", color: "#d98aa5", size: 21 },
-  { x: 93, y: 16, glyph: "✧", color: "#f1d77d", size: 22 },
-];
+  { x: 5, y: 38, kind: "star", size: 24 },
+  { x: 13, y: 12, kind: "flower", size: 21 },
+  { x: 21, y: 48, kind: "star", size: 25 },
+  { x: 29, y: 18, kind: "burst", size: 18 },
+  { x: 37, y: 43, kind: "flower", size: 22 },
+  { x: 45, y: 8, kind: "star", size: 24 },
+  { x: 53, y: 45, kind: "burst", size: 20 },
+  { x: 61, y: 15, kind: "flower", size: 23 },
+  { x: 69, y: 48, kind: "star", size: 19 },
+  { x: 77, y: 10, kind: "burst", size: 24 },
+  { x: 85, y: 42, kind: "flower", size: 21 },
+  { x: 93, y: 16, kind: "star", size: 22 },
+] as const;
 
 function Particle({ item, index }: { item: (typeof PARTICLES)[number]; index: number }) {
   const progress = useSharedValue(0);
@@ -54,25 +55,29 @@ function Particle({ item, index }: { item: (typeof PARTICLES)[number]; index: nu
     ],
   }));
 
+  const image = item.kind === "flower"
+    ? cozyRedesignImages.effects_sparkle_cluster_webp
+    : item.kind === "burst"
+      ? cozyRedesignImages.effects_sparkle_burst_webp
+      : cozyRedesignImages.effects_shimmer_star_webp;
   return (
-    <Animated.Text
+    <Animated.Image
+      source={image}
+      resizeMode="contain"
+      accessible={false}
       pointerEvents="none"
       style={[
         {
           position: "absolute",
           left: `${item.x}%`,
           top: item.y,
-          color: item.color,
-          fontSize: item.size,
-          fontWeight: "700",
-          textShadowColor: "#fff4cc",
-          textShadowRadius: 8,
+          width: item.size,
+          height: item.size,
         },
         animatedStyle,
       ]}
     >
-      {item.glyph}
-    </Animated.Text>
+    </Animated.Image>
   );
 }
 
@@ -97,9 +102,13 @@ export function VictorySparkles({
           <Particle key={index} item={item} index={index} />
         ))}
       {!active && (
-        <Text style={{ textAlign: "center", fontSize: 28, color: "#d9ad56" }}>
-          ✦　✿　✧
-        </Text>
+        <Image
+          testID="victory-static-shimmer"
+          source={cozyRedesignImages.effects_shimmer_trio_webp}
+          resizeMode="contain"
+          accessible={false}
+          style={{ width: 110, height: 74, alignSelf: "center" }}
+        />
       )}
     </View>
   );
