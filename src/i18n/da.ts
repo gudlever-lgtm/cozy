@@ -50,6 +50,7 @@ export const da: Record<keyof typeof en, string> = {
     "Vind et minispil for at optjene flere Undo-point. Dit kabalespil bliver gemt, mens du besøger haven.",
   cozyTagline: "Spil. Hyg. Opdag.",
   undoPoints: "Undo-point",
+  noUndoMoves: "Der er ingen træk at fortryde endnu.",
   yourMiniGames: "Dine minispil",
   menuSubtitle: "Et lille øjeblik kun til dig",
   returnToGame: "Tilbage til spillet",
