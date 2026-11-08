@@ -241,14 +241,13 @@ test("native partial hidden puzzle resumes at its level and cannot pay twice aft
   await AsyncStorage.setItem(
     SAVE_KEY,
     JSON.stringify(
-      setProfile(fresh("mini-save", "en"), "Puzzle Gardener", "mini-player"),
+      withSavedMini(setProfile(fresh("mini-save", "en"), "Puzzle Gardener", "mini-player"), "hidden", 3),
     ),
   );
   await renderAsync(<App />);
   await screen.findByTestId("main-tabs");
   press("✿ Mini-games");
-  press("Level 3");
-  fireEvent.press(screen.getByTestId("mini-start-hidden"));
+  press("Resume saved puzzle");
   press("Key");
   await waitFor(async () => {
     const s = await stored();
@@ -256,7 +255,7 @@ test("native partial hidden puzzle resumes at its level and cannot pay twice aft
     expect(s.miniSession.level).toBe(3);
   });
   press("Back");
-  press("Level 1");
+  press("✿ Mini-games");
   press("Resume saved puzzle");
   expect(screen.queryByRole("button", { name: "Key" })).toBeNull();
   await waitFor(async () => expect((await stored()).miniSession.level).toBe(3));
@@ -445,13 +444,12 @@ test.each([1, 2, 3] as MiniLevel[])(
   async (level) => {
     await AsyncStorage.setItem(
       SAVE_KEY,
-      JSON.stringify(setProfile(fresh("tea-native", "en"), "Tea Native", "p")),
+      JSON.stringify(withSavedMini(setProfile(fresh("tea-native", "en"), "Tea Native", "p"), "tea", level)),
     );
     await renderAsync(<App />);
     await screen.findByTestId("main-tabs");
     press("✿ Mini-games");
-    press(`Level ${level}`);
-    fireEvent.press(screen.getByTestId("mini-start-tea"));
+    press("Resume saved puzzle");
     const queue: { cups: number[][]; path: number[][] }[] = [
       { cups: screen.UNSAFE_getByType(TeaTime).props.game, path: [] },
     ];
@@ -961,17 +959,12 @@ test("shared journey links the real next quest and saved appearance controls", a
 test.each([1, 2, 3] as MiniLevel[])(
   "Hidden Treasures level %s fits a fixed scene with all targets and completes once",
   async (level) => {
-    const original = setProfile(
-      fresh("hidden-fit", "en"),
-      "Hidden Native",
-      "p",
-    );
+    const original = withSavedMini(setProfile(fresh("hidden-fit", "en"), "Hidden Native", "p"), "hidden", level);
     await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(original));
     await renderAsync(<App />);
     await screen.findByTestId("main-tabs");
     press("✿ Mini-games");
-    press(`Level ${level}`);
-    fireEvent.press(screen.getByTestId("mini-start-hidden"));
+    press("Resume saved puzzle");
     const scene = screen.getByTestId("garden-scene");
     expect(scene).toHaveStyle({ flex: 1, minHeight: 0 });
     let ancestor = scene.parent;
@@ -1068,7 +1061,7 @@ test.each([1, 2, 3] as MiniLevel[])(
     cells[2] = 0;
     cells[7] = 0;
     original.miniSession = {
-      id: `swipe-${level}`,
+      id: original.miniProgress.slots[0].session.id,
       kind: "match",
       level,
       match: {
@@ -1080,6 +1073,7 @@ test.each([1, 2, 3] as MiniLevel[])(
       tea: teaForLevel(level),
       found: [],
     };
+    original.miniProgress.slots[0] = { ...original.miniProgress.slots[0], moves: 8, session: original.miniSession! };
     await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(original));
     await renderAsync(<App />);
     await screen.findByTestId("main-tabs");
