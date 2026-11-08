@@ -12,6 +12,8 @@ import { useTranslation } from "react-i18next";
 import { CozyButton } from "./CozyButton";
 import { cozy } from "./theme";
 import { GameIcon } from "../GameIcon";
+import { SvgXml } from "react-native-svg";
+import { gardenIllustrations } from "../assets/cozyGardenIllustrations";
 export function UndoHelp({
   visible,
   onClose,
@@ -42,7 +44,10 @@ export function UndoHelp({
           ]}
         >
           <StrongScrollView contentContainerStyle={{ gap: 14 }}>
-            <GameIcon name="undo" size={38} />
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+              <SvgXml xml={gardenIllustrations.lantern} width={34} height={46} />
+              <GameIcon name="undo" size={38} />
+            </View>
             <Text accessibilityRole="header" style={s.title}>
               {String(t("undoEmptyTitle"))}
             </Text>
