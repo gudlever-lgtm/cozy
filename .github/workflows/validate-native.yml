@@ -1,0 +1,75 @@
+name: Validate native source
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cozy-validation-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: TypeScript, tests, artwork and native exports
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Verify version and build numbers
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          const expo = JSON.parse(fs.readFileSync('app.json', 'utf8')).expo;
+          if (pkg.version !== expo.version) throw Error('package.json and app.json versions differ');
+          if (!Number.isInteger(expo.android.versionCode) || expo.android.versionCode < 1) throw Error('Invalid Android versionCode');
+          if (String(expo.ios.buildNumber) !== String(expo.android.versionCode)) throw Error('Android and iOS build numbers differ');
+          if (expo.android.package !== 'com.gudlever.cozy') throw Error('Unexpected Android package');
+          if (expo.platforms.length !== 2 || !expo.platforms.includes('android') || !expo.platforms.includes('ios')) throw Error('Unexpected native platforms');
+          console.log('Verified', pkg.version, 'build', expo.android.versionCode);
+          NODE
+
+      - name: TypeScript
+        run: npm run typecheck
+
+      - name: Engine and presentation tests
+        run: npm test
+
+      - name: Native component tests (Android and iOS)
+        run: npm run test:native
+
+      - name: Check artwork integrity
+        run: npm run audit:art
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Export native JavaScript and bundled assets
+        env:
+          EXPO_NO_TELEMETRY: '1'
+          CI: '1'
+        run: npm run export:native
+
+      - name: Summary
+        if: always()
+        run: |
+          echo '## Cozy native source validation' >> "$GITHUB_STEP_SUMMARY"
+          echo "Commit: \`$GITHUB_SHA\`" >> "$GITHUB_STEP_SUMMARY"
+          echo 'This workflow does **not** compile, sign or publish an APK.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'A green run verifies source/tests/exports only; physical-device QA remains separate.' >> "$GITHUB_STEP_SUMMARY"
