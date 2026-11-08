@@ -208,6 +208,7 @@ const s = StyleSheet.create({
     ...cozy.shadow,
     alignItems: "center",
     justifyContent: "center",
+    overflow: "hidden",
   },
   brand: {
     fontFamily: cozy.font.title,
