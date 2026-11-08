@@ -18,6 +18,7 @@ import { gardenIllustrations } from "../assets/cozyGardenIllustrations";
 import { CozyButton } from "./CozyButton";
 import { ResourceBadge } from "./ResourceBadge";
 import { CharacterIdle } from "../living/CharacterIdle";
+import { AppVersion } from "./AppVersion";
 import { cozy } from "./theme";
 import type { Save } from "../engine/save";
 import type { MiniSlot } from "../engine/miniProgress";
@@ -178,6 +179,12 @@ export function GardenHome({
         />
       </View>
       {children}
+      <View
+        pointerEvents="none"
+        style={[s.version, { left: insets.left + 12, bottom: insets.bottom + 59 }]}
+      >
+        <AppVersion />
+      </View>
     </View>
   );
 }
@@ -236,4 +243,5 @@ const s = StyleSheet.create({
     textShadowRadius: 3,
   },
   play: { position: "absolute" },
+  version: { position: "absolute", zIndex: 50 },
 });
