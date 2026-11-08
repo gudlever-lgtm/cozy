@@ -1,5 +1,5 @@
 name: Cozy Android test APK (native Gradle, latest)
-# Requested test build v2.1.1 b24: installed version label and original illustrated button assets.
+# Explicit on-demand Android test APK; version/build are read from app.json.
 
 # APK creation is a deliberate action. Source pushes must never trigger it.
 on:
@@ -70,9 +70,15 @@ jobs:
           SIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -1)"
           test -x "$SIGNER"
           "$SIGNER" verify "$APK"
-          mkdir -p out
           VERSION="$(node -p "require('./app.json').expo.version")"
           BUILD="$(node -p "require('./app.json').expo.android.versionCode")"
+          AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -1)"
+          test -x "$AAPT"
+          ACTUAL="$("$AAPT" dump badging "$APK" | head -n 1)"
+          echo "$ACTUAL"
+          [[ "$ACTUAL" == *"versionCode='$BUILD'"* ]] || { echo "APK versionCode mismatch"; exit 1; }
+          [[ "$ACTUAL" == *"versionName='$VERSION'"* ]] || { echo "APK versionName mismatch"; exit 1; }
+          mkdir -p out
           FILE="cozy-solitaire-v${VERSION}-b${BUILD}.apk"
           cp "$APK" "out/$FILE"
           cp "$APK" out/cozy-solitaire-test.apk
