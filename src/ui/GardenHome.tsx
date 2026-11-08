@@ -14,6 +14,8 @@ import { GardenViewport } from "../GardenViewport";
 import { GardenMiniPair } from "../GardenMiniPair";
 import { MaterialRibbon } from "../MaterialRibbon";
 import { cozyImages } from "../assets/images";
+import { SvgXml } from "react-native-svg";
+import { gardenIllustrations } from "../assets/cozyGardenIllustrations";
 import { CozyButton } from "./CozyButton";
 import { ResourceBadge } from "./ResourceBadge";
 import { cozy } from "./theme";
@@ -109,6 +111,14 @@ export function GardenHome({
                 <Text style={s.brand}>Cozy Solitaire</Text>
                 <Text style={s.tagline}>{String(t("cozyTagline"))}</Text>
               </View>
+            )}
+            {!portrait && width >= 720 && (
+              <SvgXml
+                xml={gardenIllustrations.butterfly}
+                width={27}
+                height={23}
+                accessible={false}
+              />
             )}
           </View>
           <View style={s.resources}>
