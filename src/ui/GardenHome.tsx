@@ -57,7 +57,10 @@ export function GardenHome({
         source={cozyImages.seasons[season]}
         style={StyleSheet.absoluteFillObject}
         resizeMode="cover"
+        resizeMethod="resize"
+        fadeDuration={0}
         blurRadius={12}
+        pointerEvents="none"
         accessible={false}
       />
       <GardenViewport
