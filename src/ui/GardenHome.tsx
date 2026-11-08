@@ -53,6 +53,7 @@ export function GardenHome({
     { width, height } = useWindowDimensions(),
     insets = useSafeAreaInsets();
   const portrait = height > width;
+  const narrowPortrait = portrait && width < 380;
   const bottom = insets.bottom + 70;
   return (
     <View testID="garden-fullscreen" style={s.root}>
@@ -61,7 +62,7 @@ export function GardenHome({
         imageSize={gardenImageSize(season, portrait && cottage)}
         language={save.preferences.language}
         controlsBottom={
-          insets.bottom + (portrait ? 204 : width < 720 ? 126 : 8)
+          insets.bottom + (portrait ? (narrowPortrait ? 296 : 204) : width < 720 ? 126 : 8)
         }
       >
         {scene}
@@ -134,6 +135,7 @@ export function GardenHome({
         pointerEvents="box-none"
         style={[
           s.actions,
+          narrowPortrait && { flexDirection: "column-reverse", alignItems: "flex-end" },
           {
             left: insets.left + 10,
             right: insets.right + 10,
