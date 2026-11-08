@@ -23,6 +23,8 @@ import { StrongScrollView } from "./StrongScrollView";
 import { GameIcon } from "./GameIcon";
 import { Portrait } from "./Art";
 import { cozyImages } from "./assets/images";
+import { CozyPanel } from "./ui/CozyPanel";
+import { cozyRedesignImages } from "./assets/cozyRedesignImages";
 function QuestPortrait({ npc }: { npc: Quest["npc"] }) {
   return (
     <View
@@ -40,7 +42,7 @@ function QuestPortrait({ npc }: { npc: Quest["npc"] }) {
         </View>
       ) : (
         <Image
-          source={cozyImages.characters[npc]}
+          source={cozyImages.avatars[npc]}
           style={{ width: 30, height: 28 }}
           resizeMode="contain"
         />
@@ -133,24 +135,29 @@ export function QuestJournal({
   return (
     <View testID="quest-journal" style={{ flex: 1, minHeight: 0 }}>
       <View style={{ flex: 1, minHeight: 0, padding: 8, gap: 8 }}>
-        <View
+        <CozyPanel
+          ornaments={false}
           style={{
             flexDirection: "row",
             alignItems: "center",
             justifyContent: "space-between",
             paddingHorizontal: 8,
             minHeight: 44,
-            backgroundColor: cozy.color.paper,
-            borderRadius: 12,
           }}
         >
+          <Image
+            source={cozyRedesignImages.ui_flower_corner_left_webp}
+            style={{ width: 24, height: 24 }}
+            resizeMode="contain"
+            accessible={false}
+          />
           <Text accessibilityRole="header" style={s.title}>
             {tt("quests")}
           </Text>
           <Text style={s.small}>
             {save.completed.length}/{quests.length} {tt("questDone")}
           </Text>
-        </View>
+        </CozyPanel>
         <View style={{ flexDirection: "row", gap: 6 }}>
           {(["millie", "marmalade", "pip"] as const).map((character) => (
             <CozyPressable
