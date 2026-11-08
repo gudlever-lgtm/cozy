@@ -1,5 +1,6 @@
 import React from "react";
-import { View } from "react-native";
+import { View, Image } from "react-native";
+import { cozyRedesignImages } from "./assets/cozyRedesignImages";
 import { ArtIcon } from "./ArtIcon";
 import { CardArtwork } from "./CardArtwork";
 import Svg, { Path, Rect, Circle, G } from "react-native-svg";
@@ -13,6 +14,31 @@ export function GameIcon({
   size?: number;
   color?: string;
 }) {
+  // Individual production illustrations replace the older atlas and line icons
+  // for solitaire actions; they remain crisp and consistent with the design.
+  const illustrated = {
+    newGame: cozyRedesignImages.cards_icon_new_game_webp,
+    undo: cozyRedesignImages.cards_icon_undo_webp,
+    hint: cozyRedesignImages.cards_icon_hint_webp,
+    auto: cozyRedesignImages.cards_icon_auto_finish_webp,
+  } as const;
+  const source = illustrated[name as keyof typeof illustrated];
+  if (source) {
+    return (
+      <View
+        testID={`art-icon-${name === "auto" ? "shuffle" : name}`}
+        pointerEvents="none"
+        style={{ width: size, height: size, overflow: "hidden" }}
+      >
+        <Image
+          source={source}
+          resizeMode="contain"
+          accessible={false}
+          style={{ width: size, height: size }}
+        />
+      </View>
+    );
+  }
   const original: Record<string, string> = {
     glimmer: "glimmer",
     wood: "wood",
