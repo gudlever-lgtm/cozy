@@ -62,7 +62,7 @@ function press(name: string) {
       fireEvent.press(
         screen.getByRole("button", { name: String(i18n.t("mainMenu")) }),
       );
-      if (route && route.id !== "mini") {
+      if (route) {
         fireEvent.press(screen.getByTestId(`menu-${route.id}`));
         return;
       }
