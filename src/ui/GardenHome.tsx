@@ -78,7 +78,12 @@ export function GardenHome({
           },
         ]}
       >
-        <View style={s.top}>
+        <View
+          style={[
+            s.top,
+            narrowPortrait && { flexDirection: "column", alignItems: "stretch" },
+          ]}
+        >
           <View style={s.friends}>
             <Pressable
               accessibilityRole="button"
@@ -115,7 +120,12 @@ export function GardenHome({
               />
             )}
           </View>
-          <View style={s.resources}>
+          <View
+            style={[
+              s.resources,
+              narrowPortrait && { justifyContent: "flex-end", flexWrap: "wrap" },
+            ]}
+          >
             <ResourceBadge
               icon="glimmer"
               label={String(t("glimmers"))}
