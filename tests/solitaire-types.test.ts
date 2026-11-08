@@ -4,6 +4,7 @@ import {
   newSolitaire,
   canMove,
   restart,
+  autoComplete,
   type Game,
   type Card,
 } from "../src/engine/solitaire";
@@ -41,4 +42,45 @@ test("Whitehead builds same color, moves same-suit runs and fills spaces with an
   g.tableau[0] = [card(7, "♥")];
   g.tableau[1] = [card(8, "♣")];
   assert.equal(canMove(g, from, { kind: "tableau", pile: 1 }), false);
+});
+
+test("auto finish never leaves a partly advanced board when the deal cannot be won", () => {
+  const base = newSolitaire("auto-incomplete", "open");
+  const game: Game = {
+    ...base,
+    stock: [],
+    waste: [],
+    tableau: [[card(1, "♥")], [card(3, "♥")], [], [], [], [], []],
+    foundations: [[], [], [], []],
+    history: [],
+    moves: 0,
+    won: false,
+  };
+  const result = autoComplete(game);
+  assert.equal(result, game);
+  assert.equal(result.moves, 0);
+  assert.equal(result.tableau[0].length, 1);
+});
+
+test("auto finish completes an exposed winning board and keeps Undo history", () => {
+  const base = newSolitaire("auto-winning", "open");
+  const suits = ["♠", "♥", "♣", "♦"] as const;
+  const game: Game = {
+    ...base,
+    stock: [],
+    waste: [],
+    tableau: suits.map((suit) => [card(13, suit)]).concat([[], [], []]),
+    foundations: suits.map((suit) =>
+      Array.from({ length: 12 }, (_, rank) => card(rank + 1, suit)),
+    ),
+    history: [],
+    moves: 0,
+    won: false,
+  };
+  const result = autoComplete(game);
+  assert.notEqual(result, game);
+  assert.equal(result.won, true);
+  assert.equal(result.history.length, 4);
+  assert.equal(result.moves, 4);
+  assert.equal(result.foundations.every((pile) => pile.length === 13), true);
 });
