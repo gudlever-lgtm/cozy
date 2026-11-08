@@ -13,6 +13,10 @@ export const cozyImages = {
     millie: require("../../public/assets/characters/millie_rabbit.png"),
     marmalade: require("../../public/assets/characters/marmalade_cat.png"),
   },
+  avatars: {
+    millie: require("../../assets/cozy-redesign/illustrations/characters/millie_avatar.webp"),
+    marmalade: require("../../assets/cozy-redesign/illustrations/characters/marmalade_avatar.webp"),
+  },
   sheets: {
     ui: require("../../public/assets/icons/ui_icons_sheet.png"),
     resources: require("../../public/assets/resources/resources_sheet.png"),
