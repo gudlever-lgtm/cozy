@@ -21,4 +21,7 @@ test("Undo action remains tappable with no history and invokes feedback handler"
   expect(events).toEqual(["undo"]);
   fireEvent.press(screen.getByRole("button", { name: "newGame" }));
   expect(events).toEqual(["undo", "new"]);
+  // Auto-finish remains clickable even before the board is ready so the handler can explain why.
+  fireEvent.press(screen.getByRole("button", { name: "auto" }));
+  expect(events).toEqual(["undo", "new", "auto"]);
 });
