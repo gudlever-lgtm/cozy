@@ -50,6 +50,7 @@ export const en = {
     "Win a mini game to earn more Undo points. Your solitaire game is saved while you visit the garden.",
   cozyTagline: "Play. Unwind. Discover.",
   undoPoints: "Undo points",
+  noUndoMoves: "There are no moves to undo yet.",
   yourMiniGames: "Your mini games",
   menuSubtitle: "A little moment just for you",
   returnToGame: "Back to your game",
