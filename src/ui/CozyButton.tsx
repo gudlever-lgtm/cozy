@@ -189,13 +189,19 @@ export function CozyButton({
           size={compact ? 20 : 23}
         />
       )}
-      <Text
-        numberOfLines={2}
-        maxFontSizeMultiplier={1.25}
-        style={[styles.label, (quiet || disabled) && styles.paperLabel, compact && { fontSize: 11 }]}
-      >
-        {label}
-      </Text>
+      {label.length > 0 && (
+        <Text
+          numberOfLines={2}
+          maxFontSizeMultiplier={1.25}
+          style={[
+            styles.label,
+            (quiet || disabled) && styles.paperLabel,
+            compact && { fontSize: 11 },
+          ]}
+        >
+          {label}
+        </Text>
+      )}
       {badge !== undefined && (
         <View style={styles.badge}>
           <Text allowFontScaling={false} style={styles.badgeText}>
