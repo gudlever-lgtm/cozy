@@ -135,6 +135,29 @@ async function main() {
           `${name}: ${character} portrait escapes the top-bar button`,
         );
       }
+      const screenRect = { x: 0, y: 0, width, height };
+      const insideScreen = (box: typeof screenRect) =>
+        box.x >= -1 &&
+        box.y >= -1 &&
+        box.x + box.width <= width + 1 &&
+        box.y + box.height <= height + 1;
+      for (const id of [
+        "garden-friends",
+        "garden-resources",
+        "garden-edit-toggle",
+        "garden-play-button",
+        "active-mini-pair",
+        "main-tabs",
+      ]) {
+        const rect = (await page.getByTestId(id).boundingBox())!;
+        assert.ok(rect && insideScreen(rect), `${name}: ${id} is off-screen`);
+      }
+      const miniRect = (await page.getByTestId("garden-mini-actions").boundingBox())!;
+      const buildRect = (await page.getByTestId("garden-edit-toggle").boundingBox())!;
+      const playRect = (await page.getByTestId("garden-play-button").boundingBox())!;
+      const dockRect = (await page.getByTestId("main-tabs").boundingBox())!;
+      assert.ok(!overlap(miniRect, buildRect), `${name}: mini buttons cover build button`);
+      assert.ok(!overlap(playRect, dockRect), `${name}: play button covers bottom navigation`);
       const fullImage = (await page.getByTestId("garden-scene").boundingBox())!;
       await page.getByTestId("garden-zoom-out").click();
       assert.equal(
