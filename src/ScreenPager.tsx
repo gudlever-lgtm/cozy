@@ -1,7 +1,9 @@
 import { CozyPressable } from "./ui/CozyPressable";
 import { cozy } from "./ui/theme";
 import React, { useState, useEffect } from "react";
-import { View, Text, useWindowDimensions, StyleSheet } from "react-native";
+import { View, Text, Image, useWindowDimensions, StyleSheet } from "react-native";
+import { CozyPanel } from "./ui/CozyPanel";
+import { cozyRedesignImages } from "./assets/cozyRedesignImages";
 import { useTranslation } from "react-i18next";
 import { pageGeometry } from "./presentation/paging";
 /** Finite viewport pages: all items remain reachable without nesting a ScrollView. */
@@ -46,17 +48,22 @@ export function ScreenPager({
           );
       }}
     >
-      <View
+      <CozyPanel
+        ornaments={false}
         style={{
-          height: actions ? 44 : 30,
-          backgroundColor: "#fff8e9e6",
-          borderRadius: 12,
+          height: actions ? 44 : 38,
           paddingHorizontal: 8,
           flexDirection: "row",
           alignItems: "center",
           gap: 8,
         }}
       >
+        <Image
+          source={cozyRedesignImages.ui_flower_corner_blue_webp}
+          style={styles.headerFlower}
+          resizeMode="contain"
+          accessible={false}
+        />
         <Text
           accessibilityRole="header"
           numberOfLines={1}
@@ -66,7 +73,7 @@ export function ScreenPager({
           {title}
         </Text>
         {actions}
-      </View>
+      </CozyPanel>
       <View
         style={{
           height: layout.gridHeight,
@@ -121,6 +128,7 @@ export function ScreenPager({
 }
 const styles = StyleSheet.create({
   root: { flex: 1, minHeight: 0, padding: 8, gap: 8 },
+  headerFlower: { width: 24, height: 24 },
   title: {
     height: 30,
     fontSize: 22,
