@@ -2378,13 +2378,13 @@ export default function App() {
           ).map((item) => (
             <CozyButton
               key={item.id}
-              label={item.id === "menu" ? tt("mainMenu") : tt(item.id)}
+              label={height > width ? "" : item.id === "menu" ? tt("mainMenu") : tt(item.id)}
               icon={item.icon}
               accessibilityLabel={item.label}
               compact
               quiet
               selected={item.id === screen}
-              style={{ flex: 1, minWidth: 0 }}
+              style={{ flex: 1, minWidth: 0, paddingHorizontal: height > width ? 4 : 9 }}
               onPress={() => {
                 if (item.id === "menu") setMenuOpen(true);
                 else if (item.id === "mini") {
