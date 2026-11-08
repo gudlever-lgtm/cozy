@@ -6,6 +6,7 @@ import { GardenHome } from "./ui/GardenHome";
 import { GameToolbar } from "./ui/GameToolbar";
 import { ResourceBadge } from "./ui/ResourceBadge";
 import { cozy } from "./ui/theme";
+import { cozyRedesignImages } from "./assets/cozyRedesignImages";
 import { GardenBuildScreen } from "./GardenBuildScreen";
 import { GardenMiniPair } from "./GardenMiniPair";
 import { MiniGameHub } from "./MiniGameHub";
@@ -2035,6 +2036,13 @@ export default function App() {
             {screen === "settings" && (
               <View style={{ flex: 1, minHeight: 0, padding: 8, gap: 8 }}>
                 <View style={{ gap: 8, flexShrink: 0 }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                    <Image
+                      source={cozyRedesignImages.ui_flower_corner_blue_webp}
+                      style={{ width: 30, height: 30 }}
+                      resizeMode="contain"
+                      accessible={false}
+                    />
                   <Text
                     accessibilityRole="header"
                     style={[
@@ -2049,6 +2057,7 @@ export default function App() {
                   >
                     {tt("settings")}
                   </Text>
+                  </View>
                   <View style={{ flexDirection: "row", gap: 5 }}>
                     {(["profile", "appearance", "audio", "rules"] as const).map(
                       (tab) => (
