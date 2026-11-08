@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { GameIcon } from "../GameIcon";
+import { CozyGardenMotif } from "./CozyGardenMotif";
 import { cozy } from "./theme";
 export function ResourceBadge({
   icon,
@@ -13,7 +14,11 @@ export function ResourceBadge({
 }) {
   return (
     <View accessible accessibilityLabel={`${label}: ${value}`} style={s.root}>
-      <GameIcon name={icon} size={22} />
+      {icon === "glimmer" ? (
+        <CozyGardenMotif kind="shimmer" size={24} />
+      ) : (
+        <GameIcon name={icon} size={22} />
+      )}
       <View style={{ minWidth: 0 }}>
         <Text style={s.label} numberOfLines={1} maxFontSizeMultiplier={1.2}>
           {label}
