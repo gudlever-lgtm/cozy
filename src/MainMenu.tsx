@@ -15,6 +15,7 @@ import { cozy } from "./ui/theme";
 import { SvgXml } from "react-native-svg";
 import { gardenIllustrations } from "./assets/cozyGardenIllustrations";
 import { cozyRedesignImages } from "./assets/cozyRedesignImages";
+import { cozyImages } from "./assets/images";
 export type MenuDestination =
   | "garden"
   | "play"
@@ -89,6 +90,8 @@ export function MainMenu({
       >
         <View testID="main-menu" style={s.panel}>
           <View style={s.header}>
+            <Image source={cozyImages.gardenPortrait} style={StyleSheet.absoluteFillObject} resizeMode="cover" accessible={false} />
+            <View pointerEvents="none" style={s.headerTint} />
             <Image source={cozyRedesignImages.decorations_pink_hydrangea_webp} style={{ width: 46, height: 46 }} resizeMode="contain" accessible={false} />
             <View style={{ flex: 1 }}>
               <Text style={s.brand}>Cozy Solitaire</Text>
@@ -157,7 +160,9 @@ const s = StyleSheet.create({
     overflow: "hidden",
     ...cozy.shadow,
   },
+  headerTint: { ...StyleSheet.absoluteFillObject, backgroundColor: "#342c22b3" },
   header: {
+    overflow: "hidden",
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
