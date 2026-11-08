@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   createAmbientObjects,
+  ambientViewportBudget,
   ACTIVE_LIMITS,
   curve,
   shouldAnimate,
@@ -115,4 +116,35 @@ test("default autumn intensity retains both sparse rain and leaves", () => {
   const objects = createAmbientObjects("autumn", "medium", 0.4);
   assert.ok(objects.some((o) => o.kind === "rain"));
   assert.ok(objects.some((o) => o.kind === "leaf"));
+});
+
+test("particle budgets respect accessibility, screen size and quality without changing gameplay", () => {
+  assert.equal(ambientViewportBudget("high", 0, 900), 0);
+  assert.equal(ambientViewportBudget("medium", Number.NaN, 800), 0);
+  assert.equal(ambientViewportBudget("low", 320, 550, "world"), 6);
+  assert.equal(ambientViewportBudget("medium", 320, 550, "world"), 11);
+  assert.equal(ambientViewportBudget("high", 390, 844, "world"), 24);
+  assert.equal(ambientViewportBudget("low", 390, 844, "board"), 2);
+  assert.equal(ambientViewportBudget("medium", 390, 844, "board"), 4);
+  assert.equal(ambientViewportBudget("high", 390, 844, "board"), 6);
+  assert.ok(ambientViewportBudget("high", 320, 550) < ambientViewportBudget("high", 390, 844));
+});
+
+test("characters and win sparkles only reference bundled offline illustrations", async () => {
+  const characters = await readFile("src/living/CharacterIdle.tsx", "utf8");
+  const sparkles = await readFile("src/living/VictorySparkles.tsx", "utf8");
+  const manifest = await readFile("src/assets/cozyRedesignImages.ts", "utf8");
+  for (const name of [
+    "characters_millie_wave_webp",
+    "characters_marmalade_look_up_webp",
+    "effects_shimmer_star_webp",
+    "effects_sparkle_cluster_webp",
+    "effects_sparkle_burst_webp",
+    "effects_shimmer_trio_webp",
+  ]) {
+    assert.ok(manifest.includes(name), "Bundled graphic missing: " + name);
+    assert.ok((characters + sparkles).includes(name), "Graphic not integrated: " + name);
+  }
+  assert.match(characters, /useMotionPolicy\(enabled, reducedMotion\)/);
+  assert.match(sparkles, /useMotionPolicy\(enabled, reducedMotion\)/);
 });
