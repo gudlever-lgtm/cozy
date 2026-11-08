@@ -60,7 +60,6 @@ export function GardenHome({
         resizeMethod="resize"
         fadeDuration={0}
         blurRadius={12}
-        pointerEvents="none"
         accessible={false}
       />
       <GardenViewport
