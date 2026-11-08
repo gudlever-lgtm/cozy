@@ -1652,22 +1652,26 @@ export default function App() {
                     setPendingChallenge(null);
                     setDialog("new");
                   }}
-                  onUndo={() =>
-                    s.miniProgress.undo === 0
-                      ? setUndoHelp(true)
-                      : update((v) =>
-                          v.game.history.length && v.miniProgress.undo > 0
-                            ? {
-                                ...v,
-                                game: undo(v.game),
-                                miniProgress: {
-                                  ...v.miniProgress,
-                                  undo: v.miniProgress.undo - 1,
-                                },
-                              }
-                            : v,
-                        )
-                  }
+                  onUndo={() => {
+                    if (s.miniProgress.undo === 0) {
+                      setUndoHelp(true);
+                    } else if (!s.game.history.length) {
+                      setTip(tt("noUndoMoves"));
+                    } else {
+                      update((v) =>
+                        v.game.history.length && v.miniProgress.undo > 0
+                          ? {
+                              ...v,
+                              game: undo(v.game),
+                              miniProgress: {
+                                ...v.miniProgress,
+                                undo: v.miniProgress.undo - 1,
+                              },
+                            }
+                          : v,
+                      );
+                    }
+                  }}
                   onHint={() => {
                     const h = hints(s.game)[0];
                     setHint(h ?? null);
@@ -1691,7 +1695,7 @@ export default function App() {
                   }}
                   onAuto={() => applyGame(autoComplete)}
                   undo={s.miniProgress.undo}
-                  canUndo={!!s.game.history.length}
+                  canUndo={true}
                   canAuto={
                     !s.game.won &&
                     s.game.tableau.every((p) => p.every((c) => c.up)) &&
