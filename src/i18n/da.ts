@@ -172,6 +172,7 @@ export const da: Record<keyof typeof en, string> = {
   receivedMaterials: "Belønning",
   noRecentMaterials: "Dine næste fund vises her.",
   mainMenu: "Hovedmenu",
+  menuMore: "Flere muligheder",
   menuGames: "Spil",
   menuGarden: "Have og opgaver",
   menuPlayer: "Spiller",
