@@ -1,5 +1,6 @@
 import { gardenImageSize, type CozySeason } from "./assets/images";
 import { GardenBackdrop } from "./ui/GardenBackdrop";
+import { buyGardenDecoration } from "./engine/gardenPurchase";
 import { Timber } from "./ui/CozyButton";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { cozy } from "./ui/theme";
@@ -20,7 +21,6 @@ import { GameIcon } from "./GameIcon";
 import type { Save } from "./engine/save";
 import {
   upgrades,
-  transact,
   place,
   upgradeFurniture,
   type UpgradeId,
@@ -207,25 +207,7 @@ export function GardenBuildScreen({
                             !affordable && { opacity: 0.45 },
                           ]}
                           onPress={() =>
-                            onUpdate((current) => {
-                              if (current.economy.inventory.includes(item.id))
-                                return current;
-                              const economy = transact(
-                                current.economy,
-                                `buy:${item.id}`,
-                                { glimmers: -item.cost, wood: -item.wood },
-                                item.id,
-                              );
-                              return {
-                                ...current,
-                                economy,
-                                placements: place(
-                                  economy.inventory,
-                                  current.placements,
-                                  { id: item.id, x: item.x, y: item.y },
-                                ),
-                              };
-                            })
+                            onUpdate((current) => buyGardenDecoration(current, item.id))
                           }
                         >
                           <Timber green muted={!affordable} />
