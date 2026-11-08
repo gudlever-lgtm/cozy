@@ -1,4 +1,5 @@
 import { gardenImageSize, type CozySeason } from "../assets/images";
+import { GardenBackdrop } from "./GardenBackdrop";
 import React from "react";
 import {
   View,
@@ -53,15 +54,7 @@ export function GardenHome({
   const bottom = insets.bottom + 70;
   return (
     <View testID="garden-fullscreen" style={s.root}>
-      <Image
-        source={portrait && season === "spring" ? cozyImages.gardenPortrait : cozyImages.seasons[season]}
-        style={StyleSheet.absoluteFillObject}
-        resizeMode="cover"
-        resizeMethod="resize"
-        fadeDuration={0}
-        blurRadius={12}
-        accessible={false}
-      />
+      <GardenBackdrop season={season} />
       <GardenViewport
         imageSize={gardenImageSize(season)}
         language={save.preferences.language}
