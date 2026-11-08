@@ -4,7 +4,6 @@ import React from "react";
 import {
   View,
   Text,
-  Image,
   Pressable,
   StyleSheet,
   useWindowDimensions,
@@ -14,11 +13,11 @@ import { useTranslation } from "react-i18next";
 import { GardenViewport } from "../GardenViewport";
 import { GardenMiniPair } from "../GardenMiniPair";
 import { MaterialRibbon } from "../MaterialRibbon";
-import { cozyImages } from "../assets/images";
 import { SvgXml } from "react-native-svg";
 import { gardenIllustrations } from "../assets/cozyGardenIllustrations";
 import { CozyButton } from "./CozyButton";
 import { ResourceBadge } from "./ResourceBadge";
+import { CharacterIdle } from "../living/CharacterIdle";
 import { cozy } from "./theme";
 import type { Save } from "../engine/save";
 import type { MiniSlot } from "../engine/miniProgress";
@@ -85,11 +84,9 @@ export function GardenHome({
               onPress={onMillie}
               style={s.portrait}
             >
-              <Image
-                source={cozyImages.avatars.millie}
-                style={s.avatar}
-                resizeMode="contain"
-              />
+              <CharacterIdle character="millie" size={32}
+                enabled={save.preferences.animations}
+                reducedMotion={save.preferences.reducedMotion} />
             </Pressable>
             <Pressable
               accessibilityRole="button"
@@ -97,11 +94,9 @@ export function GardenHome({
               onPress={onMarmalade}
               style={s.portrait}
             >
-              <Image
-                source={cozyImages.avatars.marmalade}
-                style={s.avatar}
-                resizeMode="contain"
-              />
+              <CharacterIdle character="marmalade" size={32}
+                enabled={save.preferences.animations}
+                reducedMotion={save.preferences.reducedMotion} />
             </Pressable>
             {!portrait && (
               <View>
@@ -204,8 +199,9 @@ const s = StyleSheet.create({
     borderColor: cozy.color.honey,
     backgroundColor: cozy.color.paperLight,
     ...cozy.shadow,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  avatar: { width: 40, height: 40 },
   brand: {
     fontFamily: cozy.font.title,
     fontSize: 21,
