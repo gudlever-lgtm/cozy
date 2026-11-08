@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
     flex: 1,
     overflow: "hidden",
     position: "relative",
-    backgroundColor: "#e8ecdf",
+    backgroundColor: "transparent",
   },
   controls: {
     position: "absolute",
