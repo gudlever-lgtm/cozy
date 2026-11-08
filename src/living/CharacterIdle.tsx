@@ -1,4 +1,4 @@
-import { View, Image, StyleSheet } from "react-native";
+import { View, Image } from "react-native";
 import React, { memo, useEffect } from "react";
 import Animated, {
   useSharedValue,
