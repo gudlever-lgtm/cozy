@@ -68,6 +68,7 @@ export function GardenHome({
         {scene}
       </GardenViewport>
       <View
+        testID="garden-hud"
         pointerEvents="box-none"
         style={[
           s.hud,
@@ -84,7 +85,7 @@ export function GardenHome({
             narrowPortrait && { flexDirection: "column", alignItems: "stretch" },
           ]}
         >
-          <View style={s.friends}>
+          <View testID="garden-friends" style={s.friends}>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={String(t("millie"))}
@@ -121,6 +122,7 @@ export function GardenHome({
             )}
           </View>
           <View
+            testID="garden-resources"
             style={[
               s.resources,
               narrowPortrait && { justifyContent: "flex-end", flexWrap: "wrap" },
@@ -153,7 +155,7 @@ export function GardenHome({
           },
         ]}
       >
-        <View style={s.mini}>
+        <View testID="garden-mini-actions" style={s.mini}>
           <Text style={s.miniLabel}>{String(t("yourMiniGames"))}</Text>
           <GardenMiniPair
             compact
@@ -189,6 +191,7 @@ export function GardenHome({
         ]}
       >
         <CozyButton
+          testID="garden-play-button"
           label={String(t("play"))}
           icon="play"
           onPress={onPlay}
