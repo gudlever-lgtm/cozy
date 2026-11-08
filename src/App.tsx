@@ -7,6 +7,7 @@ import { ResourceBadge } from "./ui/ResourceBadge";
 import { cozy } from "./ui/theme";
 import { GardenBuildScreen } from "./GardenBuildScreen";
 import { GardenMiniPair } from "./GardenMiniPair";
+import { MiniGameHub } from "./MiniGameHub";
 import {
   newSolitaire,
   solitaireTypes,
@@ -679,7 +680,8 @@ export default function App() {
       return;
     }
     if (id === "mini") {
-      go("garden");
+      setMiniHub(true);
+      go("mini");
       return;
     }
     go(id);
@@ -1708,10 +1710,12 @@ export default function App() {
             {screen === "mini" && (
               <>
                 {!activeMini ? (
-                  <View>
-                    <Text style={st.label}>{tt("miniProgressInfo")}</Text>
-                    {button(tt("garden"), () => go("garden"))}
-                  </View>
+                  <MiniGameHub
+                    slots={s.miniProgress.slots}
+                    onStart={openMini}
+                    onResume={() => setMiniHub(false)}
+                    saved={mini}
+                  />
                 ) : (
                   <View style={st.playLayout} testID="mini-play-layout">
                     <ScrollView
@@ -2331,7 +2335,7 @@ export default function App() {
             [
               { id: "garden", label: "⌂ " + tt("garden"), icon: "garden" },
               { id: "play", label: "♠ " + tt("play"), icon: "play" },
-
+              { id: "mini", label: "✿ " + tt("mini"), icon: "match" },
               { id: "menu", label: tt("mainMenu"), icon: "menu" },
             ] as const
           ).map((item) => (
@@ -2346,7 +2350,10 @@ export default function App() {
               style={{ flex: 1, minWidth: 0 }}
               onPress={() => {
                 if (item.id === "menu") setMenuOpen(true);
-                else {
+                else if (item.id === "mini") {
+                  setMiniHub(true);
+                  go("mini");
+                } else {
                   if (item.id === "garden") setLocation("cottage");
                   go(item.id);
                 }
