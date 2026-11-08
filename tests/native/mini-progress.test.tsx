@@ -24,7 +24,7 @@ afterEach(async () => {
   jest.restoreAllMocks();
 });
 
-test("home shows two earned-move icons without a mini game tab; play resumes the saved board", async () => {
+test("home shows earned minigames and a dedicated navigation tab; play resumes the saved board", async () => {
   const initial = reward(
     setProfile(fresh("main", "en"), "Gardener", "player"),
     "solitaire",
@@ -33,7 +33,7 @@ test("home shows two earned-move icons without a mini game tab; play resumes the
   await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(initial));
   await renderAsync(<App />);
   await screen.findByTestId("active-mini-pair");
-  expect(screen.queryByRole("button", { name: "Mini-games" })).toBeNull();
+  expect(screen.getByRole("button", { name: "Mini-games" })).toBeOnTheScreen();
   expect(screen.getByTestId("active-mini-match")).toBeOnTheScreen();
   expect(screen.getByTestId("active-mini-hidden")).toBeOnTheScreen();
   fireEvent.press(screen.getByTestId("active-mini-hidden"));
