@@ -1,7 +1,7 @@
 import React, { memo } from "react";
 import { Image } from "react-native";
 import { cozyImages } from "./assets/images";
-import Svg, { Rect, Path, Circle, G, Text as SvgText } from "react-native-svg";
+import Svg, { Rect, Path, G, Text as SvgText } from "react-native-svg";
 import type { Card } from "./engine/solitaire";
 import type { CardTheme } from "./engine/progression";
 const palette = {
@@ -59,69 +59,17 @@ export const CardArtwork = memo(function CardArtwork({
       <Path d={suitPath(card.suit)} fill={ink} />
     </G>
   );
-  if (!card.up && (theme === "classic" || theme === "botanical")) {
+  if (!card.up) {
     return (
       <Image
         testID="solitaire-card-back-art"
         accessible={false}
         source={cozyImages.cardBacks[theme]}
         style={{ width: "100%", height: "100%" }}
-        resizeMode="stretch"
+        resizeMode="contain"
       />
     );
   }
-  if (!card.up)
-    return (
-      <Svg width="100%" height="100%" viewBox="0 0 90 130">
-        <Rect width="90" height="130" rx="6" fill={p.back} />
-        <Rect
-          x="4"
-          y="4"
-          width="82"
-          height="122"
-          rx="5"
-          stroke={p.gold}
-          strokeWidth="1"
-          fill="none"
-        />
-        <Rect
-          x="8"
-          y="8"
-          width="74"
-          height="114"
-          rx="4"
-          stroke={p.gold}
-          strokeWidth=".5"
-          fill="none"
-        />
-        {theme === "river" ? (
-          Array.from({ length: 8 }, (_, i) => (
-            <Path
-              key={i}
-              d={`M10 ${18 + i * 13}Q30 ${8 + i * 13} 45 ${18 + i * 13}T80 ${18 + i * 13}`}
-              stroke={p.gold}
-              strokeWidth="1.5"
-              fill="none"
-              opacity=".6"
-            />
-          ))
-        ) : theme === "winter" ? (
-          <G stroke={p.gold} strokeWidth="2">
-            <Path d="M45 30V100M16 48L74 82M16 82L74 48M36 38L45 48L54 38M36 92L45 82L54 92" />
-            <Circle cx="45" cy="65" r="24" fill="none" />
-          </G>
-        ) : (
-          <G stroke={p.gold} fill="none">
-            <Path
-              d="M45 103Q30 70 47 29M41 72Q17 55 25 42Q46 44 42 65M44 52Q68 35 70 52Q57 67 43 63M44 85Q69 69 70 84Q58 98 44 92"
-              strokeWidth="2"
-            />
-            <Circle cx="48" cy="29" r="10" strokeWidth="1.5" />
-            <Circle cx="48" cy="29" r="3" fill={p.gold} />
-          </G>
-        )}
-      </Svg>
-    );
   return (
     <Svg width="100%" height="100%" viewBox="0 0 90 130">
       <Rect width="90" height="130" rx="6" fill={p.paper} />
