@@ -163,7 +163,6 @@ export function CozyButton({
     >
       <Image
         testID={testID ? `${testID}-art` : undefined}
-        pointerEvents="none"
         source={
           selected === true
             ? cozyRedesignImages.ui_button_green_webp
