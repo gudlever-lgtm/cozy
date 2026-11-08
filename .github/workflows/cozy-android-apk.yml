@@ -1,5 +1,5 @@
 name: Cozy Android test APK (native Gradle, latest)
-# Requested test build: 2026-11-08, using current main and existing test-signing verification.
+# Requested test build v2.1.1 b24: installed version label and original illustrated button assets.
 
 on:
   workflow_dispatch:
@@ -59,10 +59,16 @@ jobs:
           test -x "$SIGNER"
           "$SIGNER" verify "$APK"
           mkdir -p out
+          VERSION="$(node -p "require('./app.json').expo.version")"
+          BUILD="$(node -p "require('./app.json').expo.android.versionCode")"
+          FILE="cozy-solitaire-v${VERSION}-b${BUILD}.apk"
+          cp "$APK" "out/$FILE"
           cp "$APK" out/cozy-solitaire-test.apk
-          URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/cozy-android-test/cozy-solitaire-test.apk"
+          URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/cozy-android-test/$FILE"
+          qrencode -o "out/cozy-solitaire-v${VERSION}-b${BUILD}-qr.png" -s 8 -m 2 "$URL"
           qrencode -o out/cozy-solitaire-qr.png -s 8 -m 2 "$URL"
-          sha256sum out/cozy-solitaire-test.apk > out/SHA256SUMS.txt
+          printf 'Version: %s\\nAndroid build: %s\\nCommit: %s\\nFile: %s\\n' "$VERSION" "$BUILD" "$GITHUB_SHA" "$FILE" > out/BUILD_INFO.txt
+          (cd out && sha256sum "$FILE" cozy-solitaire-test.apk > SHA256SUMS.txt)
       - uses: actions/upload-artifact@v4
         with:
           name: cozy-android-apk-with-qr
@@ -74,8 +80,9 @@ jobs:
         run: |
           set -euo pipefail
           if gh release view cozy-android-test >/dev/null 2>&1; then
-            gh release upload cozy-android-test out/cozy-solitaire-test.apk out/cozy-solitaire-qr.png out/SHA256SUMS.txt --clobber
+            gh release upload cozy-android-test out/* --clobber
+            gh release edit cozy-android-test --notes "Testing build from commit ${GITHUB_SHA}. Version and Android build in BUILD_INFO.txt. This is not a production release; native integration tests may still fail."
           else
-            gh release create cozy-android-test out/cozy-solitaire-test.apk out/cozy-solitaire-qr.png out/SHA256SUMS.txt \
+            gh release create cozy-android-test out/* \
               --title "Cozy Solitaire Android test APK" --notes "Development/testing build; signed with the Android project test configuration. Not a Play Store release." --prerelease
           fi
