@@ -1670,10 +1670,10 @@ export default function App() {
                     setDialog("new");
                   }}
                   onUndo={() => {
-                    if (s.miniProgress.undo === 0) {
-                      setUndoHelp(true);
-                    } else if (!s.game.history.length) {
+                    if (!s.game.history.length) {
                       setTip(tt("noUndoMoves"));
+                    } else if (s.miniProgress.undo === 0) {
+                      setUndoHelp(true);
                     } else {
                       update((v) =>
                         v.game.history.length && v.miniProgress.undo > 0
