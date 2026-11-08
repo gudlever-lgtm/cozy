@@ -3,6 +3,8 @@ import { View, Text, Image, StyleSheet } from "react-native";
 import { GameIcon } from "../GameIcon";
 import { cozyImages } from "../assets/images";
 import { cozy } from "./theme";
+import { useTranslation } from "react-i18next";
+import { number } from "../i18n";
 export function ResourceBadge({
   icon,
   label,
@@ -12,8 +14,10 @@ export function ResourceBadge({
   label: string;
   value: number | string;
 }) {
+  const { i18n } = useTranslation();
+  const displayValue = typeof value === "number" ? number(value, i18n.language) : value;
   return (
-    <View accessible accessibilityLabel={`${label}: ${value}`} style={s.root}>
+    <View accessible accessibilityLabel={`${label}: ${displayValue}`} style={s.root}>
       {icon === "glimmer" ? (
         <Image source={cozyImages.rewardShimmer} style={{ width: 25, height: 25 }} resizeMode="contain" accessible={false} />
       ) : (
@@ -24,7 +28,7 @@ export function ResourceBadge({
           {label}
         </Text>
         <Text style={s.value} numberOfLines={1} adjustsFontSizeToFit>
-          {value}
+          {displayValue}
         </Text>
       </View>
     </View>
