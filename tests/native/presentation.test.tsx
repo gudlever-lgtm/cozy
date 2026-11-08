@@ -35,6 +35,19 @@ test.each(["♠", "♥", "♣", "♦"] as const)(
   },
 );
 
+
+test.each(["classic", "botanical", "river", "winter"] as const)(
+  "%s cards use bundled illustrated backs without stretching",
+  async (theme) => {
+    await renderAsync(
+      <CardArtwork card={{ id: "back", rank: 3, suit: "♠", up: false }} theme={theme} />,
+    );
+    const art = screen.getByTestId("solitaire-card-back-art");
+    expect(art.props.source).toBeTruthy();
+    expect(art.props.resizeMode).toBe("contain");
+  },
+);
+
 test("stack picker uses full-sized paged cards rather than a clipped scrolling text list", async () => {
   const { StackCardPicker } = require("../../src/StackCardPicker");
   const onSelect = jest.fn(),
