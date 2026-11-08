@@ -148,3 +148,15 @@ test("characters and win sparkles only reference bundled offline illustrations",
   assert.match(characters, /useMotionPolicy\(enabled, reducedMotion\)/);
   assert.match(sparkles, /useMotionPolicy\(enabled, reducedMotion\)/);
 });
+
+test("garden HUD uses animated storybook portraits and skips alternate art when motion is off", async () => {
+  const garden = await readFile("src/ui/GardenHome.tsx", "utf8");
+  const characters = await readFile("src/living/CharacterIdle.tsx", "utf8");
+  assert.match(garden, /<CharacterIdle character="millie"/);
+  assert.match(garden, /<CharacterIdle character="marmalade"/);
+  assert.match(garden, /enabled=\{save\.preferences\.animations\}/);
+  assert.match(garden, /reducedMotion=\{save\.preferences\.reducedMotion\}/);
+  assert.match(characters, /\{moving && \(/);
+  assert.match(characters, /characters_millie_wave_webp/);
+  assert.match(characters, /characters_marmalade_look_up_webp/);
+});
