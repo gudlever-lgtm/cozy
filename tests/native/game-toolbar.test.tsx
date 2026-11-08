@@ -17,8 +17,8 @@ test("Undo action remains tappable with no history and invokes feedback handler"
       canAuto={false}
     />,
   );
-  fireEvent.press(screen.getByText("Undo"));
+  fireEvent.press(screen.getByRole("button", { name: "undo" }));
   expect(events).toEqual(["undo"]);
-  fireEvent.press(screen.getByText("New game"));
+  fireEvent.press(screen.getByRole("button", { name: "newGame" }));
   expect(events).toEqual(["undo", "new"]);
 });
