@@ -684,6 +684,12 @@ export default function App() {
       go("mini");
       return;
     }
+    if (id === "garden") {
+      setLocation("cottage");
+      setGardenEditing(false);
+      go("garden");
+      return;
+    }
     go(id);
   };
   const pref = <K extends keyof Save["preferences"]>(
