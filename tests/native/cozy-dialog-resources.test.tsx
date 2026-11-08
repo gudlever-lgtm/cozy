@@ -5,6 +5,7 @@ import { number } from "../../src/i18n";
 import { CozyPanel } from "../../src/ui/CozyPanel";
 import { ResourceBadge } from "../../src/ui/ResourceBadge";
 import { Text } from "react-native";
+import { ScreenPager } from "../../src/ScreenPager";
 
 afterEach(async () => cleanupAsync());
 
@@ -30,3 +31,13 @@ test.each(["da", "en"] as const)(
     expect(screen.getByLabelText("Lysglimt: " + formatted)).toBeOnTheScreen();
   },
 );
+
+test("paginated screens retain a readable floral header and current page", async () => {
+  await i18n.changeLanguage("da");
+  await renderAsync(
+    <ScreenPager id="test-garden-pages" title="Min have" items={[<Text key="one">Dekoration</Text>]} />,
+  );
+  expect(screen.getByTestId("test-garden-pages-pages")).toBeOnTheScreen();
+  expect(screen.getByRole("header", { name: "Min have" })).toBeOnTheScreen();
+  expect(screen.getByText("Dekoration")).toBeOnTheScreen();
+});
