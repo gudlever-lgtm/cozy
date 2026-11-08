@@ -47,6 +47,7 @@ export function MainMenu({
   const primary: { id: MenuDestination; key: string; icon: string }[] = [
     { id: "newDeal", key: "newGame", icon: "newGame" },
     { id: "garden", key: "garden", icon: "garden" },
+    { id: "mini", key: "mini", icon: "match" },
     { id: "decorations", key: "buildGarden", icon: "decorations" },
     { id: "quests", key: "quests", icon: "quests" },
     { id: "world", key: "world", icon: "world" },
