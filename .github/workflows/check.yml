@@ -13,9 +13,13 @@ jobs:
         with:
           node-version: '24'
           cache: npm
-      - run: npm ci
+      - id: install
+        run: npm ci
       - run: npm run typecheck
       - run: npm test
       - run: npm run audit:art
       - run: npm run test:native
+      # Validate Metro bundling even when an unrelated Jest test fails.
+      # This exports JS/assets only; it does not build an APK.
       - run: npm run export:native
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
