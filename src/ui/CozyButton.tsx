@@ -161,9 +161,19 @@ export function CozyButton({
         disabled && { opacity: 0.55 },
       ]}
     >
-      <Timber
-        green={selected === true || (!quiet && selected === undefined)}
-        muted={disabled}
+      <Image
+        testID={testID ? `${testID}-art` : undefined}
+        pointerEvents="none"
+        source={
+          selected === true
+            ? cozyRedesignImages.ui_button_green_webp
+            : quiet || disabled
+              ? cozyRedesignImages.ui_button_paper_webp
+              : cozyRedesignImages.ui_button_wood_webp
+        }
+        resizeMode="stretch"
+        accessible={false}
+        style={styles.buttonArtwork}
       />
       {!compact && !quiet && !disabled && (
         <Image
@@ -176,14 +186,14 @@ export function CozyButton({
       {icon && (
         <GameIcon
           name={icon}
-          color={cozy.color.cream}
+          color={quiet || disabled ? cozy.color.woodDark : cozy.color.cream}
           size={compact ? 20 : 23}
         />
       )}
       <Text
         numberOfLines={2}
         maxFontSizeMultiplier={1.25}
-        style={[styles.label, compact && { fontSize: 11 }]}
+        style={[styles.label, (quiet || disabled) && styles.paperLabel, compact && { fontSize: 11 }]}
       >
         {label}
       </Text>
@@ -198,6 +208,8 @@ export function CozyButton({
   );
 }
 const styles = StyleSheet.create({
+  buttonArtwork: { ...StyleSheet.absoluteFillObject, borderRadius: 15, width: "100%", height: "100%" },
+  paperLabel: { color: cozy.color.woodDark, textShadowColor: "transparent" },
   button: {
     minHeight: 48,
     minWidth: 44,
