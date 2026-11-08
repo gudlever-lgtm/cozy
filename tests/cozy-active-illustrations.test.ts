@@ -25,3 +25,13 @@ test("illustrated menu, primary controls, and portrait garden use bundled art", 
   assert.match(garden, /portrait && season === "spring" \? cozyImages\.gardenPortrait/);
   assert.match(images, /gardenPortrait: cozyRedesignImages\.backgrounds_garden_home_spring_webp/);
 });
+
+test("solitaire toolbar icons use separate transparent production graphics", () => {
+  const icon = read("src/GameIcon.tsx");
+  const source = read("src/assets/cozyRedesignImages.ts");
+  for (const key of ["new_game", "undo", "hint", "auto_finish"]) {
+    const assetKey = "cards_icon_" + key + "_webp";
+    assert.ok(icon.includes("cozyRedesignImages." + assetKey), "Missing active icon: " + assetKey);
+    assert.ok(source.includes('"' + assetKey + '"'), "Missing bundled icon: " + assetKey);
+  }
+});
