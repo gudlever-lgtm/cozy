@@ -1,4 +1,5 @@
 import { gardenImageSize, type CozySeason } from "./assets/images";
+import { GardenBackdrop } from "./ui/GardenBackdrop";
 import { Timber } from "./ui/CozyButton";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { cozy } from "./ui/theme";
@@ -61,6 +62,7 @@ export function GardenBuildScreen({
     });
   return (
     <View testID="garden-build-screen" style={styles.root}>
+      <GardenBackdrop season={season} />
       <View testID="build-garden-preview" style={StyleSheet.absoluteFill}>
         <GardenViewport
           imageSize={gardenImageSize(season)}
