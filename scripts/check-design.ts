@@ -135,8 +135,12 @@ async function main() {
           `${name}: ${character} portrait escapes the top-bar button`,
         );
       }
-      const screenRect = { x: 0, y: 0, width, height };
-      const insideScreen = (box: typeof screenRect) =>
+      const insideScreen = (box: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+      }) =>
         box.x >= -1 &&
         box.y >= -1 &&
         box.x + box.width <= width + 1 &&
