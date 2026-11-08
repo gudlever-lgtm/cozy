@@ -1315,7 +1315,7 @@ test("garden material counters open labeled totals and persistent recent gains w
   expect((await stored()).economy.inventory).toEqual(["flowers"]);
 });
 
-test("main menu submenus close back to the current deal and new deals still require confirmation", async () => {
+test("illustrated main menu navigates directly and preserves the active solitaire deal", async () => {
   const original = setProfile(fresh("menu-deal", "en"), "Menu Native", "p");
   await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(original));
   await renderAsync(<App />);
@@ -1326,21 +1326,20 @@ test("main menu submenus close back to the current deal and new deals still requ
   const played = (await stored()).game;
   expect(
     within(screen.getByTestId("main-tabs")).getAllByRole("button"),
-  ).toHaveLength(3);
+  ).toHaveLength(4);
+
   press("Main menu");
-  press("Garden and quests");
-  expect(
-    screen.getByRole("button", { name: "☷ Quest Journal" }),
-  ).toBeOnTheScreen();
-  press("Back");
-  press("Close");
-  expect(screen.getByTestId("solitaire-board")).toBeOnTheScreen();
+  const menu = await screen.findByTestId("main-menu");
+  expect(within(menu).getByText(String(i18n.t("menuMore")))).toBeOnTheScreen();
+  fireEvent.press(within(menu).getByTestId("menu-quests"));
+  await screen.findByTestId("quest-list-scroll");
+  expect(screen.queryByTestId("main-menu")).toBeNull();
   expect((await stored()).game).toEqual(played);
+
   press("Main menu");
-  press("Games");
-  fireEvent.press(
-    screen.getByRole("button", { name: String(i18n.t("newGame")) }),
-  );
+  const second = await screen.findByTestId("main-menu");
+  fireEvent.press(within(second).getByTestId("menu-newDeal"));
+  await screen.findByTestId("deal-dialog-scroll");
   expect((await stored()).game).toEqual(played);
   press(String(i18n.t("cancel")));
   expect((await stored()).game).toEqual(played);
