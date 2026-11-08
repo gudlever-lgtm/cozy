@@ -1,4 +1,6 @@
 import React, { memo } from "react";
+import { Image } from "react-native";
+import { cozyImages } from "./assets/images";
 import Svg, { Rect, Path, Circle, G, Text as SvgText } from "react-native-svg";
 import type { Card } from "./engine/solitaire";
 import type { CardTheme } from "./engine/progression";
@@ -57,6 +59,17 @@ export const CardArtwork = memo(function CardArtwork({
       <Path d={suitPath(card.suit)} fill={ink} />
     </G>
   );
+  if (!card.up && (theme === "classic" || theme === "botanical")) {
+    return (
+      <Image
+        testID="solitaire-card-back-art"
+        accessible={false}
+        source={cozyImages.cardBacks[theme]}
+        style={{ width: "100%", height: "100%" }}
+        resizeMode="stretch"
+      />
+    );
+  }
   if (!card.up)
     return (
       <Svg width="100%" height="100%" viewBox="0 0 90 130">
