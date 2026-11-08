@@ -115,14 +115,29 @@ export function MainMenu({
               {String(t("mainMenu"))}
             </Text>
             <View style={s.grid}>
-              {[...primary, ...secondary].map((item, index) => (
+              {primary.map((item) => (
                 <CozyButton
                   key={item.id}
                   testID={`menu-${item.id}`}
                   label={String(t(item.key))}
                   icon={item.icon}
                   onPress={() => onNavigate(item.id)}
-                  quiet={index >= primary.length}
+                  style={{ width: width < 350 ? "100%" : "48%", minHeight: 52 }}
+                />
+              ))}
+            </View>
+            <Text accessibilityRole="header" style={s.secondaryTitle}>
+              {String(t("menuMore"))}
+            </Text>
+            <View style={s.grid}>
+              {secondary.map((item) => (
+                <CozyButton
+                  key={item.id}
+                  testID={`menu-${item.id}`}
+                  label={String(t(item.key))}
+                  icon={item.icon}
+                  onPress={() => onNavigate(item.id)}
+                  quiet
                   style={{ width: width < 350 ? "100%" : "48%", minHeight: 52 }}
                 />
               ))}
@@ -178,6 +193,7 @@ const s = StyleSheet.create({
   },
   subtitle: { fontSize: 11, color: cozy.color.honey, marginTop: 3 },
   title: { fontSize: 20, fontFamily: cozy.font.title, color: cozy.color.ink },
+  secondaryTitle: { fontSize: 15, fontWeight: "700", color: cozy.color.woodDark, paddingTop: 8, borderTopWidth: 1, borderTopColor: cozy.color.border },
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
