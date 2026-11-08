@@ -1012,7 +1012,7 @@ export default function App() {
           }
           style={[StyleSheet.absoluteFill, { width: "100%", height: "100%" }]}
           testID="garden-background-image"
-          resizeMode={hidden ? "cover" : "contain"}
+          resizeMode={hidden || (height > width && location === "cottage") ? "cover" : "contain"}
           accessibilityIgnoresInvertColors
         />
       )}
