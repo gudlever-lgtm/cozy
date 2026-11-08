@@ -15,7 +15,8 @@
     "export:native": "expo export --platform all --output-dir dist --max-workers 2",
     "test:native": "jest --runInBand",
     "preview:design": "node scripts/preview-design.js",
-    "test:design": "node --import tsx scripts/check-design.ts"
+    "test:design": "node --import tsx scripts/check-design.ts",
+    "audit:art": "node scripts/audit-cozy-art.mjs"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",
