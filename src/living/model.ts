@@ -22,6 +22,24 @@ export const ACTIVE_LIMITS: Record<AnimationQuality, number> = {
   medium: 24,
   high: 32,
 };
+/**
+ * Bound the total visible animation elements by screen area and user quality.
+ * Does not alter rewards, garden positions, or weather preferences.
+ * Small phones get lower particle counts; larger screens keep full quality.
+ */
+export function ambientViewportBudget(
+  quality: AnimationQuality,
+  width: number,
+  height: number,
+  surface: "world" | "board" = "world",
+): number {
+  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0)
+    return 0;
+  if (surface === "board") return quality === "low" ? 2 : quality === "medium" ? 4 : 6;
+  const base = quality === "low" ? 8 : quality === "medium" ? 16 : 24;
+  const area = width * height;
+  return area < 180_000 ? Math.ceil(base * 0.65) : base;
+}
 export const LAYER_ORDER = [
   "background",
   "behindTrees",
