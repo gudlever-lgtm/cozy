@@ -1707,12 +1707,10 @@ export default function App() {
                     );
                   }}
                   onAuto={() => {
-                    const ready =
-                      !s.game.won &&
-                      s.game.tableau.every((pile) => pile.every((card) => card.up)) &&
-                      !s.game.stock.length &&
-                      !s.game.waste.length;
-                    if (!ready) {
+                    // Preview without changing player progress. A board with
+                    // all cards exposed is not necessarily auto-finishable.
+                    const completed = autoComplete(s.game);
+                    if (completed === s.game || !completed.won) {
                       setTip(tt("autoNotReady"));
                       return;
                     }
