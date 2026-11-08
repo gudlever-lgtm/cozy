@@ -81,6 +81,19 @@ jobs:
           npm run preview:design -- --port 8083 > /tmp/cozy-design-preview.log 2>&1 &
           PREVIEW_PID=$!
           trap 'kill "$PREVIEW_PID" 2>/dev/null || true' EXIT
+          READY=0
+          for attempt in $(seq 1 90); do
+            if curl --silent --fail --output /dev/null http://127.0.0.1:8083; then
+              READY=1
+              break
+            fi
+            if ! kill -0 "$PREVIEW_PID" 2>/dev/null; then break; fi
+            sleep 2
+          done
+          if [ "$READY" -ne 1 ]; then
+            cat /tmp/cozy-design-preview.log
+            exit 1
+          fi
           if ! timeout 15m npm run test:design; then
             cat /tmp/cozy-design-preview.log
             exit 1
