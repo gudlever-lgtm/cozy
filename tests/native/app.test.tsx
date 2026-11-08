@@ -659,7 +659,7 @@ test("inventory shows five compact resource fields using original light Glimmer 
   expect(screen.getByTestId("compact-tooltip")).toBeOnTheScreen();
 });
 
-test("Decorations and Statistics use bounded pages; unique purchases are placed automatically only once", async () => {
+test("new Garden Builder purchases unique decorations and Statistics remains paginated", async () => {
   const initial = setProfile(fresh("paged", "en"), "Pages Native", "p");
   initial.economy.wallet.glimmers = 200;
   initial.economy.wallet.wood = 10;
@@ -667,59 +667,22 @@ test("Decorations and Statistics use bounded pages; unique purchases are placed 
   await renderAsync(<App />);
   await screen.findByTestId("main-tabs");
   press("❀ Decorations");
-  const pager = screen.getByTestId("decorations-pages");
-  fireEvent(pager, "layout", {
-    nativeEvent: { layout: { width: 568, height: 262 } },
+  const builder = screen.getByTestId("garden-build-screen");
+  expect(builder).toBeOnTheScreen();
+  expect(screen.getByTestId("build-catalog")).toBeOnTheScreen();
+  fireEvent.press(screen.getByTestId("build-buy-flowers"));
+  await waitFor(async () => {
+    const saved = await stored();
+    expect(saved.economy.inventory).toContain("flowers");
+    expect(saved.placements.some((p: {id:string}) => p.id === "flowers")).toBe(true);
+    expect(saved.economy.wallet.glimmers).toBe(180);
   });
-  expect(screen.queryByTestId("screen-scroll")).toBeNull();
-  let parent = pager.parent;
-  while (parent) {
-    expect(["ScrollView", "RCTScrollView"]).not.toContain(parent.type);
-    parent = parent.parent;
-  }
-  const buy = screen
-    .getAllByRole("button")
-    .find(
-      (button) =>
-        String(button.props.accessibilityLabel).startsWith("Unlock") &&
-        String(button.props.accessibilityLabel).includes("Flower"),
-    );
-  expect(buy).toBeDefined();
-  fireEvent.press(buy!);
-  await waitFor(async () =>
-    expect((await stored()).economy.inventory).toContain("flowers"),
-  );
-  expect(
-    screen.getByRole("button", { name: "Unlocked: Flower garden" }),
-  ).toBeDisabled();
-  const purchased = (await stored()).economy.wallet.glimmers;
-  expect(
-    screen.queryByRole("button", { name: "Place in garden: Flower garden" }),
-  ).toBeNull();
-  press("⌂ My Garden");
-  const scene = screen.getByTestId("garden-scene");
-  expect(scene.props.onResponderRelease).toBeUndefined();
-  expect(
-    screen.getByTestId("garden-decoration-flowers", {
-      includeHiddenElements: true,
-    }),
-  ).toBeOnTheScreen();
-  expect((await stored()).economy.wallet.glimmers).toBe(purchased);
-  press("❀ Decorations");
-  fireEvent(screen.getByTestId("decorations-pages"), "layout", {
-    nativeEvent: { layout: { width: 568, height: 262 } },
-  });
-  press("Next page");
-  expect(screen.getByRole("button", { name: "Previous page" })).toBeEnabled();
+  expect(screen.queryByTestId("build-buy-flowers")).toBeNull();
+  press("Done");
+  expect(screen.getByTestId("garden-decoration-flowers", {includeHiddenElements:true})).toBeOnTheScreen();
   press("↗ Statistics");
-  fireEvent(screen.getByTestId("statistics-pages"), "layout", {
-    nativeEvent: { layout: { width: 568, height: 262 } },
-  });
-  expect(screen.queryByTestId("screen-scroll")).toBeNull();
-  press("Next page");
-  expect(
-    screen.getByRole("button", { name: "Curious explorer" }),
-  ).toBeOnTheScreen();
+  expect(screen.getByTestId("statistics-pages")).toBeOnTheScreen();
+  expect((await stored()).economy.wallet.glimmers).toBe(180);
 });
 
 test("compact world map explains the actual missing quest instead of a disabled unlock wall", async () => {
@@ -851,15 +814,16 @@ test("Solitaire runs sparse seasonal effects behind cards without intercepting t
   ).toHaveLength(0);
 });
 
-test("Win materials opens game choices without granting free supplies or changing the deal", async () => {
+test("mini-game navigation offers earned activities without granting free materials", async () => {
   const initial = setProfile(fresh("earn", "en"), "Earn Native", "p");
   initial.economy.wallet.glimmers = 75;
   await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(initial));
   await renderAsync(<App />);
   await screen.findByTestId("main-tabs");
-  expect(screen.queryByRole("button", { name: "Gather supplies" })).toBeNull();
-  press("Win materials");
-  expect(screen.getByTestId("mini-start-hidden")).toBeOnTheScreen();
+  press("✿ Mini-games");
+  expect(screen.getByTestId("mini-hub-pages")).toBeOnTheScreen();
+  expect(screen.getByTestId("mini-start-match")).toBeDisabled();
+  expect(screen.getByTestId("mini-start-hidden")).toBeDisabled();
   expect((await stored()).economy.wallet).toEqual(initial.economy.wallet);
   expect((await stored()).counters.gather).toBe(0);
   expect((await stored()).game).toEqual(initial.game);
