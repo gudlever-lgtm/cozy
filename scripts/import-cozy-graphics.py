@@ -56,9 +56,9 @@ def main() -> None:
             suffix = rel.suffix.lower()
             if suffix == ".webp" and not (content.startswith(b"RIFF") and content[8:12] == b"WEBP"):
                 raise SystemExit(f"Invalid WebP data: {name}")
-            if suffix == ".png" and not content.startswith(b"\\x89PNG\\r\\n\\x1a\\n"):
+            if suffix == ".png" and not content.startswith(b"\x89PNG\r\n\x1a\n"):
                 raise SystemExit(f"Invalid PNG data: {name}")
-            if suffix in {".jpg", ".jpeg"} and not content.startswith(b"\\xff\\xd8"):
+            if suffix in {".jpg", ".jpeg"} and not content.startswith(b"\xff\xd8"):
                 raise SystemExit(f"Invalid JPEG data: {name}")
             digest = hashlib.sha256(content).hexdigest()
             if digest != item["sha256"]:
