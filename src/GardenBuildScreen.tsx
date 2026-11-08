@@ -65,7 +65,7 @@ export function GardenBuildScreen({
       <GardenBackdrop season={season} />
       <View testID="build-garden-preview" style={StyleSheet.absoluteFill}>
         <GardenViewport
-          imageSize={gardenImageSize(season)}
+          imageSize={gardenImageSize(season, portrait)}
           editing
           language={language}
           controlsBottom={insets.bottom + 8}
