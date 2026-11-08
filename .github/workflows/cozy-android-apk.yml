@@ -4,6 +4,10 @@ name: Cozy Android test APK (native Gradle, latest)
 # APK creation is a deliberate action. Source pushes must never trigger it.
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/apk-requests/**'
 
 permissions:
   contents: write
