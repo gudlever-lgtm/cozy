@@ -10,6 +10,6 @@ test("all source vector garden assets are bundled in the repository", () => {
     assert.ok(fs.existsSync(asset), "Missing vector graphic: " + asset);
     assert.equal(fs.readFileSync(asset, "utf8"), xml, "Embedded artwork differs from SVG: " + name);
     assert.match(xml, /^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg"/);
-    assert.doesNotMatch(xml, /<text\b|<script\b|https?:\/\//g, "Art should not contain rendered copy, code, or external dependencies");
+    assert.doesNotMatch(xml, /<text\b|<script\b|<image\b|xlink:href/g, "Art should not contain rendered copy, code, or external dependencies");
   }
 });
