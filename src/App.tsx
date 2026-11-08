@@ -1003,7 +1003,11 @@ export default function App() {
         />
       ) : (
         <Image
-          source={cozyImages.seasons[season]}
+          source={
+            !hidden && location === "cottage" && height > width && season === "spring"
+              ? cozyImages.gardenPortrait
+              : cozyImages.seasons[season]
+          }
           style={[StyleSheet.absoluteFill, { width: "100%", height: "100%" }]}
           testID="garden-background-image"
           resizeMode={hidden ? "cover" : "contain"}
@@ -1313,6 +1317,7 @@ export default function App() {
               ) : (
                 <GardenHome
                   season={season}
+                  cottage={location === "cottage"}
                   save={s}
                   scene={gardenScene()}
                   onPlay={() => go("play")}
