@@ -19,7 +19,7 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[1]
 TARGET = ROOT / "assets" / "cozy-redesign" / "illustrations"
 TYPES = {".png", ".webp", ".jpg", ".jpeg"}
-EXPECTED_FOLDERS = {"characters", "decorations", "ui", "cards", "backgrounds"}
+EXPECTED_FOLDERS = {"characters", "decorations", "ui", "cards", "backgrounds", "effects"}
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -38,17 +38,28 @@ def main() -> None:
             raise SystemExit("Expected at least 70 individual art entries")
         digest_map = {}
         selected = []
+        seen = set()
         for item in manifest:
             name = str(item["file"])
             rel = PurePosixPath(name)
             if (rel.is_absolute() or ".." in rel.parts or len(rel.parts) < 2 or
                 rel.parts[0] not in EXPECTED_FOLDERS or rel.suffix.lower() not in TYPES):
                 raise SystemExit(f"Unsafe or unsupported asset path: {name}")
+            if name in seen:
+                raise SystemExit(f"Duplicate asset path: {name}")
+            seen.add(name)
             if name not in names:
                 raise SystemExit(f"Missing source asset: {name}")
             content = archive.read(name)
-            if len(content) > 10_000_000:
-                raise SystemExit(f"Oversized asset: {name}")
+            if not content or len(content) > 10_000_000:
+                raise SystemExit(f"Empty or oversized asset: {name}")
+            suffix = rel.suffix.lower()
+            if suffix == ".webp" and not (content.startswith(b"RIFF") and content[8:12] == b"WEBP"):
+                raise SystemExit(f"Invalid WebP data: {name}")
+            if suffix == ".png" and not content.startswith(b"\\x89PNG\\r\\n\\x1a\\n"):
+                raise SystemExit(f"Invalid PNG data: {name}")
+            if suffix in {".jpg", ".jpeg"} and not content.startswith(b"\\xff\\xd8"):
+                raise SystemExit(f"Invalid JPEG data: {name}")
             digest = hashlib.sha256(content).hexdigest()
             if digest != item["sha256"]:
                 raise SystemExit(f"Checksum mismatch: {name}")
