@@ -236,7 +236,8 @@ const styles = StyleSheet.create({
   },
   compact: { minHeight: 44, paddingHorizontal: 5, paddingVertical: 5 },
   content: {
-    width: "100%",
+    alignSelf: "stretch",
+    minWidth: 0,
     minHeight: 28,
     flexDirection: "row",
     alignItems: "center",
