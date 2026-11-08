@@ -87,7 +87,7 @@ def main() -> None:
             "export const cozyRedesignImages = {",
         ]
         for name in sorted(digest_map):
-            key = name.replace("/", "__").replace(".", "_").replace("-", "_")
+            key = name.replace("/", "_").replace(".", "_").replace("-", "_")
             lines.append(f'  "{key}": require("../../assets/cozy-redesign/illustrations/{name}"),')
         lines.extend(["} as const;", ""])
         manifest_out.write_text("\n".join(lines), encoding="utf-8")
