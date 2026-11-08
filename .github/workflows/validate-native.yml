@@ -66,6 +66,35 @@ jobs:
           CI: '1'
         run: npm run export:native
 
+      - name: Install Chrome for design regression tests
+        uses: browser-actions/setup-chrome@v1
+        id: chrome
+
+      - name: Verify real rendered home and gameplay layouts
+        shell: bash
+        env:
+          CHROMIUM_PATH: ${{ steps.chrome.outputs.chrome-path }}
+          EXPO_NO_TELEMETRY: '1'
+          CI: '1'
+        run: |
+          set -euo pipefail
+          npm run preview:design -- --port 8083 > /tmp/cozy-design-preview.log 2>&1 &
+          PREVIEW_PID=$!
+          trap 'kill "$PREVIEW_PID" 2>/dev/null || true' EXIT
+          if ! timeout 15m npm run test:design; then
+            cat /tmp/cozy-design-preview.log
+            exit 1
+          fi
+
+      - name: Upload screenshots when design tests fail
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cozy-design-failure-screenshots
+          path: work/design-checks/
+          if-no-files-found: ignore
+          retention-days: 7
+
       - name: Summary
         if: always()
         run: |
