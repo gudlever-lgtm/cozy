@@ -11,6 +11,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StrongScrollView } from "./StrongScrollView";
 import { CozyButton } from "./ui/CozyButton";
 import { cozy } from "./ui/theme";
+import { SvgXml } from "react-native-svg";
+import { gardenIllustrations } from "./assets/cozyGardenIllustrations";
 export type MenuDestination =
   | "garden"
   | "play"
@@ -84,6 +86,7 @@ export function MainMenu({
       >
         <View testID="main-menu" style={s.panel}>
           <View style={s.header}>
+            <SvgXml xml={gardenIllustrations.flower} width={34} height={34} accessible={false} />
             <View style={{ flex: 1 }}>
               <Text style={s.brand}>Cozy Solitaire</Text>
               <Text style={s.subtitle}>{String(t("menuSubtitle"))}</Text>
@@ -94,6 +97,9 @@ export function MainMenu({
               quiet
               compact
             />
+          </View>
+          <View pointerEvents="none" style={s.flowerDivider}>
+            <SvgXml xml={gardenIllustrations.branch} width="100%" height={24} />
           </View>
           <StrongScrollView
             testID="main-menu-scroll"
@@ -155,6 +161,7 @@ const s = StyleSheet.create({
     padding: 14,
     backgroundColor: cozy.color.woodDark,
   },
+  flowerDivider: { height: 24, backgroundColor: cozy.color.paper, alignItems: "center" },
   brand: {
     fontSize: 26,
     fontFamily: cozy.font.title,
