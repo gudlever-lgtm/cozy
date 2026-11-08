@@ -9,7 +9,7 @@ test("main menu styles all six primary destinations as primary actions", () => {
   const source = read("src/MainMenu.tsx");
   assert.match(source, /\{primary\.map\(\(item\)/);
   assert.match(source, /\{secondary\.map\(\(item\)/);
-  assert.match(source, /quiet\s*\/>/);
+  assert.match(source, /\bquiet\s+style=/);
   assert.match(source, /t\("menuMore"\)/);
   for (const key of ["newGame", "garden", "buildGarden", "quests", "world", "settings"]) {
     assert.ok(source.includes('key: "' + key + '"'), "Missing primary menu action: " + key);
