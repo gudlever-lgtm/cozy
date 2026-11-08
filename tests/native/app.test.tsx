@@ -177,7 +177,7 @@ test("native hidden-object completion grants its reward once and survives restar
   await cleanupAsync();
   await renderAsync(<App />);
   await screen.findByTestId("main-tabs");
-  expect(screen.getByLabelText("✦ 20 Glimmers")).toBeOnTheScreen();
+  expect(screen.getByLabelText("Glimmers: 20")).toBeOnTheScreen();
   expect((await stored()).counters.hidden).toBe(1);
 });
 
@@ -678,7 +678,7 @@ test("new Garden Builder purchases unique decorations and Statistics remains pag
     expect(saved.economy.wallet.glimmers).toBe(180);
   });
   expect(screen.queryByTestId("build-buy-flowers")).toBeNull();
-  press("Done");
+  press("Done building");
   expect(screen.getByTestId("garden-decoration-flowers", {includeHiddenElements:true})).toBeOnTheScreen();
   press("↗ Statistics");
   expect(screen.getByTestId("statistics-pages")).toBeOnTheScreen();
@@ -1047,8 +1047,9 @@ test.each([1, 2, 3] as MiniLevel[])(
       expect(saved.game).toEqual(original.game);
     });
     press("Back");
-    press("Resume saved puzzle");
+    press("✿ Mini-games");
     expect((await stored()).counters.match).toBe(1);
+    expect((await stored()).economy.wallet.glimmers).toBe(20);
   },
 );
 
@@ -1059,12 +1060,12 @@ test("idle guide in Tea Time resets on actual touch lifecycle and moves without 
   });
   jest.useFakeTimers();
   try {
-    const original = setProfile(fresh("idle-tea", "en"), "Idle Native", "p");
+    const original = withSavedMini(setProfile(fresh("idle-tea", "en"), "Idle Native", "p"), "tea", 1);
     await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(original));
     await renderAsync(<App />);
     await screen.findByTestId("main-tabs");
     press("✿ Mini-games");
-    fireEvent.press(screen.getByTestId("mini-start-tea"));
+    press("Resume saved puzzle");
     await act(async () => {});
     expect(screen.UNSAFE_getByType(IdleFirefly).props.settings.paused).toBe(
       false,
