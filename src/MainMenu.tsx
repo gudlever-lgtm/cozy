@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StrongScrollView } from "./StrongScrollView";
 import { CozyButton } from "./ui/CozyButton";
 import { cozy } from "./ui/theme";
+import { AppVersion } from "./ui/AppVersion";
 import { SvgXml } from "react-native-svg";
 import { gardenIllustrations } from "./assets/cozyGardenIllustrations";
 import { cozyRedesignImages } from "./assets/cozyRedesignImages";
@@ -143,12 +144,13 @@ export function MainMenu({
               ))}
             </View>
           </StrongScrollView>
-          <View style={{ padding: 10 }}>
+          <View style={{ padding: 10, gap: 6 }}>
             <CozyButton
               label={String(t("returnToGame"))}
               onPress={onClose}
               quiet
             />
+            <View style={{ alignItems: "center" }}><AppVersion testID="menu-app-version" /></View>
           </View>
         </View>
       </View>
