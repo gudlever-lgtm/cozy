@@ -54,7 +54,7 @@ export function GardenHome({
   return (
     <View testID="garden-fullscreen" style={s.root}>
       <Image
-        source={cozyImages.seasons[season]}
+        source={portrait && season === "spring" ? cozyImages.gardenPortrait : cozyImages.seasons[season]}
         style={StyleSheet.absoluteFillObject}
         resizeMode="cover"
         resizeMethod="resize"
