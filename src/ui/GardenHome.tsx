@@ -51,6 +51,13 @@ export function GardenHome({
   const bottom = insets.bottom + 70;
   return (
     <View testID="garden-fullscreen" style={s.root}>
+      <Image
+        source={cozyImages.seasons[season]}
+        style={StyleSheet.absoluteFillObject}
+        resizeMode="cover"
+        blurRadius={12}
+        accessible={false}
+      />
       <GardenViewport
         imageSize={gardenImageSize(season)}
         language={save.preferences.language}
