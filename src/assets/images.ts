@@ -41,7 +41,10 @@ export type CozySeason = keyof typeof cozyImages.seasons;
 export function gardenImageSize(season: CozySeason, portraitGarden = false) {
   // Portrait illustration is an actual world plane, not a stretched 836x470 skin.
   // Other seasons and hidden-object scenes retain their existing coordinates.
-  if (portraitGarden && season === "spring") return { width: 941, height: 1672 };
+  // The portrait garden is a tall camera plane for every season. Landscape
+  // seasonal art is cropped by resizeMode="cover" rather than letterboxed.
+  // Spring has a purpose-built portrait image of this exact size.
+  if (portraitGarden) return { width: 941, height: 1672 };
   if (season === "winter") return { width: 1672, height: 941 };
   return { width: 836, height: season === "autumn" ? 471 : 470 };
 }
