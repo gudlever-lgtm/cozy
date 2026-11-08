@@ -282,7 +282,9 @@ export function autoComplete(g: Game): Game {
     if (!h) break;
     next = move(next, h.from, h.to);
   }
-  return next;
+  // Auto finish is atomic: never silently consume some available moves and
+  // leave the player with a partially completed board.
+  return next.won ? next : g;
 }
 
 /** Check a complete stock cycle. Unknown/malformed cycles are never called stuck. */
