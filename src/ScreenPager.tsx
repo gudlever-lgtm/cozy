@@ -27,7 +27,7 @@ export function ScreenPager({
     height: window.height - 58,
   });
   const [requested, setPage] = useState(0);
-  const layout = pageGeometry(bounds.width, bounds.height, actions ? 44 : 30),
+  const layout = pageGeometry(bounds.width, bounds.height, actions ? 44 : 38),
     pages = Math.max(1, Math.ceil(items.length / layout.perPage)),
     page = Math.min(requested, pages - 1);
   useEffect(() => {
