@@ -92,10 +92,10 @@ export function MainMenu({
           <View style={s.header}>
             <Image source={cozyImages.gardenPortrait} style={StyleSheet.absoluteFillObject} resizeMode="cover" accessible={false} />
             <View pointerEvents="none" style={s.headerTint} />
-            <Image source={cozyRedesignImages.decorations_pink_hydrangea_webp} style={{ width: 46, height: 46 }} resizeMode="contain" accessible={false} />
-            <View style={{ flex: 1 }}>
-              <Text style={s.brand}>Cozy Solitaire</Text>
-              <Text style={s.subtitle}>{String(t("menuSubtitle"))}</Text>
+            <Image source={cozyRedesignImages.decorations_pink_hydrangea_webp} style={{ width: width < 375 ? 34 : 46, height: width < 375 ? 34 : 46 }} resizeMode="contain" accessible={false} />
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text numberOfLines={1} adjustsFontSizeToFit style={[s.brand, width < 375 && { fontSize: 20 }]}>Cozy Solitaire</Text>
+              <Text numberOfLines={2} style={s.subtitle}>{String(t("menuSubtitle"))}</Text>
             </View>
             <CozyButton
               label={String(t("close"))}
