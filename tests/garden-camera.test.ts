@@ -36,3 +36,16 @@ test("pan follows the fitted image, so portrait zoom cannot pan into empty verti
   assert.equal(limits.x, 195);
   assert.equal(limits.y, 0);
 });
+
+test("the actual portrait spring artwork fills a portrait viewport without distortion", () => {
+  const portraitArt = { width: 941, height: 1672 };
+  const viewport = { width: 390, height: 844 };
+  const fit = gardenCameraFit(viewport, portraitArt);
+  assert.ok(fit > 0);
+  assert.ok(portraitArt.width * fit <= viewport.width + 1e-8);
+  assert.ok(portraitArt.height * fit <= viewport.height + 1e-8);
+  assert.deepEqual(gardenPanLimits(viewport, portraitArt, 1), { x: 0, y: 0 });
+  const zoomed = gardenPanLimits(viewport, portraitArt, 2);
+  assert.ok(zoomed.x > 0);
+  assert.ok(zoomed.y > 0);
+});
