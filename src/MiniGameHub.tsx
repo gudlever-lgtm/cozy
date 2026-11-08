@@ -4,6 +4,8 @@ import { View, Text, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
 import { ScreenPager } from "./ScreenPager";
 import { MiniArtwork } from "./MiniArtwork";
+import { GameRewardLine } from "./GameRewardLine";
+import { CozyPanel } from "./ui/CozyPanel";
 import { GameIcon } from "./GameIcon";
 import type { MiniKind } from "./engine/session";
 import type { MiniSlot } from "./engine/miniProgress";
@@ -41,7 +43,7 @@ export function MiniGameHub({
         const kind = slot.session.kind;
         const unavailable = slot.done || slot.moves <= 0;
         return (
-          <View key={slot.session.id} style={s.card}>
+          <CozyPanel key={slot.session.id} ornaments={false} style={s.card}>
             <MiniArtwork
               kind={
                 kind === "match" ? "match" : kind === "tea" ? "tea" : "treasure"
@@ -58,6 +60,7 @@ export function MiniGameHub({
                   ? String(t("finishMini"))
                   : String(t("moves", { count: slot.moves }))}
               </Text>
+              <GameRewardLine kind={kind} level={slot.session.level} compact />
             </View>
             <CozyPressable
               testID={`mini-start-${kind}`}
@@ -70,9 +73,9 @@ export function MiniGameHub({
             >
               <GameIcon name="play" size={26} />
             </CozyPressable>
-          </View>
+          </CozyPanel>
         );
-      })}
+      })
     />
   );
 }
@@ -99,7 +102,7 @@ const s = StyleSheet.create({
   disabled: { opacity: 0.42 },
   card: {
     flex: 1,
-    minHeight: 76,
+    minHeight: 86,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
