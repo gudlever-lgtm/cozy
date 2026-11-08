@@ -89,7 +89,7 @@ export function GardenHome({
               style={s.portrait}
             >
               <Image
-                source={cozyImages.characters.millie}
+                source={cozyImages.avatars.millie}
                 style={s.avatar}
                 resizeMode="contain"
               />
@@ -101,7 +101,7 @@ export function GardenHome({
               style={s.portrait}
             >
               <Image
-                source={cozyImages.characters.marmalade}
+                source={cozyImages.avatars.marmalade}
                 style={s.avatar}
                 resizeMode="contain"
               />
