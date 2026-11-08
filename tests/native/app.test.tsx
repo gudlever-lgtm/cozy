@@ -1155,6 +1155,7 @@ test("forest material objectives advance only after a won game, then claim and b
   original.counters.hidden = 2;
   original.counters.gather = 3;
   original.preferences.season = "autumn";
+  original.miniProgress.slots[1].moves = 10;
   await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(original));
   await renderAsync(<App />);
   await screen.findByTestId("main-tabs");
@@ -1165,10 +1166,12 @@ test("forest material objectives advance only after a won game, then claim and b
   expect(screen.getByTestId("forest-art-autumn")).toBeOnTheScreen();
   fireEvent.press(screen.getByTestId("forest-next-action"));
   expect((await stored()).counters.gather).toBe(3);
+  expect(screen.getByTestId("mini-hub-pages")).toBeOnTheScreen();
   fireEvent.press(screen.getByTestId("mini-start-hidden"));
   for (const name of ["Key", "Acorn", "Ribbon", "Spoon", "Button"]) press(name);
   await waitFor(async () => expect((await stored()).counters.gather).toBe(4));
-  press("Explore the forest");
+  press("Main menu");
+  fireEvent.press(screen.getByTestId("menu-forest"));
   fireEvent.press(screen.getByTestId("forest-next-action"));
   await waitFor(async () => {
     const saved = await stored();
