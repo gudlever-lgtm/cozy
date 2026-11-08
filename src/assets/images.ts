@@ -1,3 +1,4 @@
+import { cozyRedesignImages } from "./cozyRedesignImages";
 /** Bundled, offline-ready images for Expo/React Native .
  * Metro requires literal require() calls; do not build dynamic paths from JSON.
  * Images live in public/assets pending a future move to assets/.
@@ -14,9 +15,21 @@ export const cozyImages = {
     marmalade: require("../../public/assets/characters/marmalade_cat.png"),
   },
   avatars: {
-    millie: require("../../assets/cozy-redesign/illustrations/characters/millie_avatar.webp"),
-    marmalade: require("../../assets/cozy-redesign/illustrations/characters/marmalade_avatar.webp"),
+    millie: cozyRedesignImages.characters_millie_idle_webp,
+    marmalade: cozyRedesignImages.characters_marmalade_idle_webp,
   },
+  gardenPortrait: cozyRedesignImages.backgrounds_garden_home_spring_webp,
+  cardBacks: {
+    classic: cozyRedesignImages.cards_card_back_blue_webp,
+    botanical: cozyRedesignImages.cards_card_back_cottage_webp,
+    river: cozyRedesignImages.cards_card_back_blue_webp,
+    winter: cozyRedesignImages.cards_card_back_blue_webp,
+  },
+  floralDetails: {
+    left: cozyRedesignImages.ui_flower_corner_left_webp,
+    right: cozyRedesignImages.ui_flower_corner_right_webp,
+  },
+  rewardShimmer: cozyRedesignImages.effects_shimmer_star_webp,
   sheets: {
     ui: require("../../public/assets/icons/ui_icons_sheet.png"),
     resources: require("../../public/assets/resources/resources_sheet.png"),
