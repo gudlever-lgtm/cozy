@@ -16,6 +16,7 @@ import App from "../../src/App";
 import { TeaTime } from "../../src/TeaTime";
 import { IdleFirefly, IDLE_HINT_DELAY } from "../../src/living/IdleFirefly";
 import { newGame } from "../../src/engine/solitaire";
+import { miniPair } from "../../src/engine/miniProgress";
 import { solitaireIdleHint } from "../../src/presentation/idleHints";
 import i18n from "../../src/i18n";
 import { fresh, setProfile, SAVE_KEY } from "../../src/engine/save";
@@ -43,14 +44,23 @@ function withSavedMini<T extends ReturnType<typeof fresh>>(
   kind: MiniKind,
   level: MiniLevel = 1,
 ): T {
-  save.miniSession = {
-    id: `saved:${kind}:${level}`,
-    kind,
-    level,
-    match: matchForLevel(level),
-    tea: teaForLevel(level),
-    found: [],
-  };
+  // Slots are earned through Solitaire. The first two are Match/Hidden;
+  // Tea appears in round 1. Resume must retain its actual slot and moves.
+  const round = kind === "tea" ? 1 : 0;
+  save.miniProgress.round = round;
+  save.miniProgress.slots = miniPair(round).map((slot) => ({
+    ...slot,
+    moves: 100,
+    session: {
+      ...slot.session,
+      level,
+      match: matchForLevel(level),
+      tea: teaForLevel(level),
+    },
+  }));
+  const slot = save.miniProgress.slots.find((slot) => slot.session.kind === kind);
+  if (!slot) throw Error("Missing earned mini-game slot: " + kind);
+  save.miniSession = { ...slot.session };
   return save;
 }
 async function stored() {
