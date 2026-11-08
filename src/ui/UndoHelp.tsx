@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { useTranslation } from "react-i18next";
 import { CozyButton } from "./CozyButton";
+import { CozyPanel } from "./CozyPanel";
 import { cozy } from "./theme";
 import { GameIcon } from "../GameIcon";
 import { SvgXml } from "react-native-svg";
@@ -36,11 +37,11 @@ export function UndoHelp({
       onRequestClose={onClose}
     >
       <View style={s.scrim}>
-        <View
+        <CozyPanel
           testID="undo-help-dialog"
           style={[
             s.panel,
-            { height: Math.min(380, height - insets.top - insets.bottom - 24) },
+            { maxHeight: Math.max(0, height - insets.top - insets.bottom - 24) },
           ]}
         >
           <StrongScrollView contentContainerStyle={{ gap: 14 }}>
@@ -55,7 +56,7 @@ export function UndoHelp({
             <CozyButton label={String(t("garden"))} onPress={onEarn} />
             <CozyButton label={String(t("close"))} onPress={onClose} quiet />
           </StrongScrollView>
-        </View>
+        </CozyPanel>
       </View>
     </Modal>
   );
@@ -73,11 +74,6 @@ const s = StyleSheet.create({
     maxWidth: 360,
     padding: 22,
     gap: 14,
-    borderRadius: 24,
-    borderWidth: 3,
-    borderColor: cozy.color.border,
-    backgroundColor: cozy.color.paper,
-    ...cozy.shadow,
   },
   title: { fontFamily: cozy.font.title, fontSize: 23, color: cozy.color.ink },
   body: { fontSize: 15, lineHeight: 23, color: cozy.color.muted },
