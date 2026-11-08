@@ -1,5 +1,6 @@
 import { CozyPressable } from "./ui/CozyPressable";
 import { UndoHelp } from "./ui/UndoHelp";
+import { CozyPanel } from "./ui/CozyPanel";
 import { CozyButton, Timber } from "./ui/CozyButton";
 import { GardenHome } from "./ui/GardenHome";
 import { GameToolbar } from "./ui/GameToolbar";
@@ -2464,7 +2465,7 @@ export default function App() {
         )}
         {!dialog && (help || miniHelp || challengeOpen) && (
           <View accessibilityViewIsModal style={st.overlay}>
-            <View style={[st.modal, { height: "80%", maxHeight: "85%" }]}>
+            <CozyPanel style={[st.modal, { height: "80%", maxHeight: "85%" }]}>
               <ScrollView
                 nestedScrollEnabled
                 contentContainerStyle={{ gap: 12, padding: 12 }}
@@ -2513,12 +2514,12 @@ export default function App() {
                   true,
                 )}
               </ScrollView>
-            </View>
+            </CozyPanel>
           </View>
         )}
         {dialog && (
           <View accessibilityViewIsModal style={st.overlay}>
-            <View
+            <CozyPanel
               style={[
                 st.modal,
                 {
@@ -2667,7 +2668,7 @@ export default function App() {
                   })}
                 </View>
               </ScrollView>
-            </View>
+            </CozyPanel>
           </View>
         )}
       </Modal>
