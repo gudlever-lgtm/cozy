@@ -277,6 +277,7 @@ export const da: Record<keyof typeof en, string> = {
   drawOne: "Træk ét",
   drawThree: "Træk tre",
   auto: "Afslut automatisk",
+  autoNotReady: "Automatisk afslutning kan bruges, når trækbunken og afkastbunken er tomme, og alle kort på bordet vender opad.",
   moves: "{{count}} træk",
   moves_one: "{{count}} træk",
   moves_other: "{{count}} træk",
