@@ -1,4 +1,5 @@
 name: Cozy Android test APK (native Gradle, latest)
+# Requested test build: 2026-11-08, using current main and existing test-signing verification.
 
 on:
   workflow_dispatch:
