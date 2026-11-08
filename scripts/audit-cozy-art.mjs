@@ -53,9 +53,14 @@ function inspect(file) {
   assets.push({ path: name, width, height, alpha, bytes: data.length, category });
 }
 walk(root);
+const portrait = assets.find(a => a.path === "backgrounds/garden_home_spring.webp");
+if (!portrait) problems.push("Missing active portrait garden background");
+else if (portrait.width !== 941 || portrait.height !== 1672)
+  problems.push("Portrait camera expects 941x1672 but bundled artwork is " + portrait.width + "x" + portrait.height);
 const groups = Object.groupBy(assets, a => a.category);
 const result = {
   total: assets.length,
+  portraitGarden: portrait ? { width: portrait.width, height: portrait.height } : null,
   bytes: assets.reduce((n, a) => n + a.bytes, 0),
   groups: Object.fromEntries(Object.entries(groups).map(([key, values]) => [key, values.length])),
   problems, warnings,
