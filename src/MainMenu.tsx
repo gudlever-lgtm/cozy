@@ -2,6 +2,7 @@ import React from "react";
 import {
   View,
   Text,
+  Image,
   Modal,
   StyleSheet,
   useWindowDimensions,
@@ -13,6 +14,7 @@ import { CozyButton } from "./ui/CozyButton";
 import { cozy } from "./ui/theme";
 import { SvgXml } from "react-native-svg";
 import { gardenIllustrations } from "./assets/cozyGardenIllustrations";
+import { cozyRedesignImages } from "./assets/cozyRedesignImages";
 export type MenuDestination =
   | "garden"
   | "play"
@@ -87,7 +89,7 @@ export function MainMenu({
       >
         <View testID="main-menu" style={s.panel}>
           <View style={s.header}>
-            <SvgXml xml={gardenIllustrations.flower} width={34} height={34} accessible={false} />
+            <Image source={cozyRedesignImages.decorations_pink_hydrangea_webp} style={{ width: 46, height: 46 }} resizeMode="contain" accessible={false} />
             <View style={{ flex: 1 }}>
               <Text style={s.brand}>Cozy Solitaire</Text>
               <Text style={s.subtitle}>{String(t("menuSubtitle"))}</Text>
