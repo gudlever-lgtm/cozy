@@ -99,14 +99,14 @@ jobs:
             exit 1
           fi
 
-      - name: Upload screenshots when design tests fail
-        if: failure()
+      - name: Upload design screenshots for visual review
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: cozy-design-failure-screenshots
+          name: cozy-design-screenshots
           path: work/design-checks/
           if-no-files-found: ignore
-          retention-days: 7
+          retention-days: 14
 
       - name: Summary
         if: always()
