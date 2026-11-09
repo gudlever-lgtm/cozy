@@ -1231,7 +1231,8 @@ export default function App() {
           onClose={() => setUndoHelp(false)}
           onEarn={() => {
             setUndoHelp(false);
-            go("garden");
+            setMiniHub(true);
+            go("mini");
           }}
         />
       )}
