@@ -162,6 +162,24 @@ async function main() {
       const dockRect = (await page.getByTestId("main-tabs").boundingBox())!;
       assert.ok(!overlap(miniRect, buildRect), `${name}: mini buttons cover build button`);
       assert.ok(!overlap(playRect, dockRect), `${name}: play button covers bottom navigation`);
+      // Portrait bottom navigation is icon-only. Icons must be visually
+      // centred, not pinned to the left as they are on labelled buttons.
+      if (height > width) {
+        for (const id of ["garden", "play", "mini", "menu"]) {
+          const button = (await page.getByTestId(`main-tab-${id}`).boundingBox())!;
+          const icon = (await page.getByTestId(`main-tab-${id}-icon-slot`).boundingBox())!;
+          assert.ok(button && icon, `${name}: missing ${id} bottom navigation icon`);
+          assert.ok(
+            Math.abs(icon.x + icon.width / 2 - button.x - button.width / 2) <= 3,
+            `${name}: ${id} bottom icon must be centred`,
+          );
+          assert.ok(
+            icon.y >= button.y - 1 &&
+              icon.y + icon.height <= button.y + button.height + 1,
+            `${name}: ${id} bottom icon escapes its button`,
+          );
+        }
+      }
       const fullImage = (await page.getByTestId("garden-scene").boundingBox())!;
       await page.getByTestId("garden-zoom-out").click();
       assert.equal(
