@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><defs>
+<linearGradient id="cream" x2="0" y2="1"><stop stop-color="#fff9e7"/><stop offset=".52" stop-color="#ffedc7"/><stop offset="1" stop-color="#ddb87a"/></linearGradient>
+<linearGradient id="gold" x2="0" y2="1"><stop stop-color="#fae4a8"/><stop offset=".5" stop-color="#d49a45"/><stop offset="1" stop-color="#9d622d"/></linearGradient>
+<linearGradient id="green" x2="0" y2="1"><stop stop-color="#c6e753"/><stop offset=".36" stop-color="#69b20a"/><stop offset=".76" stop-color="#348400"/><stop offset="1" stop-color="#1c5900"/></linearGradient>
+<linearGradient id="wood" x2="0" y2="1"><stop stop-color="#d99043"/><stop offset=".48" stop-color="#a95821"/><stop offset="1" stop-color="#723410"/></linearGradient>
+<linearGradient id="purple" x2="0" y2="1"><stop stop-color="#a285dd"/><stop offset="1" stop-color="#493279"/></linearGradient>
+<radialGradient id="paper"><stop stop-color="#fff7e9"/><stop offset="1" stop-color="#edd0a1"/></radialGradient>
+<filter id="shadow" x="-20%" y="-40%" width="140%" height="180%"><feGaussianBlur in="SourceAlpha" stdDeviation="4"/><feOffset dy="4"/><feComponentTransfer><feFuncA type="linear" slope=".25"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs><rect x="28" y="18" width="71" height="53" rx="8" fill="#ca823f" stroke="#88512b" stroke-width="7"/><path d="M17 69H110M30 70V115M96 70V115" stroke="#87502e" stroke-width="10" stroke-linecap="round"/></svg>
