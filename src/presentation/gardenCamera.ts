@@ -18,3 +18,22 @@ export function gardenPanLimits(
     y: Math.max(0, (image.height * scale - viewport.height) / 2),
   };
 }
+
+/** Keep the zoomed garden inside the viewport while following a finger drag. */
+export function gardenPanBy(
+  viewport: { width: number; height: number },
+  image: { width: number; height: number },
+  zoom: number,
+  x: number,
+  y: number,
+  deltaX: number,
+  deltaY: number,
+) {
+  const limits = gardenPanLimits(viewport, image, zoom);
+  const clamp = (value: number, limit: number) =>
+    Math.max(-limit, Math.min(limit, value));
+  return {
+    x: clamp(x + deltaX, limits.x),
+    y: clamp(y + deltaY, limits.y),
+  };
+}
