@@ -306,6 +306,12 @@ async function main() {
         const button = (await item.boundingBox())!;
         const label = (await page.getByTestId(`menu-${id}-label`).boundingBox())!;
         assert.ok(button && label, `${name}: missing ${id} menu label`);
+        // A woodland menu button must remain a landscape plank, not a
+        // stretched square tile. This protects the supplied button artwork.
+        assert.ok(
+          button.width > button.height * 1.7,
+          `${name}: ${id} timber button is stretched vertically`,
+        );
         assert.ok(
           label.x >= button.x - 1 &&
             label.x + label.width <= button.x + button.width + 1 &&
