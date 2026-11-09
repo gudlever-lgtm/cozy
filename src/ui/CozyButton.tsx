@@ -185,7 +185,10 @@ export function CozyButton({
           accessible={false}
         />
       )}
-      <View pointerEvents="none" style={[styles.content, icon && label.length > 0 && styles.contentWithIcon]}>
+      <View
+        pointerEvents="none"
+        style={[styles.content, icon && label.length > 0 && styles.contentWithIcon]}
+      >
         {icon && (
           <View style={[styles.iconSlot, balanced && styles.balancedIconSlot]}>
             <GameIcon
