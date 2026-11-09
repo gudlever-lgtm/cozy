@@ -159,6 +159,9 @@ export function CozyButton({
   const iconOnly = mode === "bottomTab" && label.length === 0;
   const labeled = label.length > 0;
   const paper = quiet || disabled;
+  // Illustrations have transparent floral ends; reserve a readable central lane.
+  const shortLabel = Array.from(label).length;
+  const ordinaryWidth = Math.min(260, Math.max(138, 42 + shortLabel * 11));
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const [tooltipPoint, setTooltipPoint] = useState({ x: 12, y: 12 });
   const tooltip = accessibilityLabel || label;
@@ -188,6 +191,7 @@ export function CozyButton({
       delayLongPress={450}
       style={({ pressed }) => [
         styles.button,
+        mode === "standard" && { minWidth: ordinaryWidth },
         compact && styles.compact,
         mode === "bottomTab" && styles.bottomTab,
         mode === "toolbarAction" && styles.toolbarAction,
@@ -250,6 +254,7 @@ export function CozyButton({
               mode === "menuCard" && styles.menuLabel,
               mode === "menuCard" && !!icon && styles.menuLabelWithIcon,
               mode === "dialogChoice" && styles.dialogLabel,
+              mode === "standard" && styles.standardLabel,
               !vertical && !!icon && styles.inlineLabel,
             ]}
           >
@@ -374,6 +379,7 @@ const styles = StyleSheet.create({
     textShadowColor: "transparent",
   },
   inlineLabel: { paddingHorizontal: 28 },
+  standardLabel: { paddingHorizontal: 12, fontSize: 14, lineHeight: 18 },
   verticalLabel: { paddingHorizontal: 2 },
   toolbarLabel: { fontSize: 13, lineHeight: 17 },
   menuLabel: { fontSize: 13, lineHeight: 17 },
