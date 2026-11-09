@@ -126,6 +126,7 @@ export function CozyButton({
   testID,
   style,
   compact = false,
+  balanced = false,
   role = "button",
 }: {
   label: string;
@@ -139,6 +140,7 @@ export function CozyButton({
   testID?: string;
   style?: StyleProp<ViewStyle>;
   compact?: boolean;
+  balanced?: boolean;
   role?: "button" | "tab";
 }) {
   return (
@@ -155,6 +157,7 @@ export function CozyButton({
       style={({ pressed }) => [
         styles.button,
         compact && styles.compact,
+        balanced && styles.balancedButton,
         style,
         pressed &&
           !disabled && { transform: [{ translateY: 1 }], opacity: 0.9 },
@@ -182,9 +185,9 @@ export function CozyButton({
           accessible={false}
         />
       )}
-      <View pointerEvents="none" style={styles.content}>
+      <View pointerEvents="none" style={[styles.content, icon && label.length > 0 && styles.contentWithIcon]}>
         {icon && (
-          <View style={styles.iconSlot}>
+          <View style={[styles.iconSlot, balanced && styles.balancedIconSlot]}>
             <GameIcon
               name={icon}
               color={quiet || disabled ? cozy.color.woodDark : cozy.color.cream}
@@ -202,7 +205,8 @@ export function CozyButton({
               styles.label,
               (quiet || disabled) && styles.paperLabel,
               compact && styles.compactLabel,
-              icon && styles.labelWithIcon,
+              icon && label.length > 0 && styles.labelWithIcon,
+              balanced && styles.balancedLabel,
             ]}
           >
             {label}
@@ -240,24 +244,29 @@ const styles = StyleSheet.create({
     ...cozy.shadow,
   },
   compact: { minHeight: 44, paddingHorizontal: 5, paddingVertical: 5 },
+  balancedButton: { minHeight: 68, paddingHorizontal: 9, paddingVertical: 8 },
   content: {
     alignSelf: "stretch",
+    flex: 1,
     minWidth: 0,
     minHeight: 28,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
   },
+  contentWithIcon: { paddingHorizontal: 29 },
   iconSlot: {
     position: "absolute",
-    left: 2,
+    left: 0,
     top: 0,
     bottom: 0,
     justifyContent: "center",
     alignItems: "center",
     width: 25,
   },
-  labelWithIcon: { marginHorizontal: 30 },
+  balancedIconSlot: { left: 0 },
+  labelWithIcon: { flex: 1, marginHorizontal: 0 },
+  balancedLabel: { fontSize: 13, lineHeight: 16, flexShrink: 1 },
   compactLabel: { fontSize: 11, lineHeight: 14 },
   flowerAccent: {
     position: "absolute",
