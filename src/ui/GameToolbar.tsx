@@ -33,7 +33,7 @@ export function GameToolbar({
         icon="newGame"
         onPress={onNew}
         compact={!narrow}
-        stacked
+        variant="toolbarAction"
         style={actionStyle}
       />
       <CozyButton
@@ -45,7 +45,7 @@ export function GameToolbar({
         disabled={!canUndo}
         compact={!narrow}
         quiet
-        stacked
+        variant="toolbarAction"
         style={actionStyle}
       />
       <CozyButton
@@ -55,7 +55,7 @@ export function GameToolbar({
         onPress={onHint}
         compact={!narrow}
         quiet
-        stacked
+        variant="toolbarAction"
         style={actionStyle}
       />
       <CozyButton
@@ -66,7 +66,7 @@ export function GameToolbar({
         selected={canAuto ? true : undefined}
         compact={!narrow}
         quiet={!canAuto}
-        stacked
+        variant="toolbarAction"
         style={actionStyle}
       />
     </View>
@@ -82,6 +82,6 @@ const s = StyleSheet.create({
     flexShrink: 0,
   },
   narrowRoot: { flexWrap: "wrap", justifyContent: "space-between" },
-  action: { flex: 1, minWidth: 0, minHeight: 76 },
-  narrowAction: { flexBasis: "46%", flexGrow: 1, minHeight: 76 },
+  action: { flex: 1, minWidth: 0, minHeight: 92 },
+  narrowAction: { flexBasis: "46%", flexGrow: 1, minHeight: 92 },
 });
