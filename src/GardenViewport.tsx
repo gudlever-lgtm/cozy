@@ -9,7 +9,7 @@ import React, {
 } from "react";
 import { Animated, PanResponder, StyleSheet, Text, View } from "react-native";
 
-import { gardenCameraFit, gardenPanLimits } from "./presentation/gardenCamera";
+import { gardenCameraFit, gardenPanBy, gardenPanLimits } from "./presentation/gardenCamera";
 
 const GardenCameraContext = createContext({
   camera: { current: { zoom: 1, x: 0, y: 0 } },
@@ -97,13 +97,15 @@ export function GardenViewport({
           (!draggingDecoration.current &&
             camera.current.zoom > 1.01 &&
             Math.hypot(gesture.dx, gesture.dy) > 5),
-        onPanResponderGrant: (evt) => {
+        onPanResponderGrant: (evt, gesture) => {
           const c = camera.current;
           const touches = evt.nativeEvent.touches;
           start.current = {
             ...c,
-            panX: 0,
-            panY: 0,
+            // Capture the offset at the moment this responder wins the gesture;
+            // it may already have moved before the first grant.
+            panX: gesture.dx,
+            panY: gesture.dy,
             pinch: touches.length >= 2 ? distance(touches[0], touches[1]) : 0,
           };
         },
@@ -139,14 +141,15 @@ export function GardenViewport({
               x: clamp(base.x, -maxX, maxX),
               y: clamp(base.y, -maxY, maxY),
             };
-          } else if (camera.current.zoom > 1.01) {
+          } else if (camera.current.zoom > 1.01 && !draggingDecoration.current) {
             const z = camera.current.zoom;
-            const { x: maxX, y: maxY } = gardenPanLimits(bounds, imageSize, z);
-            const x = clamp(base.x + gesture.dx - base.panX, -maxX, maxX),
-              y = clamp(base.y + gesture.dy - base.panY, -maxY, maxY);
-            dx.setValue(x);
-            dy.setValue(y);
-            camera.current = { zoom: z, x, y };
+            const pan = gardenPanBy(
+              bounds, imageSize, z, base.x, base.y,
+              gesture.dx - base.panX, gesture.dy - base.panY,
+            );
+            dx.setValue(pan.x);
+            dy.setValue(pan.y);
+            camera.current = { zoom: z, ...pan };
           }
         },
         onPanResponderRelease: () => repaint((v) => v + 1),
@@ -203,6 +206,38 @@ export function GardenViewport({
           {children}
         </GardenCameraContext.Provider>
       </Animated.View>
+      {camera.current.zoom > 1.01 && (
+        <View
+          testID="garden-pan-controls"
+          pointerEvents="box-none"
+          style={[
+            styles.panControls,
+            { bottom: controlsBottom + 52, right: controlsRight },
+          ]}
+        >
+          {([
+            ["left", "←", -48, 0, "Venstre", "Left"],
+            ["up", "↑", 0, -48, "Op", "Up"],
+            ["down", "↓", 0, 48, "Ned", "Down"],
+            ["right", "→", 48, 0, "Højre", "Right"],
+          ] as const).map(([id, symbol, stepX, stepY, da, en]) => (
+            <CozyPressable
+              key={id}
+              testID={`garden-pan-${id}`}
+              accessibilityRole="button"
+              accessibilityLabel={language === "da" ? `Flyt udsnit ${da.toLowerCase()}` : `Pan ${en.toLowerCase()}`}
+              onPress={() => {
+                const c = camera.current;
+                const pan = gardenPanBy(bounds, imageSize, c.zoom, c.x, c.y, stepX, stepY);
+                commit(c.zoom, pan.x, pan.y);
+              }}
+              style={styles.panButton}
+            >
+              <Text style={styles.panSymbol}>{symbol}</Text>
+            </CozyPressable>
+          ))}
+        </View>
+      )}
       <View
         style={[
           styles.controls,
@@ -264,6 +299,19 @@ const styles = StyleSheet.create({
     position: "relative",
     backgroundColor: "transparent",
   },
+  panControls: {
+    position: "absolute",
+    flexDirection: "row",
+    gap: 4,
+    zIndex: 20,
+  },
+  panButton: {
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  panSymbol: { color: "#315744", fontSize: 25, fontWeight: "700" },
   controls: {
     position: "absolute",
     right: 8,
