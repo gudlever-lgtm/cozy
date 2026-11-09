@@ -82,5 +82,8 @@ test("auto finish completes an exposed winning board and keeps Undo history", ()
   assert.equal(result.won, true);
   assert.equal(result.history.length, 4);
   assert.equal(result.moves, 4);
-  assert.equal(result.foundations.every((pile) => pile.length === 13), true);
+  assert.equal(
+    result.foundations.every((pile) => pile.length === 13),
+    true,
+  );
 });

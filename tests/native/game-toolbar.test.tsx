@@ -1,5 +1,10 @@
 import React from "react";
-import { renderAsync, screen, fireEvent, cleanupAsync } from "@testing-library/react-native";
+import {
+  renderAsync,
+  screen,
+  fireEvent,
+  cleanupAsync,
+} from "@testing-library/react-native";
 import { GameToolbar } from "../../src/ui/GameToolbar";
 
 afterEach(async () => cleanupAsync());

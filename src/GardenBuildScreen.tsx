@@ -207,7 +207,9 @@ export function GardenBuildScreen({
                             !affordable && { opacity: 0.45 },
                           ]}
                           onPress={() =>
-                            onUpdate((current) => buyGardenDecoration(current, item.id))
+                            onUpdate((current) =>
+                              buyGardenDecoration(current, item.id),
+                            )
                           }
                         >
                           <Timber green muted={!affordable} />

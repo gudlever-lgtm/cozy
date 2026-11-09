@@ -188,7 +188,7 @@ export const stories: {
     area: "forest",
     npc: "pip",
     objectives: [
-      { counter: "hidden", count: 2 },
+      { counter: "hidden", count: 3 },
       { counter: "gather", count: 4 },
     ],
     reward: { glimmers: 35, wood: 3 },

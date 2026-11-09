@@ -1,5 +1,9 @@
 import React from "react";
-import { cleanupAsync, renderAsync, screen } from "@testing-library/react-native";
+import {
+  cleanupAsync,
+  renderAsync,
+  screen,
+} from "@testing-library/react-native";
 import i18n from "../../src/i18n";
 import { number } from "../../src/i18n";
 import { CozyPanel } from "../../src/ui/CozyPanel";
@@ -35,7 +39,11 @@ test.each(["da", "en"] as const)(
 test("paginated screens retain a readable floral header and current page", async () => {
   await i18n.changeLanguage("da");
   await renderAsync(
-    <ScreenPager id="test-garden-pages" title="Min have" items={[<Text key="one">Dekoration</Text>]} />,
+    <ScreenPager
+      id="test-garden-pages"
+      title="Min have"
+      items={[<Text key="one">Dekoration</Text>]}
+    />,
   );
   expect(screen.getByTestId("test-garden-pages-pages")).toBeOnTheScreen();
   expect(screen.getByRole("header", { name: "Min have" })).toBeOnTheScreen();

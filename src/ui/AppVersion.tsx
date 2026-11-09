@@ -4,12 +4,16 @@ import appManifest from "../../app.json";
 import { cozy } from "./theme";
 
 /** Release identity is generated from the same Expo manifest used by Gradle. */
-export const appVersionLabel =
-  `v${appManifest.expo.version} · build ${appManifest.expo.android.versionCode}`;
+export const appVersionLabel = `v${appManifest.expo.version} · build ${appManifest.expo.android.versionCode}`;
 
 export function AppVersion({ testID = "app-version" }: { testID?: string }) {
   return (
-    <View testID={testID} pointerEvents="none" accessible={false} style={styles.wrap}>
+    <View
+      testID={testID}
+      pointerEvents="none"
+      accessible={false}
+      style={styles.wrap}
+    >
       <Text selectable={false} style={styles.label}>
         {appVersionLabel}
       </Text>

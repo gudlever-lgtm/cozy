@@ -64,7 +64,10 @@ export const CharacterIdle = memo(function CharacterIdle({
       ? cozyRedesignImages.characters_millie_wave_webp
       : cozyRedesignImages.characters_marmalade_look_up_webp;
   return (
-    <View pointerEvents="none" style={{ width: size, height: size * 1.25, overflow: "hidden" }}>
+    <View
+      pointerEvents="none"
+      style={{ width: size, height: size * 1.25, overflow: "hidden" }}
+    >
       <Animated.View
         style={[{ width: size, height: size * 1.25 }, style]}
         pointerEvents="none"
@@ -80,7 +83,16 @@ export const CharacterIdle = memo(function CharacterIdle({
           <Animated.Image
             testID={`living-character-pose-${character}`}
             source={alternate}
-            style={[{ width: size, height: size * 1.25, position: "absolute", top: 0, left: 0 }, alternateStyle]}
+            style={[
+              {
+                width: size,
+                height: size * 1.25,
+                position: "absolute",
+                top: 0,
+                left: 0,
+              },
+              alternateStyle,
+            ]}
             resizeMode="contain"
             accessible={false}
           />

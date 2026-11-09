@@ -33,7 +33,9 @@ test("home shows earned minigames and a dedicated navigation tab; play resumes t
   await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(initial));
   await renderAsync(<App />);
   await screen.findByTestId("active-mini-pair");
-  expect(screen.getByRole("button", { name: "Mini-games" })).toBeOnTheScreen();
+  expect(
+    screen.getByRole("button", { name: "✿ Mini-games" }),
+  ).toBeOnTheScreen();
   expect(screen.getByTestId("active-mini-match")).toBeOnTheScreen();
   expect(screen.getByTestId("active-mini-hidden")).toBeOnTheScreen();
   fireEvent.press(screen.getByTestId("active-mini-hidden"));

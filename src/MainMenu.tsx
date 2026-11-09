@@ -91,12 +91,33 @@ export function MainMenu({
       >
         <View testID="main-menu" style={s.panel}>
           <View style={s.header}>
-            <Image source={cozyImages.gardenPortrait} style={StyleSheet.absoluteFillObject} resizeMode="cover" accessible={false} />
+            <Image
+              source={cozyImages.gardenPortrait}
+              style={StyleSheet.absoluteFillObject}
+              resizeMode="cover"
+              accessible={false}
+            />
             <View pointerEvents="none" style={s.headerTint} />
-            <Image source={cozyRedesignImages.decorations_pink_hydrangea_webp} style={{ width: width < 375 ? 34 : 46, height: width < 375 ? 34 : 46 }} resizeMode="contain" accessible={false} />
+            <Image
+              source={cozyRedesignImages.decorations_pink_hydrangea_webp}
+              style={{
+                width: width < 375 ? 34 : 46,
+                height: width < 375 ? 34 : 46,
+              }}
+              resizeMode="contain"
+              accessible={false}
+            />
             <View style={{ flex: 1, minWidth: 0 }}>
-              <Text numberOfLines={1} adjustsFontSizeToFit style={[s.brand, width < 375 && { fontSize: 20 }]}>Cozy Solitaire</Text>
-              <Text numberOfLines={2} style={s.subtitle}>{String(t("menuSubtitle"))}</Text>
+              <Text
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                style={[s.brand, width < 375 && { fontSize: 20 }]}
+              >
+                Cozy Solitaire
+              </Text>
+              <Text numberOfLines={2} style={s.subtitle}>
+                {String(t("menuSubtitle"))}
+              </Text>
             </View>
             <CozyButton
               label={String(t("close"))}
@@ -150,7 +171,9 @@ export function MainMenu({
               onPress={onClose}
               quiet
             />
-            <View style={{ alignItems: "center" }}><AppVersion testID="menu-app-version" /></View>
+            <View style={{ alignItems: "center" }}>
+              <AppVersion testID="menu-app-version" />
+            </View>
           </View>
         </View>
       </View>
@@ -177,7 +200,10 @@ const s = StyleSheet.create({
     overflow: "hidden",
     ...cozy.shadow,
   },
-  headerTint: { ...StyleSheet.absoluteFillObject, backgroundColor: "#342c22b3" },
+  headerTint: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "#342c22b3",
+  },
   header: {
     overflow: "hidden",
     flexDirection: "row",
@@ -186,7 +212,11 @@ const s = StyleSheet.create({
     padding: 14,
     backgroundColor: cozy.color.woodDark,
   },
-  flowerDivider: { height: 24, backgroundColor: cozy.color.paper, alignItems: "center" },
+  flowerDivider: {
+    height: 24,
+    backgroundColor: cozy.color.paper,
+    alignItems: "center",
+  },
   brand: {
     fontSize: 26,
     fontFamily: cozy.font.title,
@@ -195,7 +225,14 @@ const s = StyleSheet.create({
   },
   subtitle: { fontSize: 11, color: cozy.color.honey, marginTop: 3 },
   title: { fontSize: 20, fontFamily: cozy.font.title, color: cozy.color.ink },
-  secondaryTitle: { fontSize: 15, fontWeight: "700", color: cozy.color.woodDark, paddingTop: 8, borderTopWidth: 1, borderTopColor: cozy.color.border },
+  secondaryTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: cozy.color.woodDark,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: cozy.color.border,
+  },
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",

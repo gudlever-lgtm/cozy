@@ -1,7 +1,13 @@
 import { CozyPressable } from "./ui/CozyPressable";
 import { cozy } from "./ui/theme";
 import React, { useState, useEffect } from "react";
-import { View, Text, Image, useWindowDimensions, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  Image,
+  useWindowDimensions,
+  StyleSheet,
+} from "react-native";
 import { CozyPanel } from "./ui/CozyPanel";
 import { cozyRedesignImages } from "./assets/cozyRedesignImages";
 import { useTranslation } from "react-i18next";

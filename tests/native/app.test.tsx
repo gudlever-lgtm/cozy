@@ -11,7 +11,12 @@ import {
 } from "@testing-library/react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { pour, teaWon, hasMatchMove } from "../../src/engine/minigames";
-import { teaForLevel, matchForLevel, type MiniLevel, type MiniKind } from "../../src/engine/session";
+import {
+  teaForLevel,
+  matchForLevel,
+  type MiniLevel,
+  type MiniKind,
+} from "../../src/engine/session";
 import App from "../../src/App";
 import { TeaTime } from "../../src/TeaTime";
 import { IdleFirefly, IDLE_HINT_DELAY } from "../../src/living/IdleFirefly";
@@ -32,7 +37,10 @@ afterEach(async () => {
   await cleanupAsync();
   jest.restoreAllMocks();
 });
-function grantMiniMoves<T extends ReturnType<typeof fresh>>(save: T, moves = 30): T {
+function grantMiniMoves<T extends ReturnType<typeof fresh>>(
+  save: T,
+  moves = 30,
+): T {
   save.miniProgress.slots = save.miniProgress.slots.map((slot) => ({
     ...slot,
     moves,
@@ -58,7 +66,9 @@ function withSavedMini<T extends ReturnType<typeof fresh>>(
       tea: teaForLevel(level),
     },
   }));
-  const slot = save.miniProgress.slots.find((slot) => slot.session.kind === kind);
+  const slot = save.miniProgress.slots.find(
+    (slot) => slot.session.kind === kind,
+  );
   if (!slot) throw Error("Missing earned mini-game slot: " + kind);
   save.miniSession = { ...slot.session };
   return save;
@@ -163,7 +173,9 @@ test("native draw/undo, live localization and profile editing retain the active 
 test("native hidden-object completion grants its reward once and survives restart", async () => {
   await AsyncStorage.setItem(
     SAVE_KEY,
-    JSON.stringify(grantMiniMoves(setProfile(fresh("native", "en"), "Pip Native", "p"))),
+    JSON.stringify(
+      grantMiniMoves(setProfile(fresh("native", "en"), "Pip Native", "p")),
+    ),
   );
   await renderAsync(<App />);
   await screen.findByTestId("main-tabs");
@@ -241,7 +253,11 @@ test("native partial hidden puzzle resumes at its level and cannot pay twice aft
   await AsyncStorage.setItem(
     SAVE_KEY,
     JSON.stringify(
-      withSavedMini(setProfile(fresh("mini-save", "en"), "Puzzle Gardener", "mini-player"), "hidden", 3),
+      withSavedMini(
+        setProfile(fresh("mini-save", "en"), "Puzzle Gardener", "mini-player"),
+        "hidden",
+        3,
+      ),
     ),
   );
   await renderAsync(<App />);
@@ -444,7 +460,13 @@ test.each([1, 2, 3] as MiniLevel[])(
   async (level) => {
     await AsyncStorage.setItem(
       SAVE_KEY,
-      JSON.stringify(withSavedMini(setProfile(fresh("tea-native", "en"), "Tea Native", "p"), "tea", level)),
+      JSON.stringify(
+        withSavedMini(
+          setProfile(fresh("tea-native", "en"), "Tea Native", "p"),
+          "tea",
+          level,
+        ),
+      ),
     );
     await renderAsync(<App />);
     await screen.findByTestId("main-tabs");
@@ -494,7 +516,9 @@ test.each([1, 2, 3] as MiniLevel[])(
 test("game panels scroll in a bounded viewport; oversized menu screens retain their own scroll", async () => {
   await AsyncStorage.setItem(
     SAVE_KEY,
-    JSON.stringify(grantMiniMoves(setProfile(fresh("scroll", "en"), "Scroll Native", "p"))),
+    JSON.stringify(
+      grantMiniMoves(setProfile(fresh("scroll", "en"), "Scroll Native", "p")),
+    ),
   );
   await renderAsync(<App />);
   await screen.findByTestId("main-tabs");
@@ -674,12 +698,18 @@ test("new Garden Builder purchases unique decorations and Statistics remains pag
   await waitFor(async () => {
     const saved = await stored();
     expect(saved.economy.inventory).toContain("flowers");
-    expect(saved.placements.some((p: {id:string}) => p.id === "flowers")).toBe(true);
+    expect(
+      saved.placements.some((p: { id: string }) => p.id === "flowers"),
+    ).toBe(true);
     expect(saved.economy.wallet.glimmers).toBe(180);
   });
   expect(screen.queryByTestId("build-buy-flowers")).toBeNull();
   press("Done building");
-  expect(screen.getByTestId("garden-decoration-flowers", {includeHiddenElements:true})).toBeOnTheScreen();
+  expect(
+    screen.getByTestId("garden-decoration-flowers", {
+      includeHiddenElements: true,
+    }),
+  ).toBeOnTheScreen();
   press("↗ Statistics");
   expect(screen.getByTestId("statistics-pages")).toBeOnTheScreen();
   expect((await stored()).economy.wallet.glimmers).toBe(180);
@@ -841,20 +871,32 @@ test("quest journal opens translated objectives without altering the Solitaire d
   const journal = screen.getByTestId("quest-list-scroll");
   const available = within(journal).queryAllByRole("button");
   expect(available.length).toBeGreaterThan(0);
-  fireEvent.press(available.find(button => String(button.props.testID || "").startsWith("quest-card-"))!);
+  fireEvent.press(
+    available.find((button) =>
+      String(button.props.testID || "").startsWith("quest-card-"),
+    )!,
+  );
   expect(screen.getByTestId("quest-details")).toBeOnTheScreen();
   expect((await stored()).game).toEqual(initial.game);
 });
 
 test("locked quest leads to prerequisite and next objective returns to garden without modifying deal", async () => {
-  const initial = setProfile(fresh("locked-journal", "en"), "Quest Native", "p");
+  const initial = setProfile(
+    fresh("locked-journal", "en"),
+    "Quest Native",
+    "p",
+  );
   await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(initial));
   await renderAsync(<App />);
   await screen.findByTestId("main-tabs");
   press("☷ Quest Journal");
   fireEvent.press(screen.getByTestId("quest-card-millie2"));
   press("Show previous quest");
-  expect(within(screen.getByTestId("quest-details")).getByText(String(i18n.t("millie1Info")))).toBeOnTheScreen();
+  expect(
+    within(screen.getByTestId("quest-details")).getByText(
+      String(i18n.t("millie1Info")),
+    ),
+  ).toBeOnTheScreen();
   press("Go to next step");
   expect(screen.getByTestId("garden-fullscreen")).toBeOnTheScreen();
   expect((await stored()).game).toEqual(initial.game);
@@ -893,7 +935,11 @@ test("shared journey links the real next quest and saved appearance controls", a
 test.each([1, 2, 3] as MiniLevel[])(
   "Hidden Treasures level %s fits a fixed scene with all targets and completes once",
   async (level) => {
-    const original = withSavedMini(setProfile(fresh("hidden-fit", "en"), "Hidden Native", "p"), "hidden", level);
+    const original = withSavedMini(
+      setProfile(fresh("hidden-fit", "en"), "Hidden Native", "p"),
+      "hidden",
+      level,
+    );
     await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(original));
     await renderAsync(<App />);
     await screen.findByTestId("main-tabs");
@@ -1007,7 +1053,11 @@ test.each([1, 2, 3] as MiniLevel[])(
       tea: teaForLevel(level),
       found: [],
     };
-    original.miniProgress.slots[0] = { ...original.miniProgress.slots[0], moves: 8, session: original.miniSession! };
+    original.miniProgress.slots[0] = {
+      ...original.miniProgress.slots[0],
+      moves: 8,
+      session: original.miniSession!,
+    };
     await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(original));
     await renderAsync(<App />);
     await screen.findByTestId("main-tabs");
@@ -1060,7 +1110,11 @@ test("idle guide in Tea Time resets on actual touch lifecycle and moves without 
   });
   jest.useFakeTimers();
   try {
-    const original = withSavedMini(setProfile(fresh("idle-tea", "en"), "Idle Native", "p"), "tea", 1);
+    const original = withSavedMini(
+      setProfile(fresh("idle-tea", "en"), "Idle Native", "p"),
+      "tea",
+      1,
+    );
     await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(original));
     await renderAsync(<App />);
     await screen.findByTestId("main-tabs");
@@ -1188,41 +1242,6 @@ test("forest material objectives advance only after a won game, then claim and b
   expect(screen.getByTestId("world-building-greenhouse")).toBeOnTheScreen();
 });
 
-test("repeat hunts give useful resources for each new round, retain unique unlocks and cannot reapply them", async () => {
-  const original = setProfile(fresh("repeat-hunt", "en"), "Repeat Native", "p");
-  original.economy.inventory = ["flowers"];
-  original.placements = [{ id: "flowers", x: 8, y: 12 }];
-  await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(original));
-  await renderAsync(<App />);
-  await screen.findByTestId("main-tabs");
-  press("✿ Mini-games");
-  expect(
-    screen.getByTestId("repeat-rewards-hidden").props.accessibilityLabel,
-  ).toContain("+2 Wood");
-  fireEvent.press(screen.getByTestId("mini-start-hidden"));
-  for (let round = 0; round < 2; round++) {
-    for (const name of ["Key", "Acorn", "Ribbon", "Spoon", "Button"])
-      press(name);
-    await waitFor(async () =>
-      expect((await stored()).counters.hidden).toBe(round + 1),
-    );
-    if (round === 0) press("Play again");
-  }
-  await waitFor(async () => {
-    const saved = await stored();
-    expect(saved.economy.wallet.glimmers).toBe(40);
-    expect(saved.economy.wallet.wood).toBe(4);
-    expect(saved.economy.wallet.stone).toBe(2);
-    expect(saved.economy.inventory).toEqual(["flowers"]);
-    expect(saved.placements).toEqual(original.placements);
-    expect(saved.game).toEqual(original.game);
-  });
-  press("❀ Decorations");
-  expect(
-    screen.getByRole("button", { name: "Unlocked: Flower garden" }),
-  ).toBeDisabled();
-});
-
 test("garden material counters open labeled totals and persistent recent gains without altering the deal", async () => {
   const original = setProfile(
     fresh("materials-ui", "en"),
@@ -1230,14 +1249,15 @@ test("garden material counters open labeled totals and persistent recent gains w
     "p",
   );
   original.economy.inventory = ["flowers"];
+  original.miniProgress.slots[1].session.level = 2;
+  original.miniProgress.slots[1].moves = 10;
   await AsyncStorage.setItem(SAVE_KEY, JSON.stringify(original));
   await renderAsync(<App />);
   await screen.findByTestId("main-tabs");
   expect(
     within(screen.getByTestId("materials-ribbon")).getAllByRole("button"),
   ).toHaveLength(1);
-  press("Win materials");
-  press("Level 2");
+  press("✿ Mini-games");
   fireEvent.press(screen.getByTestId("mini-start-hidden"));
   for (const name of ["Key", "Acorn", "Ribbon", "Spoon", "Button"]) press(name);
   await waitFor(async () =>

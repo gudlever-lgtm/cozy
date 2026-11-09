@@ -11,8 +11,18 @@ test("main menu styles all six primary destinations as primary actions", () => {
   assert.match(source, /\{secondary\.map\(\(item\)/);
   assert.match(source, /\bquiet\s+style=/);
   assert.match(source, /t\("menuMore"\)/);
-  for (const key of ["newGame", "garden", "buildGarden", "quests", "world", "settings"]) {
-    assert.ok(source.includes('key: "' + key + '"'), "Missing primary menu action: " + key);
+  for (const key of [
+    "newGame",
+    "garden",
+    "buildGarden",
+    "quests",
+    "world",
+    "settings",
+  ]) {
+    assert.ok(
+      source.includes('key: "' + key + '"'),
+      "Missing primary menu action: " + key,
+    );
   }
 });
 
@@ -23,7 +33,10 @@ test("illustrated menu, primary controls, and portrait garden use bundled art", 
   assert.match(button, /cozyRedesignImages\.ui_flower_corner_left_webp/);
   assert.match(button, /!compact && !quiet && !disabled/);
   assert.match(garden, /gardenImageSize\(season, portrait && cottage\)/);
-  assert.match(images, /gardenPortrait: cozyRedesignImages\.backgrounds_garden_home_spring_webp/);
+  assert.match(
+    images,
+    /gardenPortrait: cozyRedesignImages\.backgrounds_garden_home_spring_webp/,
+  );
   assert.match(read("src/App.tsx"), /\? cozyImages\.gardenPortrait/);
 });
 
@@ -32,7 +45,13 @@ test("solitaire toolbar icons use separate transparent production graphics", () 
   const source = read("src/assets/cozyRedesignImages.ts");
   for (const key of ["new_game", "undo", "hint", "auto_finish"]) {
     const assetKey = "cards_icon_" + key + "_webp";
-    assert.ok(icon.includes("cozyRedesignImages." + assetKey), "Missing active icon: " + assetKey);
-    assert.ok(source.includes('"' + assetKey + '"'), "Missing bundled icon: " + assetKey);
+    assert.ok(
+      icon.includes("cozyRedesignImages." + assetKey),
+      "Missing active icon: " + assetKey,
+    );
+    assert.ok(
+      source.includes('"' + assetKey + '"'),
+      "Missing bundled icon: " + assetKey,
+    );
   }
 });

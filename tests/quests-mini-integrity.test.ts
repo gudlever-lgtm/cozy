@@ -20,17 +20,32 @@ test("a minigame reward survives saving and never pays out twice", () => {
 test("claiming a ready quest pays out exactly once and preserves completion", () => {
   const save = fresh("quest-claim", "en");
   const eligibleCounters = { ...save.counters, match: 1 };
-  const claimed = claimQuest(save.economy, save.completed, "millie1", eligibleCounters);
+  const claimed = claimQuest(
+    save.economy,
+    save.completed,
+    "millie1",
+    eligibleCounters,
+  );
   assert.ok(claimed.completed.includes("millie1"));
   assert.equal(claimed.economy.wallet.glimmers, 25);
-  const repeated = claimQuest(claimed.economy, claimed.completed, "millie1", eligibleCounters);
+  const repeated = claimQuest(
+    claimed.economy,
+    claimed.completed,
+    "millie1",
+    eligibleCounters,
+  );
   assert.equal(repeated.economy, claimed.economy);
   assert.equal(repeated.completed, claimed.completed);
 });
 
 test("locked quest cannot grant resources before prerequisite completion", () => {
   const save = fresh("quest-locked", "da");
-  const before = claimQuest(save.economy, save.completed, "millie2", save.counters);
+  const before = claimQuest(
+    save.economy,
+    save.completed,
+    "millie2",
+    save.counters,
+  );
   assert.equal(before.economy, save.economy);
   assert.equal(before.completed, save.completed);
 });

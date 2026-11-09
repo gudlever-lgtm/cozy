@@ -127,7 +127,10 @@ test("particle budgets respect accessibility, screen size and quality without ch
   assert.equal(ambientViewportBudget("low", 390, 844, "board"), 2);
   assert.equal(ambientViewportBudget("medium", 390, 844, "board"), 4);
   assert.equal(ambientViewportBudget("high", 390, 844, "board"), 6);
-  assert.ok(ambientViewportBudget("high", 320, 550) < ambientViewportBudget("high", 390, 844));
+  assert.ok(
+    ambientViewportBudget("high", 320, 550) <
+      ambientViewportBudget("high", 390, 844),
+  );
 });
 
 test("characters and win sparkles only reference bundled offline illustrations", async () => {
@@ -143,7 +146,10 @@ test("characters and win sparkles only reference bundled offline illustrations",
     "effects_shimmer_trio_webp",
   ]) {
     assert.ok(manifest.includes(name), "Bundled graphic missing: " + name);
-    assert.ok((characters + sparkles).includes(name), "Graphic not integrated: " + name);
+    assert.ok(
+      (characters + sparkles).includes(name),
+      "Graphic not integrated: " + name,
+    );
   }
   assert.match(characters, /useMotionPolicy\(enabled, reducedMotion\)/);
   assert.match(sparkles, /useMotionPolicy\(enabled, reducedMotion\)/);
