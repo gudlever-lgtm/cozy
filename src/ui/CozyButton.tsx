@@ -190,7 +190,10 @@ export function CozyButton({
         style={[styles.content, icon && label.length > 0 && styles.contentWithIcon]}
       >
         {icon && (
-          <View style={[styles.iconSlot, balanced && styles.balancedIconSlot]}>
+          <View
+            testID={testID ? `${testID}-icon-slot` : undefined}
+            style={label.length > 0 ? styles.iconSlot : styles.iconOnlySlot}
+          >
             <GameIcon
               name={icon}
               color={quiet || disabled ? cozy.color.woodDark : cozy.color.cream}
@@ -267,7 +270,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: 25,
   },
-  balancedIconSlot: { left: 0 },
+  // Textless tab controls have an independent, truly centred icon.
+  iconOnlySlot: {
+    width: 25,
+    height: 28,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   labelWithIcon: { flex: 1, marginHorizontal: 0 },
   balancedLabel: { fontSize: 13, lineHeight: 16, flexShrink: 1 },
   compactLabel: { fontSize: 11, lineHeight: 14 },
