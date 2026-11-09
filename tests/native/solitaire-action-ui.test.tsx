@@ -21,12 +21,7 @@ test("all four Danish illustrated actions retain visible text and working callba
     onAuto: jest.fn(),
   };
   await renderAsync(
-    <GameToolbar
-      {...callbacks}
-      undo={0}
-      canUndo
-      canAuto={false}
-    />,
+    <GameToolbar {...callbacks} undo={0} canUndo canAuto={false} />,
   );
 
   for (const [id, label] of [
@@ -35,7 +30,9 @@ test("all four Danish illustrated actions retain visible text and working callba
     ["hint", "Tip"],
     ["auto", "Afslut automatisk"],
   ]) {
-    expect(screen.getByTestId(`solitaire-action-${id}-label`).props.children).toBe(label);
+    expect(
+      screen.getByTestId(`solitaire-action-${id}-label`).props.children,
+    ).toBe(label);
     expect(screen.getByTestId(`solitaire-action-${id}-icon-slot`)).toBeTruthy();
   }
 
@@ -62,5 +59,7 @@ test("English auto-finish text remains present when the action is not ready", as
       canAuto={false}
     />,
   );
-  expect(screen.getByTestId("solitaire-action-auto-label").props.children).toBe("Auto-finish");
+  expect(screen.getByTestId("solitaire-action-auto-label").props.children).toBe(
+    "Auto-finish",
+  );
 });

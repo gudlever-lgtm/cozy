@@ -23,10 +23,7 @@ export function GameToolbar({
   const narrow = useWindowDimensions().width < 420;
   const actionStyle = [s.action, narrow && s.narrowAction];
   return (
-    <View
-      testID="solitaire-toolbar"
-      style={[s.root, narrow && s.narrowRoot]}
-    >
+    <View testID="solitaire-toolbar" style={[s.root, narrow && s.narrowRoot]}>
       <CozyButton
         testID="solitaire-action-new"
         label={String(t("newGame"))}

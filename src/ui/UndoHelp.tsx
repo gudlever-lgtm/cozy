@@ -31,9 +31,7 @@ export function UndoHelp({
       <View style={s.scrim}>
         <CozyPanel testID="undo-help-dialog" style={s.panel}>
           <View style={s.content}>
-            <View
-              style={s.illustration}
-            >
+            <View style={s.illustration}>
               <SvgXml
                 xml={gardenIllustrations.lantern}
                 width={34}
@@ -41,7 +39,11 @@ export function UndoHelp({
               />
               <GameIcon name="undo" size={38} />
             </View>
-            <Text testID="undo-help-title" accessibilityRole="header" style={s.title}>
+            <Text
+              testID="undo-help-title"
+              accessibilityRole="header"
+              style={s.title}
+            >
               {String(t("undoEmptyTitle"))}
             </Text>
             <Text testID="undo-help-body" style={s.body}>
@@ -80,7 +82,22 @@ const s = StyleSheet.create({
     padding: 22,
   },
   content: { gap: 14, width: "100%", alignItems: "stretch" },
-  illustration: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 12 },
-  title: { fontFamily: cozy.font.title, fontSize: 23, color: cozy.color.ink, textAlign: "center" },
-  body: { fontSize: 15, lineHeight: 23, color: cozy.color.muted, textAlign: "center" },
+  illustration: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+  },
+  title: {
+    fontFamily: cozy.font.title,
+    fontSize: 23,
+    color: cozy.color.ink,
+    textAlign: "center",
+  },
+  body: {
+    fontSize: 15,
+    lineHeight: 23,
+    color: cozy.color.muted,
+    textAlign: "center",
+  },
 });

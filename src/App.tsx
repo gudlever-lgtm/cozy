@@ -509,7 +509,12 @@ export default function App() {
       selected={selected}
       variant="dialogChoice"
       accessibilityLabel={accessibilityLabel}
-      style={{ minWidth: 130, minHeight: 68, flexShrink: 1, alignSelf: "stretch" }}
+      style={{
+        minWidth: 130,
+        minHeight: 68,
+        flexShrink: 1,
+        alignSelf: "stretch",
+      }}
     />
   );
   const heading = (title: string, sub?: string) => (
@@ -1254,7 +1259,9 @@ export default function App() {
           onClose={() => setUndoHelp(false)}
           onEarn={() => {
             setUndoHelp(false);
-            if (s.miniProgress.slots.some((slot) => !slot.done && slot.moves > 0)) {
+            if (
+              s.miniProgress.slots.some((slot) => !slot.done && slot.moves > 0)
+            ) {
               setMiniHub(true);
               go("mini");
             } else {
@@ -2163,7 +2170,13 @@ export default function App() {
                           },
                         ]}
                       >
-                        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            gap: 10,
+                          }}
+                        >
                           <PlayerAvatar avatar={s.profile?.avatar} size={48} />
                           <Text style={st.label}>{tt("profile")}</Text>
                         </View>
@@ -2691,7 +2704,12 @@ export default function App() {
                   </Text>
                 )}
                 <View style={st.row}>
-                  {dialogButton(tt("cancel"), () => setDialog(null), false, true)}
+                  {dialogButton(
+                    tt("cancel"),
+                    () => setDialog(null),
+                    false,
+                    true,
+                  )}
                   {dialogButton(tt("confirm"), () => {
                     if (dialog === "new") {
                       if (

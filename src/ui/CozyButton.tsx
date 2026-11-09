@@ -114,7 +114,8 @@ export function Timber({
     </View>
   );
 }
-export type CozyButtonVariant = "bottomTab" | "toolbarAction" | "menuCard" | "dialogChoice";
+export type CozyButtonVariant =
+  "bottomTab" | "toolbarAction" | "menuCard" | "dialogChoice";
 
 export function CozyButton({
   label,
@@ -152,7 +153,8 @@ export function CozyButton({
   // Keep the older props compatible; use explicit variants for all major
   // surfaces. The artwork, icon and text share one measured touch target.
   const mode: CozyButtonVariant | "standard" =
-    variant ?? (stacked ? "toolbarAction" : balanced ? "dialogChoice" : "standard");
+    variant ??
+    (stacked ? "toolbarAction" : balanced ? "dialogChoice" : "standard");
   const vertical = mode === "toolbarAction" || mode === "menuCard";
   const iconOnly = mode === "bottomTab" && label.length === 0;
   const labeled = label.length > 0;
@@ -176,7 +178,8 @@ export function CozyButton({
         mode === "menuCard" && styles.menuCard,
         mode === "dialogChoice" && styles.dialogChoice,
         style,
-        pressed && !disabled && { transform: [{ translateY: 1 }], opacity: 0.9 },
+        pressed &&
+          !disabled && { transform: [{ translateY: 1 }], opacity: 0.9 },
         disabled && { opacity: 0.7 },
       ]}
     >

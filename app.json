@@ -30,9 +30,7 @@
         "backgroundColor": "#f6f2e8"
       },
       "permissions": [],
-      "blockedPermissions": [
-        "android.permission.RECORD_AUDIO"
-      ]
+      "blockedPermissions": ["android.permission.RECORD_AUDIO"]
     },
     "plugins": [
       "expo-router",
@@ -56,10 +54,7 @@
     "experiments": {
       "typedRoutes": true
     },
-    "platforms": [
-      "ios",
-      "android"
-    ],
+    "platforms": ["ios", "android"],
     "androidStatusBar": {
       "hidden": true
     },

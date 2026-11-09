@@ -32,7 +32,12 @@ export function PlayerAvatar({
       accessible={false}
       style={[
         styles.frame,
-        { width: size, height: size, borderRadius: size / 2, backgroundColor: base },
+        {
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          backgroundColor: base,
+        },
       ]}
     >
       {image ? (
@@ -53,17 +58,36 @@ export function PlayerAvatar({
                 strokeWidth="2"
                 strokeLinejoin="round"
               />
-              <Circle cx="24" cy="24" r="16" fill="#fff1d3" stroke="#795a43" strokeWidth="2" />
+              <Circle
+                cx="24"
+                cy="24"
+                r="16"
+                fill="#fff1d3"
+                stroke="#795a43"
+                strokeWidth="2"
+              />
               <Circle cx="18" cy="23" r="2" fill="#44362d" />
               <Circle cx="30" cy="23" r="2" fill="#44362d" />
-              <Path d="M21 30q3 4 6 0" fill="none" stroke="#795a43" strokeWidth="2" strokeLinecap="round" />
+              <Path
+                d="M21 30q3 4 6 0"
+                fill="none"
+                stroke="#795a43"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
               <Circle cx="24" cy="28" r="2" fill="#b97b73" />
             </>
           ) : (
             <>
               <Circle cx="24" cy="17" r="9" fill="#fff1d3" />
               <Path d="M7 45c0-12 7-19 17-19s17 7 17 19" fill="#fff1d3" />
-              <Path d="M16 12q8-10 16 0" fill="none" stroke="#795a43" strokeWidth="3" strokeLinecap="round" />
+              <Path
+                d="M16 12q8-10 16 0"
+                fill="none"
+                stroke="#795a43"
+                strokeWidth="3"
+                strokeLinecap="round"
+              />
             </>
           )}
         </Svg>
