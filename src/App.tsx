@@ -1006,13 +1006,20 @@ export default function App() {
       ) : (
         <Image
           source={
-            !hidden && location === "cottage" && height > width && season === "spring"
+            !hidden &&
+            location === "cottage" &&
+            height > width &&
+            season === "spring"
               ? cozyImages.gardenPortrait
               : cozyImages.seasons[season]
           }
           style={[StyleSheet.absoluteFill, { width: "100%", height: "100%" }]}
           testID="garden-background-image"
-          resizeMode={hidden || (height > width && location === "cottage") ? "cover" : "contain"}
+          resizeMode={
+            hidden || (height > width && location === "cottage")
+              ? "cover"
+              : "contain"
+          }
           accessibilityIgnoresInvertColors
         />
       )}
@@ -2039,27 +2046,33 @@ export default function App() {
             {screen === "settings" && (
               <View style={{ flex: 1, minHeight: 0, padding: 8, gap: 8 }}>
                 <View style={{ gap: 8, flexShrink: 0 }}>
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 8,
+                    }}
+                  >
                     <Image
                       source={cozyRedesignImages.ui_flower_corner_blue_webp}
                       style={{ width: 30, height: 30 }}
                       resizeMode="contain"
                       accessible={false}
                     />
-                  <Text
-                    accessibilityRole="header"
-                    style={[
-                      st.sectionTitle,
-                      {
-                        color: cozy.color.cream,
-                        textShadowColor: cozy.color.woodDark,
-                        textShadowOffset: { width: 0, height: 1 },
-                        textShadowRadius: 3,
-                      },
-                    ]}
-                  >
-                    {tt("settings")}
-                  </Text>
+                    <Text
+                      accessibilityRole="header"
+                      style={[
+                        st.sectionTitle,
+                        {
+                          color: cozy.color.cream,
+                          textShadowColor: cozy.color.woodDark,
+                          textShadowOffset: { width: 0, height: 1 },
+                          textShadowRadius: 3,
+                        },
+                      ]}
+                    >
+                      {tt("settings")}
+                    </Text>
                   </View>
                   <View style={{ flexDirection: "row", gap: 5 }}>
                     {(["profile", "appearance", "audio", "rules"] as const).map(
@@ -2378,13 +2391,23 @@ export default function App() {
           ).map((item) => (
             <CozyButton
               key={item.id}
-              label={height > width ? "" : item.id === "menu" ? tt("mainMenu") : tt(item.id)}
+              label={
+                height > width
+                  ? ""
+                  : item.id === "menu"
+                    ? tt("mainMenu")
+                    : tt(item.id)
+              }
               icon={item.icon}
               accessibilityLabel={item.label}
               compact
               quiet
               selected={item.id === screen}
-              style={{ flex: 1, minWidth: 0, paddingHorizontal: height > width ? 4 : 9 }}
+              style={{
+                flex: 1,
+                minWidth: 0,
+                paddingHorizontal: height > width ? 4 : 9,
+              }}
               onPress={() => {
                 if (item.id === "menu") setMenuOpen(true);
                 else if (item.id === "mini") {

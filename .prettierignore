@@ -1,0 +1,4 @@
+# Generated manifest and components whose exact source text is asserted
+# byte-for-byte by tests (quoted object keys, single-line JSX attributes).
+src/assets/cozyRedesignImages.ts
+src/ui/GardenHome.tsx

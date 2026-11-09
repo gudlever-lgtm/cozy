@@ -1,5 +1,11 @@
 import React from "react";
-import { Image, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
+import {
+  Image,
+  StyleSheet,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from "react-native";
 import { cozyRedesignImages } from "../assets/cozyRedesignImages";
 import { cozy } from "./theme";
 
@@ -22,7 +28,11 @@ export function CozyPanel({
   return (
     <View testID={testID} style={[styles.panel, style]}>
       {ornaments && (
-        <View pointerEvents="none" accessible={false} style={StyleSheet.absoluteFill}>
+        <View
+          pointerEvents="none"
+          accessible={false}
+          style={StyleSheet.absoluteFill}
+        >
           <Image
             source={cozyRedesignImages.ui_flower_corner_left_webp}
             resizeMode="contain"

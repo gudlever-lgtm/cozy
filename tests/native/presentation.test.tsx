@@ -35,12 +35,14 @@ test.each(["♠", "♥", "♣", "♦"] as const)(
   },
 );
 
-
 test.each(["classic", "botanical", "river", "winter"] as const)(
   "%s cards use bundled illustrated backs without stretching",
   async (theme) => {
     await renderAsync(
-      <CardArtwork card={{ id: "back", rank: 3, suit: "♠", up: false }} theme={theme} />,
+      <CardArtwork
+        card={{ id: "back", rank: 3, suit: "♠", up: false }}
+        theme={theme}
+      />,
     );
     const art = screen.getByTestId("solitaire-card-back-art");
     expect(art.props.source).toBeTruthy();

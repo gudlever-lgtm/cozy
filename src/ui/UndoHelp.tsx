@@ -41,12 +41,20 @@ export function UndoHelp({
           testID="undo-help-dialog"
           style={[
             s.panel,
-            { maxHeight: Math.max(0, height - insets.top - insets.bottom - 24) },
+            {
+              maxHeight: Math.max(0, height - insets.top - insets.bottom - 24),
+            },
           ]}
         >
           <StrongScrollView contentContainerStyle={{ gap: 14 }}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-              <SvgXml xml={gardenIllustrations.lantern} width={34} height={46} />
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 12 }}
+            >
+              <SvgXml
+                xml={gardenIllustrations.lantern}
+                width={34}
+                height={46}
+              />
               <GameIcon name="undo" size={38} />
             </View>
             <Text accessibilityRole="header" style={s.title}>

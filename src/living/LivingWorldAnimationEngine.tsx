@@ -259,18 +259,20 @@ export function LivingWorldAnimationEngine({
           : object,
     );
     if (surface !== "board")
-      return (preview
-        ? all
-        : all.map((object, index) => ({
-            ...object,
-            size: object.kind === "bird" ? object.size : object.size * 1.25,
-            opacity: Math.min(1, object.opacity * 1.15),
-            delay: Math.min(object.delay, 800 + index * 500),
-            pause:
-              object.kind === "bird"
-                ? object.pause
-                : Math.min(object.pause, 2600),
-          }))).slice(0, budget);
+      return (
+        preview
+          ? all
+          : all.map((object, index) => ({
+              ...object,
+              size: object.kind === "bird" ? object.size : object.size * 1.25,
+              opacity: Math.min(1, object.opacity * 1.15),
+              delay: Math.min(object.delay, 800 + index * 500),
+              pause:
+                object.kind === "bird"
+                  ? object.pause
+                  : Math.min(object.pause, 2600),
+            }))
+      ).slice(0, budget);
     return all
       .filter((object) => object.kind !== "bird" && object.kind !== "butterfly")
       .slice(0, budget);

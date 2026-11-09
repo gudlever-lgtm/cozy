@@ -10,11 +10,23 @@ test("Danish and English have identical non-empty translation keys", () => {
   for (const key of englishKeys) {
     const daText = da[key as keyof typeof da];
     const enText = en[key as keyof typeof en];
-    assert.ok(typeof daText === "string" && daText.trim(), "Missing DA translation: " + key);
-    assert.ok(typeof enText === "string" && enText.trim(), "Missing EN translation: " + key);
+    assert.ok(
+      typeof daText === "string" && daText.trim(),
+      "Missing DA translation: " + key,
+    );
+    assert.ok(
+      typeof enText === "string" && enText.trim(),
+      "Missing EN translation: " + key,
+    );
     const variables = (text: string) =>
-      [...text.matchAll(/{{\s*([^{}]+?)\s*}}/g)].map((match) => match[1]).sort();
-    assert.deepEqual(variables(daText), variables(enText), "Interpolation mismatch: " + key);
+      [...text.matchAll(/{{\s*([^{}]+?)\s*}}/g)]
+        .map((match) => match[1])
+        .sort();
+    assert.deepEqual(
+      variables(daText),
+      variables(enText),
+      "Interpolation mismatch: " + key,
+    );
   }
 });
 

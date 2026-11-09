@@ -7,7 +7,13 @@ import { cozyRedesignImages } from "./assets/cozyRedesignImages";
  * save data continue to work unchanged.
  */
 export type NewGardenItem = "birdhouse" | "teaTable";
-export function NewGardenArtwork({ id, size = 96 }: { id: NewGardenItem; size?: number }) {
+export function NewGardenArtwork({
+  id,
+  size = 96,
+}: {
+  id: NewGardenItem;
+  size?: number;
+}) {
   return (
     <Image
       testID={`new-garden-art-${id}`}

@@ -220,7 +220,12 @@ export function CozyButton({
   );
 }
 const styles = StyleSheet.create({
-  buttonArtwork: { ...StyleSheet.absoluteFillObject, borderRadius: 15, width: "100%", height: "100%" },
+  buttonArtwork: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 15,
+    width: "100%",
+    height: "100%",
+  },
   paperLabel: { color: cozy.color.woodDark, textShadowColor: "transparent" },
   button: {
     minHeight: 48,
@@ -254,7 +259,14 @@ const styles = StyleSheet.create({
   },
   labelWithIcon: { marginHorizontal: 30 },
   compactLabel: { fontSize: 11, lineHeight: 14 },
-  flowerAccent: { position: "absolute", left: 1, bottom: 1, width: 24, height: 24, opacity: 0.86 },
+  flowerAccent: {
+    position: "absolute",
+    left: 1,
+    bottom: 1,
+    width: 24,
+    height: 24,
+    opacity: 0.86,
+  },
   label: {
     fontSize: 14,
     fontWeight: "700",

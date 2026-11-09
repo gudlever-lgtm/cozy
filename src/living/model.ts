@@ -33,9 +33,15 @@ export function ambientViewportBudget(
   height: number,
   surface: "world" | "board" = "world",
 ): number {
-  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0)
+  if (
+    !Number.isFinite(width) ||
+    !Number.isFinite(height) ||
+    width <= 0 ||
+    height <= 0
+  )
     return 0;
-  if (surface === "board") return quality === "low" ? 2 : quality === "medium" ? 4 : 6;
+  if (surface === "board")
+    return quality === "low" ? 2 : quality === "medium" ? 4 : 6;
   const base = quality === "low" ? 8 : quality === "medium" ? 16 : 24;
   const area = width * height;
   return area < 180_000 ? Math.ceil(base * 0.65) : base;

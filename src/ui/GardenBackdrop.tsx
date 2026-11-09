@@ -14,7 +14,11 @@ export function GardenBackdrop({ season }: { season: CozySeason }) {
       ? cozyImages.gardenPortrait
       : cozyImages.seasons[season];
   return (
-    <View pointerEvents="none" style={StyleSheet.absoluteFill} testID="garden-scenic-bleed">
+    <View
+      pointerEvents="none"
+      style={StyleSheet.absoluteFill}
+      testID="garden-scenic-bleed"
+    >
       <Image
         accessible={false}
         source={source}

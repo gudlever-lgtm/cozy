@@ -28,7 +28,13 @@ const PARTICLES = [
   { x: 93, y: 16, kind: "star", size: 22 },
 ] as const;
 
-function Particle({ item, index }: { item: (typeof PARTICLES)[number]; index: number }) {
+function Particle({
+  item,
+  index,
+}: {
+  item: (typeof PARTICLES)[number];
+  index: number;
+}) {
   const progress = useSharedValue(0);
   useEffect(() => {
     progress.value = withDelay(
@@ -49,17 +55,21 @@ function Particle({ item, index }: { item: (typeof PARTICLES)[number]; index: nu
     opacity: Math.sin(progress.value * Math.PI) * 0.95,
     transform: [
       { translateY: -progress.value * (34 + (index % 4) * 13) },
-      { translateX: Math.sin(progress.value * Math.PI) * ((index % 2 ? 1 : -1) * 15) },
+      {
+        translateX:
+          Math.sin(progress.value * Math.PI) * ((index % 2 ? 1 : -1) * 15),
+      },
       { rotate: `${progress.value * (index % 2 ? 190 : -190)}deg` },
       { scale: 0.65 + progress.value * 0.55 },
     ],
   }));
 
-  const image = item.kind === "flower"
-    ? cozyRedesignImages.effects_sparkle_cluster_webp
-    : item.kind === "burst"
-      ? cozyRedesignImages.effects_sparkle_burst_webp
-      : cozyRedesignImages.effects_shimmer_star_webp;
+  const image =
+    item.kind === "flower"
+      ? cozyRedesignImages.effects_sparkle_cluster_webp
+      : item.kind === "burst"
+        ? cozyRedesignImages.effects_sparkle_burst_webp
+        : cozyRedesignImages.effects_shimmer_star_webp;
   return (
     <Animated.Image
       source={image}
@@ -75,8 +85,7 @@ function Particle({ item, index }: { item: (typeof PARTICLES)[number]; index: nu
         },
         animatedStyle,
       ]}
-    >
-    </Animated.Image>
+    ></Animated.Image>
   );
 }
 
@@ -94,7 +103,12 @@ export function VictorySparkles({
       accessible={false}
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
-      style={{ height: 92, width: "100%", overflow: "visible", position: "relative" }}
+      style={{
+        height: 92,
+        width: "100%",
+        overflow: "visible",
+        position: "relative",
+      }}
     >
       {active &&
         PARTICLES.map((item, index) => (

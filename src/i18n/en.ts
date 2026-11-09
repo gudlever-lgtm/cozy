@@ -276,7 +276,8 @@ export const en = {
   drawOne: "Draw one",
   drawThree: "Draw three",
   auto: "Auto-finish",
-  autoNotReady: "Auto-finish is available when the stock and waste are empty and all tableau cards are face up.",
+  autoNotReady:
+    "Auto-finish is available when the stock and waste are empty and all tableau cards are face up.",
   moves: "{{count}} moves",
   moves_one: "{{count}} move",
   moves_other: "{{count}} moves",
@@ -327,7 +328,6 @@ export const en = {
   miniWon: "Beautifully done! +20 Glimmers",
   miniLost: "Nearly there. Try a fresh garden!",
   repeatRewards: "Reward for every new round",
-  replay: "Play again",
   back: "Back",
   found: "Found",
   spring: "Spring",

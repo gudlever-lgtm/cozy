@@ -33,19 +33,14 @@ export function GameRewardLine({
         )}
       </Text>
       {entries.map(([r, n]) => (
-        <View
-          key={r}
-          style={[styles.chip, compact && styles.compactChip]}
-        >
+        <View key={r} style={[styles.chip, compact && styles.compactChip]}>
           <GameIcon
             name={
               r === "glimmers" ? "glimmer" : r === "flowers" ? "decorations" : r
             }
             size={compact ? 14 : 18}
           />
-          <Text
-            style={[styles.amount, { fontSize: compact ? 11 : 13 }]}
-          >
+          <Text style={[styles.amount, { fontSize: compact ? 11 : 13 }]}>
             +{n}
           </Text>
         </View>

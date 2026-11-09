@@ -7,4 +7,5 @@ export const decorationImages = {
   flowers: cozyRedesignImages.decorations_pink_bush_webp,
   forest: require("../../assets/decorations/forest.png"),
 } as const;
-export type DecorationId = keyof typeof decorationImages | "birdhouse" | "teaTable";
+export type DecorationId =
+  keyof typeof decorationImages | "birdhouse" | "teaTable";

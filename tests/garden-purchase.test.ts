@@ -12,8 +12,11 @@ test("one garden purchase costs resources and places an item once", () => {
   assert.equal(result.economy.wallet.glimmers, 55);
   assert.equal(result.economy.wallet.wood, 7);
   assert.deepEqual(result.economy.inventory, ["birdhouse"]);
-  assert.equal(result.economy.receipts.filter(id => id === "buy:birdhouse").length, 1);
-  assert.deepEqual(result.placements, [{id:"birdhouse", x:61, y:69}]);
+  assert.equal(
+    result.economy.receipts.filter((id) => id === "buy:birdhouse").length,
+    1,
+  );
+  assert.deepEqual(result.placements, [{ id: "birdhouse", x: 61, y: 69 }]);
   assert.equal(buyGardenDecoration(result, "birdhouse"), result);
   const restored = migrate(JSON.stringify(result), "restored", "da");
   assert.deepEqual(restored.placements, result.placements);

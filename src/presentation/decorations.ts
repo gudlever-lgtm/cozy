@@ -3,10 +3,10 @@ import type { DecorationId } from "../assets/decorations";
 /** Art-directed ground anchors in the original cottage image, not player placement coordinates. */
 export const DECORATION_ANCHORS = {
   forest: { x: 0.35, y: 0.76, width: 0.17, aspect: 1374 / 1145 },
-  lantern: { x: 0.39, y: 0.8, width: 0.055, aspect: 1024 / 1536 },
-  flowers: { x: 0.83, y: 0.88, width: 0.1, aspect: 1312 / 1199 },
-  bench: { x: 0.72, y: 0.94, width: 0.16, aspect: 1.5 },
-  bridge: { x: 0.5, y: 0.98, width: 0.15, aspect: 1.5 },
+  lantern: { x: 0.39, y: 0.8, width: 0.055, aspect: 156 / 310 },
+  flowers: { x: 0.83, y: 0.88, width: 0.1, aspect: 294 / 210 },
+  bench: { x: 0.72, y: 0.94, width: 0.16, aspect: 473 / 310 },
+  bridge: { x: 0.5, y: 0.98, width: 0.15, aspect: 566 / 234 },
   birdhouse: { x: 0.61, y: 0.69, width: 0.105, aspect: 1 },
   teaTable: { x: 0.57, y: 0.84, width: 0.15, aspect: 1 },
 } as const;

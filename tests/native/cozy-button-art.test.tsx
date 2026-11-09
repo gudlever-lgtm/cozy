@@ -1,5 +1,9 @@
 import React from "react";
-import { cleanupAsync, renderAsync, screen } from "@testing-library/react-native";
+import {
+  cleanupAsync,
+  renderAsync,
+  screen,
+} from "@testing-library/react-native";
 import { CozyButton } from "../../src/ui/CozyButton";
 import { cozyRedesignImages } from "../../src/assets/cozyRedesignImages";
 
@@ -24,9 +28,9 @@ test.each([
       />,
     );
     const art = screen.getByTestId(`${kind}-art`);
-    expect(art.props.source).toBe(kind === "disabled"
-      ? cozyRedesignImages.ui_button_paper_webp
-      : expected);
+    expect(art.props.source).toBe(
+      kind === "disabled" ? cozyRedesignImages.ui_button_paper_webp : expected,
+    );
     expect(art.props.resizeMode).toBe("stretch");
   },
 );

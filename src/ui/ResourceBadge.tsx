@@ -15,11 +15,21 @@ export function ResourceBadge({
   value: number | string;
 }) {
   const { i18n } = useTranslation();
-  const displayValue = typeof value === "number" ? number(value, i18n.language) : value;
+  const displayValue =
+    typeof value === "number" ? number(value, i18n.language) : value;
   return (
-    <View accessible accessibilityLabel={`${label}: ${displayValue}`} style={s.root}>
+    <View
+      accessible
+      accessibilityLabel={`${label}: ${displayValue}`}
+      style={s.root}
+    >
       {icon === "glimmer" ? (
-        <Image source={cozyImages.rewardShimmer} style={{ width: 25, height: 25 }} resizeMode="contain" accessible={false} />
+        <Image
+          source={cozyImages.rewardShimmer}
+          style={{ width: 25, height: 25 }}
+          resizeMode="contain"
+          accessible={false}
+        />
       ) : (
         <GameIcon name={icon} size={22} />
       )}

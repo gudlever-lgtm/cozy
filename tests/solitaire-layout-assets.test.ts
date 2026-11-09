@@ -9,7 +9,13 @@ test("seven solitaire columns fit compact portrait and landscape viewports", () 
       up: position === index,
     })),
   );
-  for (const [width, height] of [[294, 385], [310, 300], [390, 520], [720, 315], [870, 500]]) {
+  for (const [width, height] of [
+    [294, 385],
+    [310, 300],
+    [390, 520],
+    [720, 315],
+    [870, 500],
+  ]) {
     const board = fitSolitaireBoard(width, height, piles);
     assert.ok(board.cardWidth >= 1);
     assert.ok(board.cardWidth * 7 + board.padding * 2 <= width);
@@ -23,7 +29,10 @@ test("seven solitaire columns fit compact portrait and landscape viewports", () 
 
 test("dragged cards raise their entire stack row above the neighboring row", () => {
   const app = readFileSync("src/App.tsx", "utf8");
-  assert.match(app, /dragging\?\.kind === "waste" \|\|\s+dragging\?\.kind === "foundations"/);
+  assert.match(
+    app,
+    /dragging\?\.kind === "waste" \|\|\s+dragging\?\.kind === "foundations"/,
+  );
   assert.match(app, /dragging\?\.kind === "tableau" \? 200 : 2/);
   assert.match(app, /zIndex: lifted \? 1000 : undefined/);
 });
