@@ -49,11 +49,13 @@ export function UndoHelp({
             </Text>
             <CozyButton
               testID="undo-help-earn"
+              variant="dialogChoice"
               label={String(t(canPlayMini ? "mini" : "play"))}
               onPress={onEarn}
             />
             <CozyButton
               testID="undo-help-close"
+              variant="dialogChoice"
               label={String(t("close"))}
               onPress={onClose}
               quiet
