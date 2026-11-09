@@ -288,6 +288,32 @@ async function main() {
         .getByRole("button", { name: "Hovedmenu", exact: true })
         .click();
       await capture(page, `${name}-menu`);
+      // Every menu caption must remain within its illustrated button,
+      // including longer Danish translations on narrow phones.
+      for (const id of [
+        "newDeal",
+        "garden",
+        "mini",
+        "decorations",
+        "quests",
+        "world",
+        "settings",
+        "collection",
+        "inventory",
+      ]) {
+        const item = page.getByTestId(`menu-${id}`);
+        await item.scrollIntoViewIfNeeded();
+        const button = (await item.boundingBox())!;
+        const label = (await page.getByTestId(`menu-${id}-label`).boundingBox())!;
+        assert.ok(button && label, `${name}: missing ${id} menu label`);
+        assert.ok(
+          label.x >= button.x - 1 &&
+            label.x + label.width <= button.x + button.width + 1 &&
+            label.y >= button.y - 1 &&
+            label.y + label.height <= button.y + button.height + 1,
+          `${name}: ${id} menu label extends beyond the artwork`,
+        );
+      }
       await page.getByTestId("menu-settings").click();
       await capture(page, `${name}-settings`);
       await menu(page, "world");
