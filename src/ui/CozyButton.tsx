@@ -185,10 +185,7 @@ export function CozyButton({
           accessible={false}
         />
       )}
-      <View
-        pointerEvents="none"
-        style={[styles.content, icon && label.length > 0 && styles.contentWithIcon]}
-      >
+      <View pointerEvents="none" style={styles.content}>
         {icon && (
           <View
             testID={testID ? `${testID}-icon-slot` : undefined}
@@ -251,16 +248,17 @@ const styles = StyleSheet.create({
   },
   compact: { minHeight: 44, paddingHorizontal: 5, paddingVertical: 5 },
   balancedButton: { minHeight: 68, paddingHorizontal: 9, paddingVertical: 8 },
+  // Stretch a stable, vertically centred text lane across the artwork.
+  // Icons are overlaid on the left, so they never change the label centre.
   content: {
     alignSelf: "stretch",
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
     minWidth: 0,
     minHeight: 28,
-    flexDirection: "row",
-    alignItems: "center",
     justifyContent: "center",
+    alignItems: "center",
   },
-  contentWithIcon: { paddingHorizontal: 29 },
   iconSlot: {
     position: "absolute",
     left: 0,
@@ -270,15 +268,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: 25,
   },
-  // Textless tab controls have an independent, truly centred icon.
   iconOnlySlot: {
     width: 25,
     height: 28,
     alignItems: "center",
     justifyContent: "center",
   },
-  labelWithIcon: { flex: 1, marginHorizontal: 0 },
-  balancedLabel: { fontSize: 13, lineHeight: 16, flexShrink: 1 },
+  // Symmetrical padding keeps labels clear of icons and decorations.
+  labelWithIcon: {
+    width: "100%",
+    paddingHorizontal: 27,
+  },
+  balancedLabel: { fontSize: 13, lineHeight: 17 },
   compactLabel: { fontSize: 11, lineHeight: 14 },
   flowerAccent: {
     position: "absolute",
@@ -292,7 +293,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "700",
     color: cozy.color.cream,
-    flexShrink: 1,
+    flexShrink: 0,
     textAlign: "center",
     textAlignVertical: "center",
     includeFontPadding: false,
