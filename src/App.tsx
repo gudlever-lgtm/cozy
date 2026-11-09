@@ -509,7 +509,7 @@ export default function App() {
       selected={selected}
       variant="dialogChoice"
       accessibilityLabel={accessibilityLabel}
-      style={{ minWidth: 130, minHeight: 68, flexGrow: 1 }}
+      style={{ minWidth: 130, minHeight: 68, flexShrink: 1, alignSelf: "stretch" }}
     />
   );
   const heading = (title: string, sub?: string) => (
