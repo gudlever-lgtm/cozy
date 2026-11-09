@@ -48,6 +48,8 @@ export const en = {
   undoEmptyTitle: "No Undo points left",
   undoEmptyBody:
     "Win a mini game to earn more Undo points. Your solitaire game is saved while you visit the garden.",
+  undoEmptyNoMoves:
+    "First win a solitaire game to earn mini-game moves. Then win a mini game to earn Undo points. Your game is saved.",
   cozyTagline: "Play. Unwind. Discover.",
   undoPoints: "Undo points",
   noUndoMoves: "There are no moves to undo yet.",
