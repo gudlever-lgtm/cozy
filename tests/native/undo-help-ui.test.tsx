@@ -36,3 +36,16 @@ test("undo information remains legible and dismissible in English", async () => 
   fireEvent.press(screen.getByTestId("undo-help-close"));
   expect(onClose).toHaveBeenCalledTimes(1);
 });
+
+test("when no mini-game moves are earned, Undo help explains the solitaire prerequisite", async () => {
+  await i18n.changeLanguage("da");
+  const onEarn = jest.fn();
+  await renderAsync(
+    <UndoHelp visible canPlayMini={false} onEarn={onEarn} onClose={jest.fn()} />,
+  );
+
+  expect(screen.getByText(/Vind først en kabale/)).toBeTruthy();
+  expect(screen.getByText(String(i18n.t("play")))).toBeTruthy();
+  fireEvent.press(screen.getByTestId("undo-help-earn"));
+  expect(onEarn).toHaveBeenCalledTimes(1);
+});
