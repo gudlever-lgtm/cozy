@@ -77,3 +77,40 @@ test("profile avatar is an illustration, not a Unicode emoji glyph", async () =>
   expect(screen.getByTestId("player-avatar")).toBeTruthy();
   expect(screen.queryByText("🐱")).toBeNull();
 });
+
+test("holding a menu icon opens its description and tapping outside closes it", async () => {
+  const handler = jest.fn();
+  await renderAsync(
+    <CozyButton
+      testID="menu-long-press"
+      variant="menuCard"
+      label="Havens samlealbum"
+      icon="decorations"
+      onPress={handler}
+    />,
+  );
+  fireEvent(screen.getByTestId("menu-long-press"), "longPress");
+  expect(screen.getByTestId("menu-long-press-tooltip-text").props.children).toBe(
+    "Havens samlealbum",
+  );
+  expect(handler).not.toHaveBeenCalled();
+  fireEvent.press(screen.getByTestId("menu-long-press-tooltip-overlay"));
+  expect(screen.queryByTestId("menu-long-press-tooltip-text")).toBeNull();
+});
+
+test("holding an icon-only tab displays its accessible Danish label", async () => {
+  await renderAsync(
+    <CozyButton
+      testID="tab-long-press"
+      variant="bottomTab"
+      label=""
+      icon="garden"
+      accessibilityLabel="Min have"
+      onPress={jest.fn()}
+    />,
+  );
+  fireEvent(screen.getByTestId("tab-long-press"), "longPress");
+  expect(screen.getByTestId("tab-long-press-tooltip-text").props.children).toBe(
+    "Min have",
+  );
+});
