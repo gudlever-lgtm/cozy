@@ -114,6 +114,8 @@ export function Timber({
     </View>
   );
 }
+export type CozyButtonVariant = "bottomTab" | "toolbarAction" | "menuCard" | "dialogChoice";
+
 export function CozyButton({
   label,
   onPress,
@@ -128,6 +130,7 @@ export function CozyButton({
   compact = false,
   balanced = false,
   stacked = false,
+  variant,
   role = "button",
 }: {
   label: string;
@@ -143,8 +146,17 @@ export function CozyButton({
   compact?: boolean;
   balanced?: boolean;
   stacked?: boolean;
+  variant?: CozyButtonVariant;
   role?: "button" | "tab";
 }) {
+  // Keep the older props compatible; use explicit variants for all major
+  // surfaces. The artwork, icon and text share one measured touch target.
+  const mode: CozyButtonVariant | "standard" =
+    variant ?? (stacked ? "toolbarAction" : balanced ? "dialogChoice" : "standard");
+  const vertical = mode === "toolbarAction" || mode === "menuCard";
+  const iconOnly = mode === "bottomTab" && label.length === 0;
+  const labeled = label.length > 0;
+  const paper = quiet || disabled;
   return (
     <Pressable
       testID={testID}
@@ -159,12 +171,13 @@ export function CozyButton({
       style={({ pressed }) => [
         styles.button,
         compact && styles.compact,
-        balanced && styles.balancedButton,
-        stacked && styles.stackedButton,
+        mode === "bottomTab" && styles.bottomTab,
+        mode === "toolbarAction" && styles.toolbarAction,
+        mode === "menuCard" && styles.menuCard,
+        mode === "dialogChoice" && styles.dialogChoice,
         style,
-        pressed &&
-          !disabled && { transform: [{ translateY: 1 }], opacity: 0.9 },
-        disabled && { opacity: 0.55 },
+        pressed && !disabled && { transform: [{ translateY: 1 }], opacity: 0.9 },
+        disabled && { opacity: 0.7 },
       ]}
     >
       <Image
@@ -172,7 +185,7 @@ export function CozyButton({
         source={
           selected === true
             ? cozyRedesignImages.ui_button_green_webp
-            : quiet || disabled
+            : paper
               ? cozyRedesignImages.ui_button_paper_webp
               : cozyRedesignImages.ui_button_wood_webp
         }
@@ -180,49 +193,45 @@ export function CozyButton({
         accessible={false}
         style={styles.buttonArtwork}
       />
-      {!compact && !quiet && !disabled && (
-        <Image
-          source={cozyRedesignImages.ui_flower_corner_left_webp}
-          style={styles.flowerAccent}
-          resizeMode="contain"
-          accessible={false}
-        />
-      )}
       <View
         pointerEvents="none"
-        style={[styles.content, stacked && styles.stackedContent]}
+        style={[
+          styles.content,
+          vertical && styles.verticalContent,
+          iconOnly && styles.iconOnlyContent,
+        ]}
       >
         {icon && (
           <View
             testID={testID ? `${testID}-icon-slot` : undefined}
-            style={
-              stacked
-                ? styles.stackedIconSlot
-                : label.length > 0
-                  ? styles.iconSlot
-                  : styles.iconOnlySlot
-            }
+            style={[
+              styles.iconSlot,
+              vertical && styles.verticalIcon,
+              iconOnly && styles.centerIcon,
+            ]}
           >
             <GameIcon
               name={icon}
-              color={quiet || disabled ? cozy.color.woodDark : cozy.color.cream}
-              size={compact ? 20 : 23}
+              color={paper ? cozy.color.woodDark : cozy.color.cream}
+              size={mode === "bottomTab" ? 24 : 22}
             />
           </View>
         )}
-        {label.length > 0 && (
+        {labeled && (
           <Text
             testID={testID ? `${testID}-label` : undefined}
             numberOfLines={2}
-            maxFontSizeMultiplier={1.2}
             adjustsFontSizeToFit
+            minimumFontScale={0.72}
+            maxFontSizeMultiplier={1.15}
             style={[
               styles.label,
-              (quiet || disabled) && styles.paperLabel,
-              compact && styles.compactLabel,
-              icon && label.length > 0 && !stacked && styles.labelWithIcon,
-              balanced && styles.balancedLabel,
-              stacked && styles.stackedLabel,
+              paper && styles.paperLabel,
+              vertical && styles.verticalLabel,
+              mode === "toolbarAction" && styles.toolbarLabel,
+              mode === "menuCard" && styles.menuLabel,
+              mode === "dialogChoice" && styles.dialogLabel,
+              !vertical && !!icon && styles.inlineLabel,
             ]}
           >
             {label}
@@ -239,116 +248,106 @@ export function CozyButton({
     </Pressable>
   );
 }
+
 const styles = StyleSheet.create({
+  button: {
+    minHeight: 54,
+    minWidth: 44,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 22,
+    // Do not apply rectangular box shadows to transparent WebP button artwork.
+  },
+  compact: { paddingHorizontal: 5, paddingVertical: 4 },
+  bottomTab: { height: 54, minHeight: 54, paddingHorizontal: 5 },
+  toolbarAction: { minHeight: 92, paddingHorizontal: 9, paddingVertical: 11 },
+  menuCard: { minHeight: 92, paddingHorizontal: 10, paddingVertical: 9 },
+  dialogChoice: { minHeight: 68, paddingHorizontal: 16, paddingVertical: 10 },
   buttonArtwork: {
     ...StyleSheet.absoluteFillObject,
-    borderRadius: 15,
     width: "100%",
     height: "100%",
   },
-  paperLabel: { color: cozy.color.woodDark, textShadowColor: "transparent" },
-  button: {
-    minHeight: 48,
-    minWidth: 44,
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 15,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 7,
-    ...cozy.shadow,
-  },
-  compact: { minHeight: 44, paddingHorizontal: 5, paddingVertical: 5 },
-  balancedButton: { minHeight: 68, paddingHorizontal: 9, paddingVertical: 8 },
-  stackedButton: { minHeight: 76, paddingHorizontal: 8, paddingVertical: 7 },
-  // Stretch a stable, vertically centred text lane across the artwork.
-  // Icons are overlaid on the left, so they never change the label centre.
   content: {
-    alignSelf: "stretch",
-    flexGrow: 1,
-    flexShrink: 1,
+    width: "100%",
     minWidth: 0,
-    minHeight: 28,
-    justifyContent: "center",
     alignItems: "center",
+    justifyContent: "center",
   },
-  stackedContent: {
+  verticalContent: {
     flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
     gap: 2,
+    minHeight: 64,
   },
-  stackedIconSlot: {
-    width: 26,
-    height: 26,
-    flexShrink: 0,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  iconOnlyContent: { flex: 1, justifyContent: "center" },
   iconSlot: {
     position: "absolute",
-    left: 0,
+    left: 1,
     top: 0,
     bottom: 0,
-    justifyContent: "center",
+    width: 25,
     alignItems: "center",
-    width: 25,
+    justifyContent: "center",
   },
-  iconOnlySlot: {
-    width: 25,
+  verticalIcon: {
+    position: "relative",
+    left: undefined,
+    top: undefined,
+    bottom: undefined,
+    width: 27,
+    height: 27,
+    flexShrink: 0,
+  },
+  centerIcon: {
+    position: "relative",
+    left: undefined,
+    top: undefined,
+    bottom: undefined,
+    width: 27,
     height: 28,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  // Symmetrical padding keeps labels clear of icons and decorations.
-  labelWithIcon: {
-    width: "100%",
-    paddingHorizontal: 27,
-  },
-  balancedLabel: { fontSize: 13, lineHeight: 17 },
-  stackedLabel: {
-    width: "100%",
-    paddingHorizontal: 2,
-    fontSize: 12,
-    lineHeight: 15,
-    textAlign: "center",
-    flexShrink: 1,
-  },
-  compactLabel: { fontSize: 11, lineHeight: 14 },
-  flowerAccent: {
-    position: "absolute",
-    left: 1,
-    bottom: 1,
-    width: 24,
-    height: 24,
-    opacity: 0.86,
   },
   label: {
-    fontSize: 14,
-    fontWeight: "700",
+    width: "100%",
+    fontSize: 15,
+    lineHeight: 19,
     color: cozy.color.cream,
-    flexShrink: 0,
+    fontWeight: "700",
     textAlign: "center",
     textAlignVertical: "center",
     includeFontPadding: false,
+    flexShrink: 1,
     textShadowColor: "#3b2818",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 1,
   },
+  paperLabel: {
+    color: cozy.color.woodDark,
+    textShadowColor: "transparent",
+  },
+  inlineLabel: { paddingHorizontal: 28 },
+  verticalLabel: { paddingHorizontal: 2 },
+  toolbarLabel: { fontSize: 13, lineHeight: 17 },
+  menuLabel: { fontSize: 13, lineHeight: 17 },
+  dialogLabel: { fontSize: 15, lineHeight: 19 },
   badge: {
     position: "absolute",
-    right: 2,
-    top: 2,
-    minWidth: 23,
-    minHeight: 23,
+    top: 0,
+    right: 0,
+    minWidth: 25,
+    minHeight: 25,
     paddingHorizontal: 5,
     borderRadius: 20,
-    backgroundColor: cozy.color.paperLight,
     borderWidth: 1,
     borderColor: cozy.color.honey,
+    backgroundColor: cozy.color.paperLight,
     alignItems: "center",
     justifyContent: "center",
   },
-  badgeText: { color: cozy.color.woodDark, fontSize: 11, fontWeight: "800" },
+  badgeText: {
+    color: cozy.color.woodDark,
+    fontSize: 11,
+    fontWeight: "800",
+  },
 });
