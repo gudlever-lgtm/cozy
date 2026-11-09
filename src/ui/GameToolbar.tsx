@@ -82,6 +82,6 @@ const s = StyleSheet.create({
     flexShrink: 0,
   },
   narrowRoot: { flexWrap: "wrap", justifyContent: "space-between" },
-  action: { flex: 1, minWidth: 0, minHeight: 92 },
-  narrowAction: { flexBasis: "46%", flexGrow: 1, minHeight: 92 },
+  action: { flex: 1, minWidth: 0, minHeight: 98 },
+  narrowAction: { flexBasis: "46%", flexGrow: 1, minHeight: 98 },
 });
