@@ -11,10 +11,12 @@ export function UndoHelp({
   visible,
   onClose,
   onEarn,
+  canPlayMini = true,
 }: {
   visible: boolean;
   onClose: () => void;
   onEarn: () => void;
+  canPlayMini?: boolean;
 }) {
   const { t } = useTranslation();
   return (
@@ -30,7 +32,7 @@ export function UndoHelp({
         <CozyPanel testID="undo-help-dialog" style={s.panel}>
           <View style={s.content}>
             <View
-              style={{ flexDirection: "row", alignItems: "center", gap: 12 }}
+              style={s.illustration}
             >
               <SvgXml
                 xml={gardenIllustrations.lantern}
@@ -47,7 +49,7 @@ export function UndoHelp({
             </Text>
             <CozyButton
               testID="undo-help-earn"
-              label={String(t("mini"))}
+              label={String(t(canPlayMini ? "mini" : "play"))}
               onPress={onEarn}
             />
             <CozyButton
@@ -76,6 +78,7 @@ const s = StyleSheet.create({
     padding: 22,
   },
   content: { gap: 14, width: "100%", alignItems: "stretch" },
+  illustration: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 12 },
   title: { fontFamily: cozy.font.title, fontSize: 23, color: cozy.color.ink, textAlign: "center" },
   body: { fontSize: 15, lineHeight: 23, color: cozy.color.muted, textAlign: "center" },
 });
