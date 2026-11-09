@@ -106,7 +106,7 @@ jobs:
           name: cozy-design-screenshots
           path: work/design-checks/
           if-no-files-found: ignore
-          retention-days: 14
+          retention-days: 3
 
       - name: Summary
         if: always()
