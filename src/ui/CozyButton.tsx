@@ -4,6 +4,7 @@ import {
   Text,
   Pressable,
   Modal,
+  Dimensions,
   Image,
   StyleSheet,
   type StyleProp,
@@ -154,11 +155,12 @@ export function CozyButton({
   // surfaces. The artwork, icon and text share one measured touch target.
   const mode: CozyButtonVariant | "standard" =
     variant ?? (stacked ? "toolbarAction" : balanced ? "dialogChoice" : "standard");
-  const vertical = mode === "toolbarAction" || mode === "menuCard";
+  const vertical = mode === "toolbarAction";
   const iconOnly = mode === "bottomTab" && label.length === 0;
   const labeled = label.length > 0;
   const paper = quiet || disabled;
   const [tooltipVisible, setTooltipVisible] = useState(false);
+  const [tooltipPoint, setTooltipPoint] = useState({ x: 12, y: 12 });
   const tooltip = accessibilityLabel || label;
   return (
     <>
@@ -172,7 +174,17 @@ export function CozyButton({
       }}
       disabled={disabled}
       onPress={() => { setTooltipVisible(false); onPress(); }}
-      onLongPress={() => { if (tooltip) setTooltipVisible(true); }}
+      onLongPress={(event) => {
+        if (!tooltip) return;
+        const { width, height } = Dimensions.get("window");
+        const x = event.nativeEvent.pageX;
+        const y = event.nativeEvent.pageY;
+        setTooltipPoint({
+          x: Math.max(10, Math.min(width - 230, x - 110)),
+          y: Math.max(18, Math.min(height - 75, y - 90)),
+        });
+        setTooltipVisible(true);
+      }}
       delayLongPress={450}
       style={({ pressed }) => [
         styles.button,
@@ -219,7 +231,7 @@ export function CozyButton({
             <GameIcon
               name={icon}
               color={paper ? cozy.color.woodDark : cozy.color.cream}
-              size={mode === "menuCard" ? 36 : mode === "bottomTab" ? 32 : mode === "toolbarAction" ? 30 : 24}
+              size={mode === "menuCard" ? 30 : mode === "bottomTab" ? 27 : mode === "toolbarAction" ? 28 : 24}
             />
           </View>
         )}
@@ -236,6 +248,7 @@ export function CozyButton({
               vertical && styles.verticalLabel,
               mode === "toolbarAction" && styles.toolbarLabel,
               mode === "menuCard" && styles.menuLabel,
+              mode === "menuCard" && !!icon && styles.menuLabelWithIcon,
               mode === "dialogChoice" && styles.dialogLabel,
               !vertical && !!icon && styles.inlineLabel,
             ]}
@@ -256,7 +269,7 @@ export function CozyButton({
       <Modal
         transparent
         visible
-        animationType="fade"
+        animationType="none"
         onRequestClose={() => setTooltipVisible(false)}
         statusBarTranslucent
       >
@@ -267,7 +280,7 @@ export function CozyButton({
           onPress={() => setTooltipVisible(false)}
           style={styles.tooltipBackdrop}
         >
-          <View pointerEvents="none" style={styles.tooltipCard}>
+          <View pointerEvents="none" style={[styles.tooltipCard, { left: tooltipPoint.x, top: tooltipPoint.y }]}>
             <Text
               testID={testID ? `${testID}-tooltip-text` : undefined}
               style={styles.tooltipText}
@@ -294,9 +307,10 @@ const styles = StyleSheet.create({
     // Do not apply rectangular box shadows to transparent WebP button artwork.
   },
   compact: { paddingHorizontal: 5, paddingVertical: 4 },
-  bottomTab: { height: 58, minHeight: 58, paddingHorizontal: 5 },
-  toolbarAction: { minHeight: 98, paddingHorizontal: 9, paddingVertical: 10 },
-  menuCard: { minHeight: 98, paddingHorizontal: 10, paddingVertical: 8 },
+  bottomTab: { height: 54, minHeight: 54, paddingHorizontal: 5 },
+  toolbarAction: { minHeight: 88, paddingHorizontal: 9, paddingVertical: 8 },
+  // The timber button artwork is a landscape plank: never stretch it into a tall square tile.
+  menuCard: { minHeight: 68, paddingHorizontal: 13, paddingVertical: 7 },
   dialogChoice: { minHeight: 68, paddingHorizontal: 16, paddingVertical: 10 },
   buttonArtwork: {
     ...StyleSheet.absoluteFillObject,
@@ -312,7 +326,7 @@ const styles = StyleSheet.create({
   verticalContent: {
     flexDirection: "column",
     gap: 2,
-    minHeight: 72,
+    minHeight: 62,
   },
   iconOnlyContent: { flex: 1, justifyContent: "center" },
   iconSlot: {
@@ -329,8 +343,8 @@ const styles = StyleSheet.create({
     left: undefined,
     top: undefined,
     bottom: undefined,
-    width: 38,
-    height: 38,
+    width: 30,
+    height: 30,
     flexShrink: 0,
   },
   centerIcon: {
@@ -338,8 +352,8 @@ const styles = StyleSheet.create({
     left: undefined,
     top: undefined,
     bottom: undefined,
-    width: 34,
-    height: 34,
+    width: 28,
+    height: 28,
   },
   label: {
     width: "100%",
@@ -363,29 +377,30 @@ const styles = StyleSheet.create({
   verticalLabel: { paddingHorizontal: 2 },
   toolbarLabel: { fontSize: 13, lineHeight: 17 },
   menuLabel: { fontSize: 13, lineHeight: 17 },
+  menuLabelWithIcon: { paddingLeft: 32, paddingRight: 3 },
   dialogLabel: { fontSize: 15, lineHeight: 19 },
   tooltipBackdrop: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 24,
-    backgroundColor: "#1c2418aa",
+    alignItems: "flex-start",
+    justifyContent: "flex-start",
+    backgroundColor: "transparent",
   },
   tooltipCard: {
-    maxWidth: 320,
-    minWidth: 180,
-    paddingHorizontal: 22,
-    paddingVertical: 18,
-    borderRadius: 18,
-    borderWidth: 2,
-    borderColor: "#d0a05c",
+    position: "absolute",
+    width: 220,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: "#bd9253",
     backgroundColor: "#fff1d3",
+    elevation: 4,
   },
   tooltipText: {
     color: "#3c2b1d",
     textAlign: "center",
-    fontSize: 17,
-    lineHeight: 23,
+    fontSize: 13,
+    lineHeight: 18,
     fontWeight: "700",
   },
   badge: {
