@@ -36,30 +36,55 @@ jobs:
       - name: Install QR tool
         run: sudo apt-get update && sudo apt-get install -y qrencode
       - name: Install project dependencies
-        run: npm ci --include=dev --no-audit --no-fund
+        id: dependencies
+        run: |
+          mkdir -p diagnostics
+          set -o pipefail
+          npm ci --include=dev --no-audit --no-fund 2>&1 | tee diagnostics/install.log
       - name: Typecheck
-        run: npm run typecheck
+        id: typecheck
+        run: |
+          set -o pipefail
+          npm run typecheck 2>&1 | tee diagnostics/typecheck.log
       - name: Engine and presentation tests
-        run: npm test
+        id: engine_tests
+        run: |
+          set -o pipefail
+          npm test 2>&1 | tee diagnostics/engine-tests.log
       - name: Native Android and iOS component tests (diagnostic for test APK)
+        id: native_tests
         continue-on-error: true
-        run: npm run test:native
+        run: |
+          set -o pipefail
+          npm run test:native 2>&1 | tee diagnostics/native-tests.log
       - name: Verify bundled artwork
-        run: npm run audit:art
+        id: artwork
+        run: |
+          set -o pipefail
+          npm run audit:art 2>&1 | tee diagnostics/artwork.log
       - name: Check formatting (diagnostic for test APK)
         continue-on-error: true
         run: npm run format:check
       - name: Native JS asset export
-        run: npm run export:native
+        id: native_export
+        run: |
+          set -o pipefail
+          npm run export:native 2>&1 | tee diagnostics/export.log
         env:
           EXPO_NO_TELEMETRY: '1'
           CI: '1'
       - name: Generate Android native project locally
-        run: npx --no-install expo prebuild --platform android --no-install
+        id: prebuild
+        run: |
+          set -o pipefail
+          npx --no-install expo prebuild --platform android --no-install 2>&1 | tee diagnostics/prebuild.log
         env:
           EXPO_NO_TELEMETRY: '1'
       - name: Compile standalone test APK with Gradle (no EAS)
-        run: cd android && bash ./gradlew :app:assembleRelease --no-daemon --stacktrace
+        id: gradle
+        run: |
+          set -o pipefail
+          (cd android && bash ./gradlew :app:assembleRelease --no-daemon --stacktrace) 2>&1 | tee diagnostics/gradle.log
         env:
           CI: '1'
           NODE_OPTIONS: '--max-old-space-size=4096'
@@ -90,6 +115,36 @@ jobs:
           qrencode -o out/cozy-solitaire-qr.png -s 8 -m 2 "$URL"
           printf 'Version: %s\nAndroid build: %s\nCommit: %s\nFile: %s\n' "$VERSION" "$BUILD" "$GITHUB_SHA" "$FILE" > out/BUILD_INFO.txt
           (cd out && sha256sum "$FILE" cozy-solitaire-test.apk > SHA256SUMS.txt)
+      - name: Summarize diagnostics on failure
+        if: failure()
+        env:
+          DEPS: ${{ steps.dependencies.outcome }}
+          TYPESCRIPT: ${{ steps.typecheck.outcome }}
+          ENGINE: ${{ steps.engine_tests.outcome }}
+          NATIVE: ${{ steps.native_tests.outcome }}
+          ARTWORK: ${{ steps.artwork.outcome }}
+          EXPORT: ${{ steps.native_export.outcome }}
+          PREBUILD: ${{ steps.prebuild.outcome }}
+          GRADLE: ${{ steps.gradle.outcome }}
+        run: |
+          {
+            echo "## APK build failure – exact step outcomes"
+            echo "| Stage | Outcome |"
+            echo "|---|---|"
+            for key in DEPS TYPESCRIPT ENGINE NATIVE ARTWORK EXPORT PREBUILD GRADLE; do
+              echo "| $key | ${!key} |"
+            done
+            echo ""
+            echo "The first failed required stage is the build blocker. See the diagnostic artifact for its output."
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload build diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cozy-build-diagnostics
+          path: diagnostics/
+          if-no-files-found: ignore
+          retention-days: 14
       - uses: actions/upload-artifact@v4
         with:
           name: cozy-android-apk-with-qr
