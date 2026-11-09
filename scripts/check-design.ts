@@ -261,10 +261,10 @@ async function main() {
         assert.ok(
           icon &&
             icon.x >= button.x - 1 &&
-            icon.x + icon.width <= label.x + 1 &&
+            icon.x + icon.width <= button.x + button.width + 1 &&
             icon.y >= button.y - 1 &&
-            icon.y + icon.height <= button.y + button.height + 1,
-          `${name}: ${id} icon overlaps text or leaves button artwork`,
+            icon.y + icon.height <= label.y + 1,
+          `${name}: ${id} stacked icon must be above text and within button artwork`,
         );
         actionRects.push(button);
       }
