@@ -493,6 +493,25 @@ export default function App() {
       />
     );
   };
+  const dialogButton = (
+    label: string,
+    onPress: () => void,
+    disabled = false,
+    quiet = false,
+    accessibilityLabel?: string,
+    selected?: boolean,
+  ) => (
+    <CozyButton
+      label={label}
+      onPress={onPress}
+      disabled={disabled}
+      quiet={quiet}
+      selected={selected}
+      variant="dialogChoice"
+      accessibilityLabel={accessibilityLabel}
+      style={{ minWidth: 130, minHeight: 68, flexGrow: 1 }}
+    />
+  );
   const heading = (title: string, sub?: string) => (
     <View style={st.heading}>
       <Text style={st.eyebrow}>COZY SOLITAIRE</Text>
@@ -2534,7 +2553,7 @@ export default function App() {
                     <Text style={st.small}>{tt("challengeIntro")}</Text>
                     {challenges.map((c) => (
                       <View key={c.id} style={st.row}>
-                        {button(
+                        {dialogButton(
                           tt(("challenge_" + c.id) as Key),
                           () => {
                             setPendingChallenge(c.id);
@@ -2553,7 +2572,7 @@ export default function App() {
                     ))}
                   </View>
                 )}
-                {button(
+                {dialogButton(
                   tt("close"),
                   () => {
                     setHelp(false);
@@ -2603,7 +2622,7 @@ export default function App() {
                   <View>
                     {solitaireTypes.map((kind) => (
                       <React.Fragment key={kind.id}>
-                        {button(
+                        {dialogButton(
                           `${tt(kind.id)}${kind.id !== "klondike" && !s.miniProgress.keys.includes(kind.id) ? ` · ${tt("solitaireKeyAt", { count: kind.fireflies / 10 })}` : ""}`,
                           () => setNextSolitaire(kind.id),
                           kind.id !== "klondike" &&
@@ -2623,7 +2642,7 @@ export default function App() {
                   !pendingChallenge &&
                   nextSolitaire === "klondike" && (
                     <View style={st.row}>
-                      {button(
+                      {dialogButton(
                         tt("randomDeal"),
                         () => setGuaranteedDeal(false),
                         false,
@@ -2631,7 +2650,7 @@ export default function App() {
                         undefined,
                         !guaranteedDeal,
                       )}
-                      {button(
+                      {dialogButton(
                         tt("winnableDeal"),
                         () => setGuaranteedDeal(true),
                         false,
@@ -2643,13 +2662,13 @@ export default function App() {
                   )}
                 {dialog === "new" && !pendingChallenge && (
                   <View style={st.row}>
-                    {button(
+                    {dialogButton(
                       tt("drawOne"),
                       () => setNextDraw(1),
                       false,
                       nextDraw !== 1,
                     )}
-                    {button(
+                    {dialogButton(
                       tt("drawThree"),
                       () => setNextDraw(3),
                       false,
@@ -2667,8 +2686,8 @@ export default function App() {
                   </Text>
                 )}
                 <View style={st.row}>
-                  {button(tt("cancel"), () => setDialog(null), false, true)}
-                  {button(tt("confirm"), () => {
+                  {dialogButton(tt("cancel"), () => setDialog(null), false, true)}
+                  {dialogButton(tt("confirm"), () => {
                     if (dialog === "new") {
                       if (
                         guaranteedDeal &&
