@@ -45,7 +45,7 @@ export function UndoHelp({
               {String(t("undoEmptyTitle"))}
             </Text>
             <Text testID="undo-help-body" style={s.body}>
-              {String(t("undoEmptyBody"))}
+              {String(t(canPlayMini ? "undoEmptyBody" : "undoEmptyNoMoves"))}
             </Text>
             <CozyButton
               testID="undo-help-earn"
