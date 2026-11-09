@@ -48,4 +48,4 @@ jobs:
           name: cozy-graphic-integrity-report
           path: work/graphic-audit/
           if-no-files-found: warn
-          retention-days: 21
+          retention-days: 3
