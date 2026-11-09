@@ -1,8 +1,9 @@
-import React, { useId } from "react";
+import React, { useId, useState } from "react";
 import {
   View,
   Text,
   Pressable,
+  Modal,
   Image,
   StyleSheet,
   type StyleProp,
@@ -157,7 +158,10 @@ export function CozyButton({
   const iconOnly = mode === "bottomTab" && label.length === 0;
   const labeled = label.length > 0;
   const paper = quiet || disabled;
+  const [tooltipVisible, setTooltipVisible] = useState(false);
+  const tooltip = accessibilityLabel || label;
   return (
+    <>
     <Pressable
       testID={testID}
       accessibilityRole={role}
@@ -167,7 +171,9 @@ export function CozyButton({
         ...(selected === undefined ? {} : { selected }),
       }}
       disabled={disabled}
-      onPress={onPress}
+      onPress={() => { setTooltipVisible(false); onPress(); }}
+      onLongPress={() => { if (tooltip) setTooltipVisible(true); }}
+      delayLongPress={450}
       style={({ pressed }) => [
         styles.button,
         compact && styles.compact,
@@ -213,7 +219,7 @@ export function CozyButton({
             <GameIcon
               name={icon}
               color={paper ? cozy.color.woodDark : cozy.color.cream}
-              size={mode === "bottomTab" ? 24 : 22}
+              size={mode === "menuCard" ? 36 : mode === "bottomTab" ? 32 : mode === "toolbarAction" ? 30 : 24}
             />
           </View>
         )}
@@ -246,6 +252,33 @@ export function CozyButton({
         </View>
       )}
     </Pressable>
+    {tooltipVisible && (
+      <Modal
+        transparent
+        visible
+        animationType="fade"
+        onRequestClose={() => setTooltipVisible(false)}
+        statusBarTranslucent
+      >
+        <Pressable
+          testID={testID ? `${testID}-tooltip-overlay` : undefined}
+          accessibilityRole="button"
+          accessibilityLabel={tooltip}
+          onPress={() => setTooltipVisible(false)}
+          style={styles.tooltipBackdrop}
+        >
+          <View pointerEvents="none" style={styles.tooltipCard}>
+            <Text
+              testID={testID ? `${testID}-tooltip-text` : undefined}
+              style={styles.tooltipText}
+            >
+              {tooltip}
+            </Text>
+          </View>
+        </Pressable>
+      </Modal>
+    )}
+    </>
   );
 }
 
@@ -261,9 +294,9 @@ const styles = StyleSheet.create({
     // Do not apply rectangular box shadows to transparent WebP button artwork.
   },
   compact: { paddingHorizontal: 5, paddingVertical: 4 },
-  bottomTab: { height: 54, minHeight: 54, paddingHorizontal: 5 },
-  toolbarAction: { minHeight: 92, paddingHorizontal: 9, paddingVertical: 11 },
-  menuCard: { minHeight: 92, paddingHorizontal: 10, paddingVertical: 9 },
+  bottomTab: { height: 58, minHeight: 58, paddingHorizontal: 5 },
+  toolbarAction: { minHeight: 98, paddingHorizontal: 9, paddingVertical: 10 },
+  menuCard: { minHeight: 98, paddingHorizontal: 10, paddingVertical: 8 },
   dialogChoice: { minHeight: 68, paddingHorizontal: 16, paddingVertical: 10 },
   buttonArtwork: {
     ...StyleSheet.absoluteFillObject,
@@ -279,7 +312,7 @@ const styles = StyleSheet.create({
   verticalContent: {
     flexDirection: "column",
     gap: 2,
-    minHeight: 64,
+    minHeight: 72,
   },
   iconOnlyContent: { flex: 1, justifyContent: "center" },
   iconSlot: {
@@ -296,8 +329,8 @@ const styles = StyleSheet.create({
     left: undefined,
     top: undefined,
     bottom: undefined,
-    width: 27,
-    height: 27,
+    width: 38,
+    height: 38,
     flexShrink: 0,
   },
   centerIcon: {
@@ -305,8 +338,8 @@ const styles = StyleSheet.create({
     left: undefined,
     top: undefined,
     bottom: undefined,
-    width: 27,
-    height: 28,
+    width: 34,
+    height: 34,
   },
   label: {
     width: "100%",
@@ -331,6 +364,30 @@ const styles = StyleSheet.create({
   toolbarLabel: { fontSize: 13, lineHeight: 17 },
   menuLabel: { fontSize: 13, lineHeight: 17 },
   dialogLabel: { fontSize: 15, lineHeight: 19 },
+  tooltipBackdrop: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
+    backgroundColor: "#1c2418aa",
+  },
+  tooltipCard: {
+    maxWidth: 320,
+    minWidth: 180,
+    paddingHorizontal: 22,
+    paddingVertical: 18,
+    borderRadius: 18,
+    borderWidth: 2,
+    borderColor: "#d0a05c",
+    backgroundColor: "#fff1d3",
+  },
+  tooltipText: {
+    color: "#3c2b1d",
+    textAlign: "center",
+    fontSize: 17,
+    lineHeight: 23,
+    fontWeight: "700",
+  },
   badge: {
     position: "absolute",
     top: 0,
