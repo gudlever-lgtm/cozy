@@ -16,7 +16,8 @@
     "test:native": "jest --runInBand",
     "preview:design": "node scripts/preview-design.js",
     "test:design": "node --import tsx scripts/check-design.ts",
-    "audit:art": "node scripts/audit-cozy-art.mjs"
+    "audit:art": "node scripts/audit-cozy-art.mjs",
+    "audit:graphics": "node scripts/audit-graphic-usage.mjs"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",
