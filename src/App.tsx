@@ -4,6 +4,7 @@ import { CozyPanel } from "./ui/CozyPanel";
 import { CozyButton, Timber } from "./ui/CozyButton";
 import { GardenHome } from "./ui/GardenHome";
 import { GameToolbar } from "./ui/GameToolbar";
+import { PlayerAvatar } from "./ui/PlayerAvatar";
 import { ResourceBadge } from "./ui/ResourceBadge";
 import { cozy } from "./ui/theme";
 import { cozyRedesignImages } from "./assets/cozyRedesignImages";
@@ -2143,7 +2144,10 @@ export default function App() {
                           },
                         ]}
                       >
-                        <Text style={st.label}>{tt("profile")}</Text>
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                          <PlayerAvatar avatar={s.profile?.avatar} size={48} />
+                          <Text style={st.label}>{tt("profile")}</Text>
+                        </View>
                         <Text style={st.label}>{tt("chooseAvatar")}</Text>
                         <View
                           style={{
@@ -2173,7 +2177,7 @@ export default function App() {
                                 },
                               ]}
                             >
-                              <Text style={{ fontSize: 22 }}>{avatar}</Text>
+                              <PlayerAvatar avatar={avatar} size={38} />
                             </CozyPressable>
                           ))}
                         </View>
@@ -2411,6 +2415,7 @@ export default function App() {
               icon={item.icon}
               accessibilityLabel={item.label}
               compact
+              variant="bottomTab"
               quiet
               selected={item.id === screen}
               style={{
