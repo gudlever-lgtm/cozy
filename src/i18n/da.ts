@@ -48,6 +48,8 @@ export const da: Record<keyof typeof en, string> = {
   undoEmptyTitle: "Ikke flere Undo-point",
   undoEmptyBody:
     "Vind et minispil for at optjene flere Undo-point. Dit kabalespil bliver gemt, mens du besøger haven.",
+  undoEmptyNoMoves:
+    "Vind først en kabale for at få træk til minispil. Vind derefter et minispil for at optjene Undo-point. Dit spil bliver gemt.",
   cozyTagline: "Spil. Hyg. Opdag.",
   undoPoints: "Undo-point",
   noUndoMoves: "Der er ingen træk at fortryde endnu.",
