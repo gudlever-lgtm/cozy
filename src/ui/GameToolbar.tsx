@@ -28,6 +28,7 @@ export function GameToolbar({
       style={[s.root, narrow && s.narrowRoot]}
     >
       <CozyButton
+        testID="solitaire-action-new"
         label={String(t("newGame"))}
         icon="newGame"
         onPress={onNew}
@@ -36,6 +37,7 @@ export function GameToolbar({
         style={actionStyle}
       />
       <CozyButton
+        testID="solitaire-action-undo"
         label={String(t("undo"))}
         icon="undo"
         badge={undo}
@@ -47,6 +49,7 @@ export function GameToolbar({
         style={actionStyle}
       />
       <CozyButton
+        testID="solitaire-action-hint"
         label={String(t("hint"))}
         icon="hint"
         onPress={onHint}
@@ -56,6 +59,7 @@ export function GameToolbar({
         style={actionStyle}
       />
       <CozyButton
+        testID="solitaire-action-auto"
         label={String(t("auto"))}
         icon="auto"
         onPress={onAuto}
