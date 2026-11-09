@@ -2392,6 +2392,7 @@ export default function App() {
           ).map((item) => (
             <CozyButton
               key={item.id}
+              testID={`main-tab-${item.id}`}
               label={
                 height > width
                   ? ""
