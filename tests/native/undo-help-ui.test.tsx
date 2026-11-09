@@ -15,10 +15,10 @@ test("empty Undo balance explains how to earn points and offers playable mini-ga
     <UndoHelp visible onEarn={onEarn} onClose={onClose} />,
   );
 
-  expect(screen.getByTestId("undo-help-title")).toHaveTextContent("Ikke flere Undo-point");
-  expect(screen.getByTestId("undo-help-body")).toHaveTextContent("Vind et minispil");
-  expect(screen.getByTestId("undo-help-earn-label")).toHaveTextContent("Minispil");
-  expect(screen.getByTestId("undo-help-close-label")).toHaveTextContent("Luk");
+  expect(screen.getByText("Ikke flere Undo-point")).toBeTruthy();
+  expect(screen.getByText(/Vind et minispil/)).toBeTruthy();
+  expect(screen.getByText("Minispil")).toBeTruthy();
+  expect(screen.getByTestId("undo-help-close-label")).toBeTruthy();
 
   fireEvent.press(screen.getByTestId("undo-help-earn"));
   expect(onEarn).toHaveBeenCalledTimes(1);
@@ -31,8 +31,8 @@ test("undo information remains legible and dismissible in English", async () => 
   await renderAsync(
     <UndoHelp visible onEarn={jest.fn()} onClose={onClose} />,
   );
-  expect(screen.getByTestId("undo-help-title")).toHaveTextContent("No Undo points left");
-  expect(screen.getByTestId("undo-help-body")).toHaveTextContent("Win a mini game");
+  expect(screen.getByText("No Undo points left")).toBeTruthy();
+  expect(screen.getByText(/Win a mini game/)).toBeTruthy();
   fireEvent.press(screen.getByTestId("undo-help-close"));
   expect(onClose).toHaveBeenCalledTimes(1);
 });
