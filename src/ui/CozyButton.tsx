@@ -177,8 +177,8 @@ export function CozyButton({
       onLongPress={(event) => {
         if (!tooltip) return;
         const { width, height } = Dimensions.get("window");
-        const x = event.nativeEvent.pageX;
-        const y = event.nativeEvent.pageY;
+        const x = event?.nativeEvent?.pageX ?? width / 2;
+        const y = event?.nativeEvent?.pageY ?? height / 2;
         setTooltipPoint({
           x: Math.max(10, Math.min(width - 230, x - 110)),
           y: Math.max(18, Math.min(height - 75, y - 90)),
