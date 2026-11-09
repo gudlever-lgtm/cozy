@@ -4,10 +4,6 @@ name: Cozy Android test APK (native Gradle, latest)
 # APK creation is a deliberate action. Source pushes must never trigger it.
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - '.github/apk-requests/**'
 
 permissions:
   contents: write
@@ -144,12 +140,12 @@ jobs:
           name: cozy-build-diagnostics
           path: diagnostics/
           if-no-files-found: ignore
-          retention-days: 14
+          retention-days: 3
       - uses: actions/upload-artifact@v4
         with:
           name: cozy-android-apk-with-qr
           path: out/
-          retention-days: 14
+          retention-days: 3
       - name: Publish APK and QR to GitHub test release
         env:
           GH_TOKEN: ${{ github.token }}
