@@ -1,0 +1,47 @@
+name: Prune old Android APK artifacts
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/prune-old-apk-artifacts.yml'
+permissions:
+  contents: read
+  actions: write
+jobs:
+  prune:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Delete old APK artifacts and preserve the newest two
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tmp="$(mktemp)"
+          trap 'rm -f "$tmp"' EXIT
+          gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100" \
+            --jq '.artifacts[] | select(.expired == false and (.name | test("apk"; "i"))) | [.id, .name, .created_at, .size_in_bytes] | @tsv' \
+            | sort -t $'\t' -k3,3r > "$tmp"
+          count=0
+          kept=0
+          deleted=0
+          while IFS=$'\t' read -r id name created bytes; do
+            [[ -n "$id" ]] || continue
+            ((count+=1))
+            if (( kept < 2 )); then
+              ((kept+=1))
+              echo "KEEP: $name (id=$id, bytes=$bytes, created=$created)"
+            else
+              echo "DELETE: $name (id=$id, bytes=$bytes, created=$created)"
+              gh api -X DELETE "repos/${GITHUB_REPOSITORY}/actions/artifacts/$id" >/dev/null
+              ((deleted+=1))
+            fi
+          done < "$tmp"
+          echo "APK artifacts inspected: $count; kept: $kept; deleted: $deleted"
+          {
+            echo "## APK artifact cleanup"
+            echo "Kept newest: $kept"
+            echo "Deleted older APK artifacts: $deleted"
+            echo "GitHub Release assets were not modified."
+          } >> "$GITHUB_STEP_SUMMARY"
