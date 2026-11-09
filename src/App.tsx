@@ -2374,6 +2374,7 @@ export default function App() {
             screen === "garden"
               ? {
                   position: "absolute",
+                  marginHorizontal: 0,
                   bottom: insets.bottom + 6,
                   left: insets.left + 6,
                   width: Math.min(520, width - insets.left - insets.right - 12),
