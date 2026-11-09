@@ -1228,11 +1228,18 @@ export default function App() {
       {undoHelp && (
         <UndoHelp
           visible
+          canPlayMini={s.miniProgress.slots.some(
+            (slot) => !slot.done && slot.moves > 0,
+          )}
           onClose={() => setUndoHelp(false)}
           onEarn={() => {
             setUndoHelp(false);
-            setMiniHub(true);
-            go("mini");
+            if (s.miniProgress.slots.some((slot) => !slot.done && slot.moves > 0)) {
+              setMiniHub(true);
+              go("mini");
+            } else {
+              go("play");
+            }
           }}
         />
       )}
