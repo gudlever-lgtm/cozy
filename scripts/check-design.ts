@@ -255,6 +255,17 @@ async function main() {
           Math.abs(label.x + label.width / 2 - button.x - button.width / 2) <= 3,
           `${name}: ${id} label is horizontally off-centre`,
         );
+        const icon = (await page
+          .getByTestId(`solitaire-action-${id}-icon-slot`)
+          .boundingBox())!;
+        assert.ok(
+          icon &&
+            icon.x >= button.x - 1 &&
+            icon.x + icon.width <= label.x + 1 &&
+            icon.y >= button.y - 1 &&
+            icon.y + icon.height <= button.y + button.height + 1,
+          `${name}: ${id} icon overlaps text or leaves button artwork`,
+        );
         actionRects.push(button);
       }
       for (let i = 0; i < actionRects.length; i++) {
