@@ -522,19 +522,20 @@ export default function App() {
     </View>
   );
   const chooseLanguage = () => (
-    <View style={st.row}>
-      {button(
-        "Dansk",
-        () => changeLanguage("da"),
-        false,
-        i18n.language !== "da",
-      )}
-      {button(
-        "English",
-        () => changeLanguage("en"),
-        false,
-        i18n.language !== "en",
-      )}
+    <View testID="language-buttons" style={{ flexDirection: "row", gap: 12, width: "100%" }}>
+      {(["da", "en"] as const).map((lang) => (
+        <CozyButton
+          key={lang}
+          testID={`language-${lang}`}
+          variant="dialogChoice"
+          label={lang === "da" ? "Dansk" : "English"}
+          accessibilityLabel={lang === "da" ? "Dansk" : "English"}
+          selected={i18n.language === lang}
+          quiet={i18n.language !== lang}
+          onPress={() => changeLanguage(lang)}
+          style={{ flex: 1, minWidth: 0, minHeight: 62, paddingHorizontal: 10 }}
+        />
+      ))}
     </View>
   );
   if (loadError)
@@ -2208,18 +2209,26 @@ export default function App() {
                           maxLength={60}
                           style={[st.input, { padding: 8, minHeight: 44 }]}
                         />
-                        <View style={st.row}>
-                          {button(
-                            tt("rename"),
-                            () => {
+                        <View style={{ gap: 9, alignItems: "stretch" }}>
+                          <CozyButton
+                            testID="profile-save-name"
+                            variant="dialogChoice"
+                            label={tt("rename")}
+                            onPress={() => {
                               update((v) => setProfile(v, name, uuid()));
                               notify("saved");
-                            },
-                            !validateUsername(name),
-                          )}
-                          {iconButton("statistics", tt("statistics"), () =>
-                            go("statistics"),
-                          )}
+                            }}
+                            disabled={!validateUsername(name)}
+                            style={{ alignSelf: "stretch", minHeight: 62 }}
+                          />
+                          <CozyButton
+                            testID="profile-statistics"
+                            variant="dialogChoice"
+                            label={tt("statistics")}
+                            quiet
+                            onPress={() => go("statistics")}
+                            style={{ alignSelf: "stretch", minHeight: 62 }}
+                          />
                         </View>
                         <Text style={st.small}>
                           {tt("created", {
@@ -2241,12 +2250,14 @@ export default function App() {
                       >
                         <Text style={st.label}>{tt("language")}</Text>
                         {chooseLanguage()}
-                        {button(
-                          tt("privacyTitle"),
-                          () => setMessage(tt("privacy")),
-                          false,
-                          true,
-                        )}
+                        <CozyButton
+                          testID="settings-privacy"
+                          variant="dialogChoice"
+                          label={tt("privacyTitle")}
+                          onPress={() => setMessage(tt("privacy"))}
+                          quiet
+                          style={{ alignSelf: "stretch", minHeight: 62 }}
+                        />
                       </View>
                     </View>
                   )}
