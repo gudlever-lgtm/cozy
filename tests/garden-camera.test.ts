@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   gardenCameraFit,
+  gardenPanBy,
   gardenPanLimits,
 } from "../src/presentation/gardenCamera";
 
@@ -48,4 +49,16 @@ test("the actual portrait spring artwork fills a portrait viewport without disto
   const zoomed = gardenPanLimits(viewport, portraitArt, 2);
   assert.ok(zoomed.x > 0);
   assert.ok(zoomed.y > 0);
+});
+
+test("dragging a zoomed garden moves the viewport while staying within the image", () => {
+  const viewport = { width: 390, height: 844 };
+  const image = { width: 941, height: 1672 };
+  const limits = gardenPanLimits(viewport, image, 2);
+  assert.ok(limits.x > 0 && limits.y > 0);
+  const moved = gardenPanBy(viewport, image, 2, 0, 0, 65, -48);
+  assert.deepEqual(moved, { x: 65, y: -48 });
+  const clamped = gardenPanBy(viewport, image, 2, 0, 0, 50000, -50000);
+  assert.deepEqual(clamped, { x: limits.x, y: -limits.y });
+  assert.deepEqual(gardenPanBy(viewport, image, 1, 0, 0, 50, 50), { x: 0, y: 0 });
 });
