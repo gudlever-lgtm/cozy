@@ -2480,7 +2480,12 @@ export default function App() {
           >
             <ScrollView nestedScrollEnabled contentContainerStyle={{ gap: 8 }}>
               <Text style={st.subtitle}>{message}</Text>
-              {button(tt("close"), () => setMessage(""), false, true)}
+              <CozyButton
+                variant="dialogChoice"
+                label={tt("close")}
+                onPress={() => setMessage("")}
+                quiet
+              />
             </ScrollView>
           </View>
         )}
