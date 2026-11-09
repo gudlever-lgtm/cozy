@@ -1,12 +1,9 @@
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { StrongScrollView } from "../StrongScrollView";
 import React from "react";
 import {
   Modal,
   View,
   Text,
   StyleSheet,
-  useWindowDimensions,
 } from "react-native";
 import { useTranslation } from "react-i18next";
 import { CozyButton } from "./CozyButton";
@@ -25,8 +22,6 @@ export function UndoHelp({
   onEarn: () => void;
 }) {
   const { t } = useTranslation();
-  const { height } = useWindowDimensions();
-  const insets = useSafeAreaInsets();
   return (
     <Modal
       visible={visible}
@@ -39,14 +34,9 @@ export function UndoHelp({
       <View style={s.scrim}>
         <CozyPanel
           testID="undo-help-dialog"
-          style={[
-            s.panel,
-            {
-              maxHeight: Math.max(0, height - insets.top - insets.bottom - 24),
-            },
-          ]}
+          style={s.panel}
         >
-          <StrongScrollView contentContainerStyle={{ gap: 14 }}>
+          <View style={s.content}>
             <View
               style={{ flexDirection: "row", alignItems: "center", gap: 12 }}
             >
@@ -57,13 +47,13 @@ export function UndoHelp({
               />
               <GameIcon name="undo" size={38} />
             </View>
-            <Text accessibilityRole="header" style={s.title}>
+            <Text testID="undo-help-title" accessibilityRole="header" style={s.title}>
               {String(t("undoEmptyTitle"))}
             </Text>
-            <Text style={s.body}>{String(t("undoEmptyBody"))}</Text>
-            <CozyButton label={String(t("garden"))} onPress={onEarn} />
-            <CozyButton label={String(t("close"))} onPress={onClose} quiet />
-          </StrongScrollView>
+            <Text testID="undo-help-body" style={s.body}>{String(t("undoEmptyBody"))}</Text>
+            <CozyButton testID="undo-help-earn" label={String(t("garden"))} onPress={onEarn} />
+            <CozyButton testID="undo-help-close" label={String(t("close"))} onPress={onClose} quiet />
+          </View>
         </CozyPanel>
       </View>
     </Modal>
@@ -81,8 +71,8 @@ const s = StyleSheet.create({
     width: "100%",
     maxWidth: 360,
     padding: 22,
-    gap: 14,
   },
-  title: { fontFamily: cozy.font.title, fontSize: 23, color: cozy.color.ink },
-  body: { fontSize: 15, lineHeight: 23, color: cozy.color.muted },
+  content: { gap: 14, width: "100%", alignItems: "stretch" },
+  title: { fontFamily: cozy.font.title, fontSize: 23, color: cozy.color.ink, textAlign: "center" },
+  body: { fontSize: 15, lineHeight: 23, color: cozy.color.muted, textAlign: "center" },
 });
