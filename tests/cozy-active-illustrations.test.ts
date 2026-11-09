@@ -30,8 +30,15 @@ test("illustrated menu, primary controls, and portrait garden use bundled art", 
   const button = read("src/ui/CozyButton.tsx");
   const garden = read("src/ui/GardenHome.tsx");
   const images = read("src/assets/images.ts");
-  assert.match(button, /cozyRedesignImages\.ui_flower_corner_left_webp/);
-  assert.match(button, /!compact && !quiet && !disabled/);
+  // Illustrated button backgrounds remain bundled; the old extra flower
+  // overlay was intentionally removed because it collided with text.
+  for (const key of ["ui_button_wood_webp", "ui_button_paper_webp", "ui_button_green_webp"]) {
+    assert.ok(button.includes("cozyRedesignImages." + key), "Missing button artwork: " + key);
+  }
+  for (const variant of ["bottomTab", "toolbarAction", "menuCard", "dialogChoice"]) {
+    assert.ok(button.includes(variant), "Missing button variant: " + variant);
+  }
+  assert.doesNotMatch(button, /cozyRedesignImages\.ui_flower_corner_left_webp/);
   assert.match(garden, /gardenImageSize\(season, portrait && cottage\)/);
   assert.match(
     images,
