@@ -21,17 +21,18 @@ export function GameToolbar({
 }) {
   const { t } = useTranslation();
   const narrow = useWindowDimensions().width < 420;
-  const actionStyle = [s.action, narrow && { flexBasis: "48%" as const }];
+  const actionStyle = [s.action, narrow && s.narrowAction];
   return (
     <View
       testID="solitaire-toolbar"
-      style={[s.root, narrow && { flexWrap: "wrap" }]}
+      style={[s.root, narrow && s.narrowRoot]}
     >
       <CozyButton
         label={String(t("newGame"))}
         icon="newGame"
         onPress={onNew}
         compact={!narrow}
+        balanced
         style={actionStyle}
       />
       <CozyButton
@@ -42,6 +43,7 @@ export function GameToolbar({
         disabled={!canUndo}
         compact={!narrow}
         quiet
+        balanced
         style={actionStyle}
       />
       <CozyButton
@@ -50,6 +52,7 @@ export function GameToolbar({
         onPress={onHint}
         compact={!narrow}
         quiet
+        balanced
         style={actionStyle}
       />
       <CozyButton
@@ -59,6 +62,7 @@ export function GameToolbar({
         selected={canAuto ? true : undefined}
         compact={!narrow}
         quiet={!canAuto}
+        balanced
         style={actionStyle}
       />
     </View>
@@ -67,11 +71,13 @@ export function GameToolbar({
 const s = StyleSheet.create({
   root: {
     flexDirection: "row",
-    gap: 6,
-    paddingHorizontal: 6,
-    paddingTop: 4,
-    paddingBottom: 6,
+    gap: 8,
+    paddingHorizontal: 10,
+    paddingTop: 8,
+    paddingBottom: 8,
     flexShrink: 0,
   },
-  action: { flex: 1, minWidth: 0 },
+  narrowRoot: { flexWrap: "wrap", justifyContent: "space-between" },
+  action: { flex: 1, minWidth: 0, minHeight: 68 },
+  narrowAction: { flexBasis: "46%", flexGrow: 1, minHeight: 68 },
 });
