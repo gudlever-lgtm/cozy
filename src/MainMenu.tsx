@@ -146,7 +146,7 @@ export function MainMenu({
                   icon={item.icon}
                   variant="menuCard"
                   onPress={() => onNavigate(item.id)}
-                  style={{ width: width < 360 ? "100%" : "48%", minHeight: 92 }}
+                  style={{ width: width < 360 ? "100%" : "48%", minHeight: 98 }}
                 />
               ))}
             </View>
@@ -163,7 +163,7 @@ export function MainMenu({
                   variant="menuCard"
                   onPress={() => onNavigate(item.id)}
                   quiet
-                  style={{ width: width < 360 ? "100%" : "48%", minHeight: 92 }}
+                  style={{ width: width < 360 ? "100%" : "48%", minHeight: 98 }}
                 />
               ))}
             </View>
