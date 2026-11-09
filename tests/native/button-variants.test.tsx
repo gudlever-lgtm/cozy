@@ -114,3 +114,20 @@ test("holding an icon-only tab displays its accessible Danish label", async () =
     "Min have",
   );
 });
+
+test("standard buttons reserve caption space for Danish settings labels", async () => {
+  await renderAsync(
+    <>
+      <CozyButton testID="save-name" label="Gem spillernavn" onPress={jest.fn()} />
+      <CozyButton testID="privacy" label="Privatliv" quiet onPress={jest.fn()} />
+    </>,
+  );
+  for (const [id, caption] of [["save-name", "Gem spillernavn"], ["privacy", "Privatliv"]]) {
+    const button = screen.getByTestId(id);
+    const label = screen.getByTestId(`${id}-label`);
+    expect(label.props.children).toBe(caption);
+    expect(label.props.numberOfLines).toBe(2);
+    expect(label.props.adjustsFontSizeToFit).toBe(true);
+    expect(button.props.style).toBeDefined();
+  }
+});
