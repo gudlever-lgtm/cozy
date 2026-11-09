@@ -127,6 +127,7 @@ export function CozyButton({
   style,
   compact = false,
   balanced = false,
+  stacked = false,
   role = "button",
 }: {
   label: string;
@@ -141,6 +142,7 @@ export function CozyButton({
   style?: StyleProp<ViewStyle>;
   compact?: boolean;
   balanced?: boolean;
+  stacked?: boolean;
   role?: "button" | "tab";
 }) {
   return (
@@ -158,6 +160,7 @@ export function CozyButton({
         styles.button,
         compact && styles.compact,
         balanced && styles.balancedButton,
+        stacked && styles.stackedButton,
         style,
         pressed &&
           !disabled && { transform: [{ translateY: 1 }], opacity: 0.9 },
@@ -185,11 +188,20 @@ export function CozyButton({
           accessible={false}
         />
       )}
-      <View pointerEvents="none" style={styles.content}>
+      <View
+        pointerEvents="none"
+        style={[styles.content, stacked && styles.stackedContent]}
+      >
         {icon && (
           <View
             testID={testID ? `${testID}-icon-slot` : undefined}
-            style={label.length > 0 ? styles.iconSlot : styles.iconOnlySlot}
+            style={
+              stacked
+                ? styles.stackedIconSlot
+                : label.length > 0
+                  ? styles.iconSlot
+                  : styles.iconOnlySlot
+            }
           >
             <GameIcon
               name={icon}
@@ -208,8 +220,9 @@ export function CozyButton({
               styles.label,
               (quiet || disabled) && styles.paperLabel,
               compact && styles.compactLabel,
-              icon && label.length > 0 && styles.labelWithIcon,
+              icon && label.length > 0 && !stacked && styles.labelWithIcon,
               balanced && styles.balancedLabel,
+              stacked && styles.stackedLabel,
             ]}
           >
             {label}
@@ -248,6 +261,7 @@ const styles = StyleSheet.create({
   },
   compact: { minHeight: 44, paddingHorizontal: 5, paddingVertical: 5 },
   balancedButton: { minHeight: 68, paddingHorizontal: 9, paddingVertical: 8 },
+  stackedButton: { minHeight: 76, paddingHorizontal: 8, paddingVertical: 7 },
   // Stretch a stable, vertically centred text lane across the artwork.
   // Icons are overlaid on the left, so they never change the label centre.
   content: {
@@ -258,6 +272,19 @@ const styles = StyleSheet.create({
     minHeight: 28,
     justifyContent: "center",
     alignItems: "center",
+  },
+  stackedContent: {
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 2,
+  },
+  stackedIconSlot: {
+    width: 26,
+    height: 26,
+    flexShrink: 0,
+    alignItems: "center",
+    justifyContent: "center",
   },
   iconSlot: {
     position: "absolute",
@@ -280,6 +307,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 27,
   },
   balancedLabel: { fontSize: 13, lineHeight: 17 },
+  stackedLabel: {
+    width: "100%",
+    paddingHorizontal: 2,
+    fontSize: 12,
+    lineHeight: 15,
+    textAlign: "center",
+    flexShrink: 1,
+  },
   compactLabel: { fontSize: 11, lineHeight: 14 },
   flowerAccent: {
     position: "absolute",
