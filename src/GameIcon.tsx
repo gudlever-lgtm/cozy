@@ -3,6 +3,7 @@ import { View, Image } from "react-native";
 import { cozyRedesignImages } from "./assets/cozyRedesignImages";
 import { ArtIcon } from "./ArtIcon";
 import { CardArtwork } from "./CardArtwork";
+import { PlayerAvatar } from "./ui/PlayerAvatar";
 import Svg, { Path, Rect, Circle, G } from "react-native-svg";
 /** Consistent native line icons for the compact game dock and contextual controls. */
 export function GameIcon({
@@ -14,6 +15,11 @@ export function GameIcon({
   size?: number;
   color?: string;
 }) {
+  // Player/profile controls use a real illustrated avatar, never the
+  // generic question mark fallback or a playing-card symbol.
+  if (name === "player" || name === "profile" || name === "avatar") {
+    return <PlayerAvatar size={size} />;
+  }
   // Individual production illustrations replace the older atlas and line icons
   // for solitaire actions; they remain crisp and consistent with the design.
   const illustrated = {
