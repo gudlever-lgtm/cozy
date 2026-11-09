@@ -122,6 +122,7 @@ export function MainMenu({
             <CozyButton
               label={String(t("close"))}
               onPress={onClose}
+              variant="dialogChoice"
               quiet
               compact
             />
@@ -143,8 +144,9 @@ export function MainMenu({
                   testID={`menu-${item.id}`}
                   label={String(t(item.key))}
                   icon={item.icon}
+                  variant="menuCard"
                   onPress={() => onNavigate(item.id)}
-                  style={{ width: width < 350 ? "100%" : "48%", minHeight: 52 }}
+                  style={{ width: width < 360 ? "100%" : "48%", minHeight: 92 }}
                 />
               ))}
             </View>
@@ -158,9 +160,10 @@ export function MainMenu({
                   testID={`menu-${item.id}`}
                   label={String(t(item.key))}
                   icon={item.icon}
+                  variant="menuCard"
                   onPress={() => onNavigate(item.id)}
                   quiet
-                  style={{ width: width < 350 ? "100%" : "48%", minHeight: 52 }}
+                  style={{ width: width < 360 ? "100%" : "48%", minHeight: 92 }}
                 />
               ))}
             </View>
@@ -169,6 +172,7 @@ export function MainMenu({
             <CozyButton
               label={String(t("returnToGame"))}
               onPress={onClose}
+              variant="dialogChoice"
               quiet
             />
             <View style={{ alignItems: "center" }}>
