@@ -221,6 +221,30 @@ async function main() {
       assert(board && toolbar && nav);
       assert(!overlap(board, toolbar), `${name}: toolbar covers board`);
       assert(!overlap(toolbar, nav), `${name}: navigation covers actions`);
+      const actionRects = [];
+      for (const id of ["new", "undo", "hint", "auto"]) {
+        const button = (await page.getByTestId(`solitaire-action-${id}`).boundingBox())!;
+        const label = (await page.getByTestId(`solitaire-action-${id}-label`).boundingBox())!;
+        assert.ok(button && label, `${name}: missing ${id} action button or label`);
+        assert.ok(
+          label.x >= button.x - 1 &&
+            label.y >= button.y - 1 &&
+            label.x + label.width <= button.x + button.width + 1 &&
+            label.y + label.height <= button.y + button.height + 1,
+          `${name}: ${id} label extends beyond the artwork`,
+        );
+        assert.ok(
+          Math.abs(label.x + label.width / 2 - button.x - button.width / 2) <= 3,
+          `${name}: ${id} label is horizontally off-centre`,
+        );
+        actionRects.push(button);
+      }
+      for (let i = 0; i < actionRects.length; i++) {
+        for (let j = i + 1; j < actionRects.length; j++) {
+          assert(!overlap(actionRects[i], actionRects[j]),
+            `${name}: solitaire actions ${i} and ${j} overlap`);
+        }
+      }
       assert(
         await page
           .getByRole("button", { name: "Nyt spil", exact: true })
