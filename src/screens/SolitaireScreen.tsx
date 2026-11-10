@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Animated, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Animated, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -23,6 +23,8 @@ import UndoIcon from "../../assets/v3/icons/undo.svg";
 import PlayIcon from "../../assets/v3/icons/play.svg";
 import StarIcon from "../../assets/v3/icons/star.svg";
 import { textColors } from "../ui/theme/colors";
+import FeltPortrait from "../../assets/v3-premium/tabletop/solitaire-felt-portrait.svg";
+import FeltLandscape from "../../assets/v3-premium/tabletop/solitaire-felt-landscape.svg";
 
 const MARGIN = 10;
 const GAP = 6;
@@ -38,13 +40,16 @@ type DragSource = { type: "waste" } | { type: "tableau"; column: number; cardInd
  * unchanged for an illegal move).
  */
 export function SolitaireScreen() {
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
+  const isLandscape = width > height;
+  const boardWidth = isLandscape ? Math.min(470, width * 0.58) : width;
   const { preferences } = usePreferences();
   const [game, setGame] = useState<GameState | null>(null);
   const [drag, setDrag] = useState<{ source: DragSource; cards: Card[]; dx: number; dy: number } | null>(null);
   const [hintMove, setHintMove] = useState<Move | null>(null);
   const [hintText, setHintText] = useState<string | null>(null);
   const victoryAnim = useRef(new Animated.Value(0)).current;
+  const tableauScrollY = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -68,11 +73,14 @@ export function SolitaireScreen() {
     else victoryAnim.setValue(0);
   }, [won, victoryAnim]);
 
-  const cardWidth = useMemo(() => (width - 2 * MARGIN - GAP * (COLUMNS - 1)) / COLUMNS, [width]);
+  // Landscape is HEIGHT-constrained; a width-only card size made 844×390 unplayable.
+  // Board and action controls have independent rectangles. No game rules change.
+  const cardWidth = Math.min((boardWidth - 2 * MARGIN - GAP * (COLUMNS - 1)) / COLUMNS, isLandscape ? 56 : 70);
   const cardHeight = (cardWidth * 270) / 190;
   const faceDownStep = cardHeight * 0.16;
   const faceUpStep = cardHeight * 0.24;
-  const tableauTop = MARGIN * 2 + cardHeight;
+  const boardTopInset = isLandscape ? 4 : Math.max(50, Math.min(78, height * 0.09));
+  const tableauTop = boardTopInset + MARGIN * 2 + cardHeight;
 
   const columnX = (col: number) => MARGIN + col * (cardWidth + GAP);
 
@@ -126,8 +134,8 @@ export function SolitaireScreen() {
           const originX = source.type === "waste" ? MARGIN + cardWidth + GAP : columnX(source.column);
           const originY =
             source.type === "waste"
-              ? MARGIN
-              : tableauTop + stackedOffset(game!.tableau[source.column], source.cardIndex, faceDownStep, faceUpStep);
+              ? boardTopInset + MARGIN
+              : tableauTop + stackedOffset(game!.tableau[source.column], source.cardIndex, faceDownStep, faceUpStep) - tableauScrollY.current;
           attemptTableauDrop(source, originX + e.translationX, originY + e.translationY);
         }
         setDrag(null);
@@ -142,6 +150,8 @@ export function SolitaireScreen() {
   const canRecycle = !canDraw && game.waste.length > 0;
   const wasteTop = game.waste[game.waste.length - 1];
   const foundationOrder = ["clubs", "diamonds", "hearts", "spades"] as const;
+  const tallestStack = Math.max(0, ...game.tableau.map((column) => column.length ? stackedOffset(column, column.length - 1, faceDownStep, faceUpStep) + cardHeight : 0));
+  const tableauContentHeight = Math.max(160, tallestStack + 16);
 
   const runHint = () => {
     const result = domainHint(game);
@@ -162,8 +172,11 @@ export function SolitaireScreen() {
 
   return (
     <View style={styles.container}>
-      <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
-        <View style={[styles.topRow, { marginHorizontal: MARGIN, height: cardHeight }]}>
+      <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+        {isLandscape ? <FeltLandscape width="100%" height="100%" preserveAspectRatio="xMidYMid slice" /> : <FeltPortrait width="100%" height="100%" preserveAspectRatio="xMidYMid slice" />}
+      </View>
+      <SafeAreaView style={[styles.safe, isLandscape ? styles.safeLandscape : null]} edges={["top", "bottom"]}>
+        <View style={[styles.topRow, { marginHorizontal: MARGIN, marginTop: boardTopInset, width: boardWidth - 2 * MARGIN, height: cardHeight }]}>
           <GestureDetector gesture={canDraw || canRecycle ? Gesture.Tap().runOnJS(true).onEnd(() => setGame(applyMove(game, canDraw ? { type: "draw" } : { type: "recycle" }))) : Gesture.Tap()}>
             <View style={{ width: cardWidth, height: cardHeight }}>
               {canDraw ? (
@@ -199,7 +212,15 @@ export function SolitaireScreen() {
           })}
         </View>
 
-        <View style={[styles.tableauRow, { marginHorizontal: MARGIN, marginTop: MARGIN }]}>
+        <ScrollView
+          nestedScrollEnabled
+          style={[styles.tableauViewport, { width: boardWidth, marginTop: MARGIN }]}
+          contentContainerStyle={{ minHeight: tableauContentHeight, paddingHorizontal: MARGIN }}
+          onScroll={(event) => { tableauScrollY.current = event.nativeEvent.contentOffset.y; }}
+          scrollEventThrottle={16}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={[styles.tableauRow, { width: boardWidth - 2 * MARGIN, height: tableauContentHeight }]}>
           {game.tableau.map((column, colIndex) => (
             <View key={colIndex} style={{ width: cardWidth }}>
               {column.length === 0 ? (
@@ -226,9 +247,10 @@ export function SolitaireScreen() {
               )}
             </View>
           ))}
-        </View>
+          </View>
+        </ScrollView>
 
-        <View style={styles.toolbar}>
+        <View style={[styles.toolbar, isLandscape ? [styles.toolbarLandscape, { left: boardWidth + 8, right: 12 }] : styles.toolbarPortrait]}>
           <CozyIconButton icon={UndoIcon} accessibilityLabel="Fortryd" longPressHint="Fortryd sidste træk" onPress={() => setGame(domainUndo(game))} />
           <CozyIconButton icon={HintIcon} accessibilityLabel="Tip" longPressHint="Vis et lovligt træk" onPress={runHint} />
           <CozyIconButton icon={StarIcon} accessibilityLabel="Auto-finish" longPressHint="Flyt sikre kort til fundamentet" onPress={() => setGame(autoPlaySafe(game))} />
@@ -251,8 +273,8 @@ export function SolitaireScreen() {
         ? drag.cards.map((card, i) => {
             const origin =
               drag.source.type === "waste"
-                ? { x: MARGIN + cardWidth + GAP, y: MARGIN }
-                : { x: columnX(drag.source.column), y: tableauTop + stackedOffset(game.tableau[drag.source.column], drag.source.cardIndex, faceDownStep, faceUpStep) + i * faceUpStep };
+                ? { x: MARGIN + cardWidth + GAP, y: boardTopInset + MARGIN }
+                : { x: columnX(drag.source.column), y: tableauTop + stackedOffset(game.tableau[drag.source.column], drag.source.cardIndex, faceDownStep, faceUpStep) + i * faceUpStep - tableauScrollY.current };
             return (
               <View
                 key={card.id}
@@ -284,13 +306,17 @@ function stackedOffset(column: readonly Card[], uptoIndex: number, faceDownStep:
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#e7efe0" },
-  safe: { flex: 1, paddingBottom: 96 },
+  container: { flex: 1, backgroundColor: "#173f30" },
+  safe: { flex: 1, paddingBottom: 174 },
+  safeLandscape: { paddingBottom: 82 },
   topRow: { flexDirection: "row", alignItems: "flex-start" },
-  tableauRow: { flex: 1, flexDirection: "row" },
+  tableauViewport: { flex: 1, maxWidth: "100%" },
+  tableauRow: { flexDirection: "row" },
   stacked: { position: "absolute", left: 0 },
   hidden: { opacity: 0 },
-  toolbar: { flexDirection: "row", justifyContent: "center", gap: 20, paddingVertical: 10 },
+  toolbar: { position: "absolute", flexDirection: "row", justifyContent: "center", gap: 12 },
+  toolbarPortrait: { bottom: 104, left: 10, right: 10 },
+  toolbarLandscape: { top: 98, bottom: 94, flexWrap: "wrap", alignContent: "center", alignItems: "center" },
   hintToast: { position: "absolute", bottom: 70, alignSelf: "center", backgroundColor: "rgba(43,36,32,0.85)", borderRadius: 12, paddingHorizontal: 14, paddingVertical: 8, maxWidth: "80%" },
   hintText: { color: "#fff", fontSize: 13, textAlign: "center" },
   victoryOverlay: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(0,0,0,0.35)" },

@@ -1,12 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Image, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { PREMIUM_MARMALADE, PREMIUM_MILLIE, PREMIUM_SCENE, PREMIUM_SEASON_BACKGROUNDS } from "../ui/theme/premiumArt";
 import HammerIcon from "../../assets/v3/icons/hammer.svg";
 import CloseIcon from "../../assets/v3/icons/close.svg";
 import UndoIcon from "../../assets/v3/icons/undo.svg";
 import StarIcon from "../../assets/v3/icons/star.svg";
+import FlowerIcon from "../../assets/v3/icons/flower.svg";
 import { pan as panCamera, pinchZoom } from "../domain/garden/camera";
 import {
   createGarden,
@@ -70,6 +71,8 @@ export function GardenScreen() {
   const { balance } = useRewardLedger();
   const { preferences } = usePreferences();
   const { width, height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const isLandscape = width > height;
   const bounds: CameraBounds = useMemo(
     () => ({
       viewport: { width, height },
@@ -251,8 +254,8 @@ export function GardenScreen() {
           style={[
             styles.selectionToolbarWrap,
             {
-              left: Math.min(Math.max(8, selectedScreen.x - 110), width - 228),
-              top: Math.max(8, selectedScreen.y - 108),
+              left: Math.max(8, Math.min(width - 228, selectedScreen.x - 110)),
+              top: Math.max(8 + insets.top, Math.min(height - (isLandscape ? 184 : 234) - insets.bottom, selectedScreen.y - 108)),
             },
           ]}
         >
@@ -297,7 +300,19 @@ export function GardenScreen() {
       </SafeAreaView>
 
       {buildMode ? (
-        <View style={styles.palette} pointerEvents="box-none">
+        <View
+          style={[
+            styles.palette,
+            isLandscape ? styles.paletteLandscape : styles.palettePortrait,
+            { bottom: (isLandscape ? 62 : 94) + insets.bottom },
+          ]}
+          pointerEvents="box-none"
+        >
+          <View style={styles.paletteHeading} pointerEvents="none">
+            <FlowerIcon width={20} height={20} />
+            <Text style={styles.paletteTitle}>{t("buildMode")}</Text>
+          </View>
+          <View style={styles.paletteGrid}>
           {DECORATION_KINDS.map((kind) => {
             const Art = DECORATION_ART[kind];
             const active = kind === selectedKind;
@@ -314,6 +329,7 @@ export function GardenScreen() {
               </Pressable>
             );
           })}
+          </View>
         </View>
       ) : null}
     </View>
@@ -344,17 +360,26 @@ const styles = StyleSheet.create({
   selectionActions: { flexDirection: "row", justifyContent: "center", gap: 16, marginTop: 8 },
   palette: {
     position: "absolute",
-    left: 12,
-    right: 12,
-    bottom: 96,
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    backgroundColor: "rgba(255,255,255,0.9)",
-    borderRadius: 16,
-    padding: 10,
     zIndex: 5,
+    backgroundColor: "#fff3d7",
+    borderColor: "#b78342",
+    borderWidth: 3,
+    borderRadius: 22,
+    padding: 10,
+    shadowColor: "#3d2816",
+    shadowOpacity: 0.22,
+    shadowRadius: 7,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 5,
   },
-  paletteItem: { width: 48, height: 48, alignItems: "center", justifyContent: "center", borderRadius: 10 },
-  paletteItemActive: { backgroundColor: "rgba(0,0,0,0.08)" },
+  palettePortrait: { left: 16, right: 16 },
+  paletteLandscape: { left: 120, right: 120, paddingVertical: 4 },
+  paletteHeading: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 3 },
+  paletteTitle: { color: "#4a3824", fontWeight: "700", fontSize: 13 },
+  paletteGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8, alignItems: "center", justifyContent: "center" },
+  paletteItem: {
+    width: 48, height: 48, alignItems: "center", justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.36)", borderRadius: 12,
+  },
+  paletteItemActive: { backgroundColor: "#e6c889", borderColor: "#ad7837", borderWidth: 2 },
 });
