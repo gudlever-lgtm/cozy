@@ -1,11 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
-import GardenSpring from "../../assets/v3/backgrounds/garden-spring.svg";
-import GardenSummer from "../../assets/v3/backgrounds/garden-summer.svg";
-import GardenAutumn from "../../assets/v3/backgrounds/garden-autumn.svg";
-import GardenWinter from "../../assets/v3/backgrounds/garden-winter.svg";
+import { PREMIUM_MARMALADE, PREMIUM_MILLIE, PREMIUM_SCENE, PREMIUM_SEASON_BACKGROUNDS } from "../ui/theme/premiumArt";
 import HammerIcon from "../../assets/v3/icons/hammer.svg";
 import CloseIcon from "../../assets/v3/icons/close.svg";
 import UndoIcon from "../../assets/v3/icons/undo.svg";
@@ -28,22 +25,21 @@ import { CozyPanel } from "../ui/components/CozyPanel";
 import { textColors } from "../ui/theme/colors";
 import { gardenTokens } from "../ui/theme/layoutTokens";
 
-const SCENE = { width: 720, height: 1280 };
-const SEASON_ART: Record<Season, React.FC<any>> = {
-  spring: GardenSpring,
-  summer: GardenSummer,
-  autumn: GardenAutumn,
-  winter: GardenWinter,
-};
+// Candidate "Premium Art V1" raster backgrounds (assets/v3-premium/, see
+// docs/PREMIUM_ART_IMPORT.md) replace the geometric SVG season scenes here. World
+// coordinates (SCENE) now match the new art's own intrinsic pixel size exactly, so the
+// existing pure camera/garden domain math (src/domain/garden) needs no changes — it
+// only ever took the scene size as a parameter.
+const SCENE = PREMIUM_SCENE;
+const SEASON_ART: Record<Season, number> = PREMIUM_SEASON_BACKGROUNDS;
 
 /**
  * Fullscreen garden world. Pan/pinch-zoom and decoration placement are driven by the
  * pure functions in src/domain/garden (camera.ts, garden.ts) — this component only
  * translates gestures into calls on that domain code and renders the result.
  *
- * Millie and Marmalade have no character illustrations in assets/v3/ (only animal
- * avatar icons exist there) — flagged in Stage 5.1. Rather than inventing character
- * art, they render as plain labeled markers until real art is supplied.
+ * Millie and Marmalade now render as the real illustrated character cutouts from the
+ * premium pack instead of plain labeled markers.
  *
  * Decoration repositioning is tap-to-place (select, then tap a new spot) rather than
  * drag-to-move, to avoid the gesture lived under both camera-pan and decoration-drag
@@ -165,7 +161,8 @@ export function GardenScreen() {
 
   const camera = garden.camera;
   const season = currentSeason(garden, new Date());
-  const SeasonArt = SEASON_ART[season];
+  const seasonBackground = SEASON_ART[season];
+  const characterSize = 130 * camera.zoom; // 1:1 aspect, see PREMIUM_CHARACTER_ASPECT
   const toScreen = (normX: number, normY: number) => ({
     x: (normX * SCENE.width - camera.offsetX) * camera.zoom,
     y: (normY * SCENE.height - camera.offsetY) * camera.zoom,
@@ -187,16 +184,23 @@ export function GardenScreen() {
               height: SCENE.height * camera.zoom,
             }}
           >
-            <SeasonArt width="100%" height="100%" />
+            <Image source={seasonBackground} style={{ width: "100%", height: "100%" }} resizeMode="cover" />
             {garden.characters
               .filter((c) => c.visible)
               .map((c) => (
-                <View
+                <Image
                   key={c.id}
-                  style={[styles.characterMarker, { left: c.x * SCENE.width * camera.zoom - 22, top: c.y * SCENE.height * camera.zoom - 22 }]}
-                >
-                  <Text style={styles.characterLabel}>{c.id === "millie" ? "Millie" : "Marmalade"}</Text>
-                </View>
+                  source={c.id === "millie" ? PREMIUM_MILLIE : PREMIUM_MARMALADE}
+                  resizeMode="contain"
+                  accessibilityLabel={c.id === "millie" ? "Millie" : "Marmalade"}
+                  style={{
+                    position: "absolute",
+                    left: c.x * SCENE.width * camera.zoom - characterSize / 2,
+                    top: c.y * SCENE.height * camera.zoom - characterSize / 2,
+                    width: characterSize,
+                    height: characterSize,
+                  }}
+                />
               ))}
             {garden.decorations.map((d) => {
               const Art = DECORATION_ART[d.kind as DecorationKind];
@@ -301,19 +305,6 @@ const styles = StyleSheet.create({
   // Settings lives in MainScreen's own top-right header overlay — keep this row on the
   // left so the two HUD overlays never collide.
   hudRow: { flexDirection: "row", justifyContent: "flex-start", alignItems: "center", padding: 12, gap: 10 },
-  characterMarker: {
-    position: "absolute",
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "rgba(255,255,255,0.85)",
-    borderWidth: 2,
-    borderColor: textColors.onLightPanel,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 2,
-  },
-  characterLabel: { fontSize: 9, fontWeight: "700", color: textColors.onLightPanel, textAlign: "center" },
   // A soft glow instead of a hard black rectangle — gold tone sampled from the
   // approved UI frames' own border color (#d2a44d), not an invented brand color.
   decorationSelected: {

@@ -1,28 +1,25 @@
 import React, { useEffect, useRef } from "react";
-import { Animated, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Animated, Image, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import GardenBackground from "../../assets/v3/backgrounds/garden-spring.svg";
-import HeaderBanner from "../../assets/v3/ui/header-banner.svg";
 import { CozyButton } from "../ui/components/CozyButton";
 import { useLocale } from "../i18n/LocaleContext";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 import { textColors } from "../ui/theme/colors";
+import { PREMIUM_LOGO, PREMIUM_LOGO_ASPECT, PREMIUM_WELCOME_BACKGROUND } from "../ui/theme/premiumArt";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Welcome">;
 
-const BANNER_ASPECT = 680 / 142;
-
-/** A real, interactive screen (not a static mockup): background art, a soft fade/rise
+/**
+ * A real, interactive screen (not a static mockup): background art, a soft fade/rise
  * entrance, one primary action and one secondary action.
  *
- * Missing reference material (see docs/STAGE5_MISSING_ASSETS.md): there is no
- * illustrated "Cozy Solitaire" logotype and no Millie/Marmalade character art in
- * assets/v3/ — only animal avatar icons exist, which are not those two named
- * characters. The title uses assets/v3/ui/header-banner.svg (an approved wooden
- * signboard frame already in the pack, just not wired to any screen yet) rather than
- * an invented dark box or plain text, but this is NOT a substitute for a real logo;
- * it is flagged as a gap, not shipped as if it were final art.
+ * Uses the candidate "Premium Art V1" raster pack (assets/v3-premium/, see
+ * docs/PREMIUM_ART_IMPORT.md) for the background and logo — CANDIDATE art, not yet
+ * owner-approved on a real device. Millie and Marmalade are already painted into
+ * welcome-garden-premium.png itself (the embracing rabbit+cat under the tree), so they
+ * are not separately overlaid here — doing so would duplicate them. The approved SVG UI
+ * chrome (CozyButton, navigation, HUD) is untouched; only the backdrop/logo layer changed.
  *
  * Landscape gets a deliberately different layout (side-by-side, vertically centered)
  * rather than the portrait column simply stretched wide. */
@@ -36,19 +33,12 @@ export function WelcomeScreen({ navigation }: Props) {
     Animated.timing(entrance, { toValue: 1, duration: 500, useNativeDriver: true }).start();
   }, [entrance]);
 
-  const bannerWidth = Math.min(isLandscape ? width * 0.42 : width * 0.78, 420);
-  const bannerHeight = bannerWidth / BANNER_ASPECT;
+  const logoWidth = Math.min(isLandscape ? width * 0.4 : width * 0.72, 380);
+  const logoHeight = logoWidth / PREMIUM_LOGO_ASPECT;
 
   const hero = (
     <View style={styles.hero}>
-      <View style={{ width: bannerWidth, height: bannerHeight }}>
-        <HeaderBanner width="100%" height="100%" />
-        <View style={styles.bannerTextSlot} pointerEvents="none">
-          <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit>
-            Cozy Solitaire
-          </Text>
-        </View>
-      </View>
+      <Image source={PREMIUM_LOGO} style={{ width: logoWidth, height: logoHeight }} resizeMode="contain" />
       <Text style={styles.tagline}>{t("welcomeTagline")}</Text>
     </View>
   );
@@ -61,9 +51,12 @@ export function WelcomeScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
-      <View style={StyleSheet.absoluteFill}>
-        <GardenBackground width="100%" height="100%" preserveAspectRatio="xMidYMid slice" />
-      </View>
+      {/* Plain full-image cover. A "crop to the sharp band only" variant was tried and
+          reverted: at a phone's portrait aspect ratio, forcing the (landscape-shaped)
+          sharp band to fill the height requires zooming in ~1.7x, which crops Marmalade
+          out of frame entirely — worse than the documented blurred-margin seam it was
+          meant to fix. See docs/PREMIUM_ART_IMPORT.md and this pass's report. */}
+      <Image source={PREMIUM_WELCOME_BACKGROUND} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
       {isLandscape ? (
         <SafeAreaView style={styles.safeLandscape}>
           <Animated.View style={[styles.landscapeLeft, { opacity: entrance }]}>{hero}</Animated.View>
@@ -94,13 +87,6 @@ const styles = StyleSheet.create({
   landscapeLeft: { flex: 1.2, alignItems: "center", justifyContent: "center" },
   landscapeRight: { flex: 1, alignItems: "center", gap: 14 },
   hero: { alignItems: "center" },
-  bannerTextSlot: { ...StyleSheet.absoluteFillObject, alignItems: "center", justifyContent: "center", paddingHorizontal: "18%" },
-  title: {
-    fontSize: 26,
-    fontWeight: "800",
-    color: textColors.onLightPanel,
-    textAlign: "center",
-  },
   tagline: {
     fontSize: 14,
     fontWeight: "600",
