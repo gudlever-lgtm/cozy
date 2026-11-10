@@ -1,0 +1,104 @@
+name: Cozy V3 Android debug APK + QR
+
+on:
+  push:
+    branches:
+      - integration/cozy-v3-visual-garden-solitaire
+    paths:
+      - .github/workflows/cozy-v3-debug-apk.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cozy-v3-debug-apk
+  cancel-in-progress: false
+
+jobs:
+  android-debug:
+    name: Build and publish installable debug APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      CI: '1'
+      EXPO_NO_TELEMETRY: '1'
+      TAG: cozy-v3-integration-e39d096-debug
+      APK_NAME: cozy-v3-integration-e39d096-debug.apk
+      QR_NAME: cozy-v3-integration-e39d096-debug-qr.png
+    steps:
+      - name: Checkout exact integration commit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Generate Android native project
+        run: npx expo prebuild --platform android --no-install
+
+      - name: Build Android debug APK (debug-signed)
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew :app:assembleDebug --no-daemon --stacktrace
+
+      - name: Verify APK and digital signature
+        run: |
+          set -euo pipefail
+          APK=android/app/build/outputs/apk/debug/app-debug.apk
+          test -s "$APK"
+          unzip -t "$APK" | tail -1
+          echo "APK content verification complete"
+          BUILD_TOOLS="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          "$BUILD_TOOLS/apksigner" verify --verbose "$APK"
+          cp "$APK" "$APK_NAME"
+          ls -lh "$APK_NAME"
+          sha256sum "$APK_NAME" > "$APK_NAME.sha256"
+
+      - name: Create QR for direct release asset URL
+        run: |
+          set -euo pipefail
+          python3 -m pip install --user 'qrcode[pil]'
+          python3 - <<'PY'
+          import os
+          import qrcode
+          url = f"https://github.com/{os.environ['GITHUB_REPOSITORY']}/releases/download/{os.environ['TAG']}/{os.environ['APK_NAME']}"
+          qrcode.make(url).save(os.environ['QR_NAME'])
+          print("QR target:", url)
+          PY
+
+      - name: Publish pre-release with APK and QR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release exists; uploading the verified assets"
+            gh release upload "$TAG" "$APK_NAME" "$QR_NAME" "$APK_NAME.sha256" --clobber
+          else
+            gh release create "$TAG" "$APK_NAME" "$QR_NAME" "$APK_NAME.sha256" \
+              --target "$GITHUB_SHA" \
+              --title "Cozy Solitaire V3 – integration test APK e39d096" \
+              --notes "Debug-signed Android testing build from integration/cozy-v3-visual-garden-solitaire. Not production signed. Includes the new garden/solitaire visuals. Minigames were not modified or expanded in this integration. Native functionality and visual acceptance are not yet verified." \
+              --prerelease
+          fi
+
+      - name: Links and checksums
+        run: |
+          echo "APK: https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/$APK_NAME" >> "$GITHUB_STEP_SUMMARY"
+          echo "QR: https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/$QR_NAME" >> "$GITHUB_STEP_SUMMARY"
+          cat "$APK_NAME.sha256" >> "$GITHUB_STEP_SUMMARY"
