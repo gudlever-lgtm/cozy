@@ -1,5 +1,5 @@
 import React from "react";
-import { Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from "react-native";
+import { Pressable, StyleSheet, Text, View, useWindowDimensions, type LayoutChangeEvent } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import TabBackgroundArt from "../../../assets/v3/ui/tab-background.svg";
 import GardenIcon from "../../../assets/v3/icons/garden.svg";
@@ -37,14 +37,20 @@ export interface CozyBottomNavigationProps {
  */
 export function CozyBottomNavigation({ active, onSelect, labels }: CozyBottomNavigationProps) {
   const insets = useSafeAreaInsets();
+  const { width, height: viewportHeight } = useWindowDimensions();
+  const landscape = width > viewportHeight;
   const [barWidth, setBarWidth] = React.useState(0);
   const tabs: NavTabKey[] = ["garden", "solitaire", "minigames", "quests"];
-  const height = bottomTabTokens.height;
+  // Landscape is height-constrained. Keep four accessible >=44dp tabs without
+  // covering a quarter of the game field with the portrait-sized tab bar.
+  const height = landscape ? 50 : bottomTabTokens.height;
+  const iconSize = landscape ? 21 : bottomTabTokens.iconSize;
+  const captionFontSize = landscape ? 10 : bottomTabTokens.captionFontSize;
 
   const onLayout = (e: LayoutChangeEvent) => setBarWidth(e.nativeEvent.layout.width);
 
   return (
-    <View style={[styles.wrapper, { bottom: 10 + insets.bottom, left: 12, right: 12 }]}>
+    <View style={[styles.wrapper, { bottom: (landscape ? 3 : 10) + insets.bottom, left: 12, right: 12 }]}>
       <View style={{ height }} onLayout={onLayout}>
         {barWidth > 0 ? (
           <View style={StyleSheet.absoluteFill}>
@@ -75,8 +81,8 @@ export function CozyBottomNavigation({ active, onSelect, labels }: CozyBottomNav
                 style={[styles.tab, { opacity: selected ? 1 : 0.55 }]}
                 hitSlop={4}
               >
-                <Icon width={bottomTabTokens.iconSize} height={bottomTabTokens.iconSize} />
-                <Text numberOfLines={1} style={[styles.caption, { fontSize: bottomTabTokens.captionFontSize }]}>
+                <Icon width={iconSize} height={iconSize} />
+                <Text numberOfLines={1} style={[styles.caption, { fontSize: captionFontSize }]}>
                   {labels[tab]}
                 </Text>
               </Pressable>
