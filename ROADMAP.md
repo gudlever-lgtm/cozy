@@ -9,13 +9,15 @@
 ## Fase 1 – Visuelt fundament (INGEN PRODUKTIONSKODE)
 - [x] Godkend V3-grafikpakken i Premium Cozy Storybook-retning (57 SVG-assets, 2026-11-10).
 - [ ] Udarbejd komplet moodboard og farver/typografi.
-- [ ] Godkend skærmlayout til have, kabale, minispil, hovedmenu og indstillinger.
-- [ ] Godkend klikbare flows, baggrunde, kort, avatarer og grafiske kontroller.
-- [ ] Lås alle dimensioner, skaleringsregler og design-tokens.
+- [x] Godkend samlet skærmlayout inkl. have, kabale, minispil, hovedmenu, indstillinger, kortdesign, profil, sæson og sejr (2026-11-10).
+- [x] Godkend det visuelle koncept for navigation, baggrunde, kort, avatarer og grafiske kontroller (2026-11-10); klikbare flows verificeres i implementering.
+- [x] Fastlæg UI-kontrakt og forslag til responsiv geometri som implementeringsbaseline; justeringer må ikke ændre godkendt udtryk.
 
 **Gate D1a (bestået):** Grafikpakken er eksplicit godkendt.
 
-**Gate D1b (åben):** Responsive skærmlayouts, tekster og tapområder skal verificeres og godkendes på telefon, før UI erklæres færdig.
+**Gate D1b (bestået — koncept):** Det samlede skærmlayout er godkendt af ejer 2026-11-10.
+
+**Gate D1c (åben — kvalitet):** Native rendering, responsiv tilpasning, tekster og tapområder skal testes på telefon, før UI erklæres færdig.
 
 ## Fase 2 – Arkitektur og gameplaygrundlag
 

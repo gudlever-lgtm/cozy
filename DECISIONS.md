@@ -16,7 +16,14 @@
 - Godkendelsen gælder **grafikpakken**; den er ikke dokumentation for pixelperfekt skærmlayout eller native funktioner.
 - Næste fase: deterministisk Klondike-spilmotor i Claude Code, uden omdesign af brugerfladen.
 
-## Åbne designbeslutninger
+## Godkendt endeligt layout — 10. november 2026
+- Producenten har eksplicit godkendt **det samlede Cozy 3.0-mobillayout** vist i seneste designoplæg i samtalen: Forside, Min have, Kabale/Klondike, Minispil, Opgaver, Kortdesign, Indstillinger, Spillerprofil, Sæson og Sejr samt fælles navigation/HUD/knapper.
+- **Premium Cozy Storybook V3** er den låste designretning; både grafikpakken og det samlede layout er godkendt.
+- Implementering må ikke ændre skærmhierarki, navigation, visuel stil eller grafiske komponenter uden eksplicit godkendelse.
+- Den præcise telefonrendering på 360×800, 390×844 og andre faktiske skærme skal fortsat verificeres; det er test/implementeringsaccept og ikke en åben designbeslutning.
+- Den visuelle mockup blev godkendt i ChatGPT-samtalen og er endnu ikke lagt i GitHub som billedfil. Implementering skal være tro mod både mockup og dokumenterede designkontrakter; uklare detaljer må ikke fortolkes som tilladelse til redesign.
+
+## Åbne implementeringsbeslutninger
 - Premium Cozy Storybook er valgt som grafisk basis; præcise responsive skærmmockups og native layoutgodkendelse mangler fortsat.
 - Endeligt logo, typografi, farver og illustrationer.
 - Endelig forside, kabalebord, navigation og modaldesign.

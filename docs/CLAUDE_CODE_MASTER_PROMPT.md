@@ -5,7 +5,7 @@ You are an expert Expo/React Native, TypeScript and deterministic-game-engine de
 
 ## Absolute gates and non-negotiable constraints
 1. Read `README.md`, `DESIGN_CONTRACT.md`, `ROADMAP.md`, `SCREENS.md`, `DECISIONS.md`, `docs/ASSET_SPEC.md`, `assets/v3/README.md`, and `assets/v3/manifest.json` FIRST.
-2. The **57 V3 SVG assets are approved by the owner on 2026-11-10** and locked as the graphic baseline. Do not alter assets, colors, icon mappings or invent replacement UI artwork. Screen-specific mobile layouts are **not yet signed off**; implement business logic independently before UI work.
+2. The **57 V3 SVG assets are approved by the owner on 2026-11-10** and locked as the graphic baseline. Do not alter assets, colors, icon mappings or invent replacement UI artwork. The **overall mobile UI layout was approved by the owner on 2026-11-10** and is the fixed visual target. Device-specific rendering is still subject to screenshots, usability tests and on-device acceptance. Do not redesign any screen; continue engine work independently before UI integration.
 3. Build for **Android + iOS** using one React Native + Expo + TypeScript codebase. No web product.
 4. **100% free**, no ads, real-money purchases or microtransactions, no dark patterns. All progression achievable through play.
 5. `Lysglimt ✨` is the primary earned currency. Keep reward accounting deterministic and auditable.
