@@ -7,6 +7,7 @@ import { CozyIconButton } from "../ui/components/CozyIconButton";
 import SettingsIcon from "../../assets/v3/icons/settings.svg";
 import { ScaffoldScreen } from "./placeholders";
 import { GardenScreen } from "./GardenScreen";
+import { SolitaireScreen } from "./SolitaireScreen";
 import { useLocale } from "../i18n/LocaleContext";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 
@@ -18,7 +19,7 @@ export function MainScreen({ navigation, route }: Props) {
 
   const screens: Record<NavTabKey, React.ReactNode> = {
     garden: <GardenScreen />,
-    solitaire: <ScaffoldScreen title={t("solitaire")} note="Stage 5.3: full Klondike board wired to the Stage 1 engine." />,
+    solitaire: <SolitaireScreen />,
     minigames: <ScaffoldScreen title={t("minigames")} note="Stage 5.4: Memory (Stage 4 engine) is the only real minigame so far." />,
     quests: <ScaffoldScreen title={t("quests")} note="Stage 5.4: quest list wired to the Stage 2 reward ledger." />,
   };
