@@ -50,3 +50,66 @@ git commit -m 'art(v3): import premium garden illustration candidates'
 
 ## Collaboration rule
 Claude owns functional UI/code integration. The design/asset workstream does not edit `src/**` while Claude is working on it.
+
+## Integration report (2026-11-10, this pass)
+
+**Imported:** `assets/v3-premium/` — all 9 files, contents and dimensions verified
+against `manifest.json` byte-for-byte (unzip + `PIL`-read sizes, not assumed).
+
+**Wired in (mapping: `src/ui/theme/premiumArt.ts`):**
+- `WelcomeScreen` — `welcome-garden-premium.png` as the fullscreen background (plain
+  `resizeMode="cover"`, aspect preserved, not stretched), `cozy-solitaire-premium-logo.png`
+  as the title (native `Text` kept separate for the tagline, per rule 5 above). Millie and
+  Marmalade are **not** separately overlaid here — they're already painted into this
+  specific background image (the embracing rabbit+cat under the tree), so adding the
+  cutouts too would duplicate them.
+- `GardenScreen` — the four season PNGs replace the SVG season backgrounds
+  one-for-one; the world-coordinate `SCENE` constant now equals the art's own 768×1280
+  intrinsic size (`PREMIUM_SCENE`) rather than the old SVGs' 720×1280, so the existing
+  pure camera/domain math needed no changes. Millie and Marmalade now render as the
+  actual transparent character cutouts, positioned at their existing stored normalized
+  coordinates (unchanged) instead of plain text-label markers.
+- Game mechanics, HUD, buttons and navigation are byte-for-byte unchanged — only the
+  background/character/logo image source changed. `npm test` (43/43, domain untouched),
+  `npm run typecheck` and `npm run typecheck:app` all pass.
+
+**Scale, placement, transparency — checked, not assumed:**
+- Transparency: sampled the alpha channel directly (not eyeballed). Millie/Marmalade are
+  ~87% transparent pixels, the logo ~32%, **and the mask is hard-edged — 0% partially-
+  transparent edge pixels measured**, confirming the README's own warning that these are
+  cutouts from a white background with no soft edge blend. Composited both characters
+  onto a saturated green and a dark purple test background to check for white halos: the
+  rabbit's edge reads clean; the cat shows a few small stray white flecks near its
+  left side (likely a whisker-tip masking artifact) and a faint light rim along its
+  back/tail against the dark background. Minor, but real — not invisible on a colored
+  background, as the source README warned it might not be.
+- Placement/scale in the garden: world coordinates are unchanged (characters already sat
+  at reasonable normalized positions; decorations already use a measured, non-art-
+  intrinsic scene size from the prior pass), so switching the background art underneath
+  didn't require recalibrating either.
+- **Known, deliberately not "fixed" this pass:** every background (confirmed via
+  measuring row-by-row image sharpness, not guesswork) is a sharp painted scene with a
+  blurred full-bleed extension above and below — exactly as this doc's "Important visual
+  limitations" section already predicted. A plain cover fit on a tall phone screen shows
+  a visible hard seam where blur meets the sharp scene (see the Garden screenshots sent
+  this pass). A "zoom in to show only the sharp band" fix was built and tested for the
+  Welcome screen specifically, and **reverted**: the sharp band's aspect ratio is
+  landscape-shaped, so covering a portrait phone screen with only that band requires
+  ~1.7x zoom, which crops Marmalade out of the frame entirely — a worse defect than the
+  seam it was meant to fix. The measured sharp-band fractions are kept as a comment in
+  `premiumArt.ts` for whoever next attempts this (e.g. with a properly re-extended/
+  outpainted source image instead of a crop).
+
+**Not attempted this pass (would need the source studio to fix, not integration code):**
+- The visible blur seam (above).
+- The cat's stray edge-mask artifacts (above) — cosmetic, would need a cleaner matte
+  from the source.
+- True parallax/world-layer decomposition (buildings/trees/path as separate movable
+  layers) — the pack's own README says this explicitly isn't included in V1.
+
+**Verified at:** 360×800 and 390×844 for Welcome, Garden and Garden build-mode, via the
+real Expo web bundle rendered headlessly with Playwright — screenshots sent to the user
+directly, not committed. **This is web-rendered verification, not on-device native
+verification** — this container has no Android/iOS simulator, and
+`docs/UI_COMPONENT_CONTRACT_V3.md` still requires the latter before any production
+acceptance.

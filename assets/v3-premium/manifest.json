@@ -1,0 +1,99 @@
+{
+  "package": "Cozy Solitaire 3.0 Premium Art V1",
+  "status": "CANDIDATE_NOT_INTEGRATED_NOT_APPROVED_FOR_PRODUCTION",
+  "integrationStatus": {
+    "updated": "2026-11-10",
+    "note": "Original pack contents/checksums above are untouched. This block records actual code integration status as of commit 889ae538 + the following QA pass — see docs/PREMIUM_ART_IMPORT.md's 'Integration report' and docs/STAGE5_VISUAL_AUDIT.md for full detail.",
+    "integratedInCode": true,
+    "mapping": "src/ui/theme/premiumArt.ts",
+    "usedBy": ["src/screens/WelcomeScreen.tsx", "src/screens/GardenScreen.tsx"],
+    "verifiedOn": ["web (Expo web bundle via Playwright, headless Chromium)"],
+    "notVerifiedOn": ["Android device/emulator", "iOS device/simulator"],
+    "ownerApprovedForProduction": false,
+    "knownIssues": [
+      "Every background has a blurred full-bleed margin above/below the sharp painted scene (pack's own documented limitation). A portrait-screen crop fix was tried for the welcome background and reverted: it cropped Marmalade out of frame.",
+      "Character cutout alpha masks are hard-edged (0% soft/partial-transparency edge pixels measured) with minor stray artifacts on marmalade-premium.png visible against dark backgrounds."
+    ]
+  },
+  "source": "Original generated premium storybook illustration sheet, segmented into individual PNG files",
+  "note": "Season scenes are reframed from square references into portrait backgrounds with blurred full-bleed margins; artwork is raster, not layer-separated world tiles. Validate on device before replacement.",
+  "intendedIntegration": {
+    "garden": "Replace geometric spring/summer/autumn/winter SVG scenery with the four PNG backgrounds after approval; keep garden camera, HUD and editable objects as separate layers",
+    "welcome": "Layer premium logo and characters over premium welcome background; render UI text separately",
+    "characters": "Alpha-background illustrated characters; use fixed logical world coordinates"
+  },
+  "files": [
+    {
+      "path": "previews/asset-contact-sheet.jpg",
+      "width": 1600,
+      "height": 1300,
+      "mode": "RGB",
+      "bytes": 434869,
+      "sha256": "6c7ec2c98f85828c00066d738e9e747d1e905b516aab31fdcdda175594cff0de"
+    },
+    {
+      "path": "branding/cozy-solitaire-premium-logo.png",
+      "width": 630,
+      "height": 278,
+      "mode": "RGBA",
+      "bytes": 318282,
+      "sha256": "bd9ceb5f64dc5f709403ea2da4fa34796c52a44dae13167b9a62206ae8f86333"
+    },
+    {
+      "path": "backgrounds/garden-autumn-premium.png",
+      "width": 768,
+      "height": 1280,
+      "mode": "RGBA",
+      "bytes": 1399603,
+      "sha256": "7b246c1e4ef0bf7faed6570cb2afdce3e6d53a93ea2bf342cfb8b915a1088fe8"
+    },
+    {
+      "path": "backgrounds/garden-spring-premium.png",
+      "width": 768,
+      "height": 1280,
+      "mode": "RGBA",
+      "bytes": 1426828,
+      "sha256": "c4bf381620471b81d4dea7afbad69a79db0997a9d14c87db9be7a75a5e052556"
+    },
+    {
+      "path": "backgrounds/garden-summer-premium.png",
+      "width": 768,
+      "height": 1280,
+      "mode": "RGBA",
+      "bytes": 1410263,
+      "sha256": "a36213b46c81eeb7a98ae10df85f9a025bd3bcf23edb6aca6bcb206abd3be491"
+    },
+    {
+      "path": "backgrounds/garden-winter-premium.png",
+      "width": 768,
+      "height": 1280,
+      "mode": "RGBA",
+      "bytes": 1369235,
+      "sha256": "56c632b6512ecbdf889bac6f59548a3aa06cbcc642bcb3ea9e28c8516636ad40"
+    },
+    {
+      "path": "backgrounds/welcome-garden-premium.png",
+      "width": 768,
+      "height": 1280,
+      "mode": "RGB",
+      "bytes": 1094137,
+      "sha256": "756e23fa667fab745e0dcee4c605a55d3b9e4fd21075ef6c3e51de29102ac218"
+    },
+    {
+      "path": "characters/marmalade-premium.png",
+      "width": 640,
+      "height": 640,
+      "mode": "RGBA",
+      "bytes": 126157,
+      "sha256": "834ec69403afd3d061010500407d58ceb0e7ab9885e6f0c6b44d1b540fb7daf9"
+    },
+    {
+      "path": "characters/millie-premium.png",
+      "width": 640,
+      "height": 640,
+      "mode": "RGBA",
+      "bytes": 125403,
+      "sha256": "6f2318bf84609770cded9042b505b701e3d9cf2d7ad0c00996af38c36b1d817c"
+    }
+  ]
+}
