@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { balanceOf, createLedger, grant as domainGrant, spend as domainSpend } from "../../domain/rewards/ledger";
-import { loadSavedLedger, saveLedger } from "../../application/rewardsPersistence";
+import React, { createContext, useContext, useMemo, useSyncExternalStore } from "react";
+import { createRewardLedgerStore, type RewardLedgerStore } from "../../application/rewardLedgerStore";
+import { asyncStorageRewardLedgerStorage } from "../../application/rewardsPersistence";
 import type { LedgerState, RewardEvent, SpendRequest, SpendResult } from "../../domain/rewards/types";
 
 interface RewardLedgerContextValue {
@@ -10,45 +10,40 @@ interface RewardLedgerContextValue {
   spend: (request: SpendRequest) => SpendResult;
 }
 
-const RewardLedgerContext = createContext<RewardLedgerContextValue | null>(null);
+const RewardLedgerContext = createContext<RewardLedgerStore | null>(null);
 
 /**
  * Real RewardLedger (src/domain/rewards) wired to AsyncStorage, shared by any screen
- * that displays or spends Lysglimt. The HUD reads actual persisted balances instead of
- * a hardcoded display value; no gameplay yet grants Lysglimt (that's Stage 5.4 quest/
- * minigame wiring), so a fresh install legitimately shows 0 — but it's 0 because the
- * ledger is empty, not because the number is hardcoded.
+ * that displays or spends Lysglimt. The actual store logic lives in
+ * rewardLedgerStore.ts (plain TS, no React) — this component only creates one
+ * instance per app lifetime and subscribes to it via useSyncExternalStore, which is
+ * React's own mechanism for an external mutable store (handles re-render timing
+ * correctly without this component needing its own race-prone state juggling).
+ *
+ * The HUD reads actual persisted balances instead of a hardcoded display value; no
+ * gameplay yet grants Lysglimt outside minigames/quests, so a fresh install
+ * legitimately shows 0 — but it's 0 because the ledger is empty, not hardcoded.
  */
 export function RewardLedgerProvider({ children }: { children: React.ReactNode }) {
-  const [ledger, setLedger] = useState<LedgerState>(createLedger());
-
-  useEffect(() => {
-    loadSavedLedger().then(setLedger);
-  }, []);
-
-  useEffect(() => {
-    saveLedger(ledger);
-  }, [ledger]);
-
-  const value = useMemo<RewardLedgerContextValue>(
-    () => ({
-      ledger,
-      balance: (resource) => balanceOf(ledger, resource),
-      grant: (event) => setLedger((current) => domainGrant(current, event)),
-      spend: (request) => {
-        const result = domainSpend(ledger, request);
-        if (result.ok) setLedger(result.state);
-        return result;
-      },
-    }),
-    [ledger],
-  );
-
-  return <RewardLedgerContext.Provider value={value}>{children}</RewardLedgerContext.Provider>;
+  const store = useMemo(() => createRewardLedgerStore(asyncStorageRewardLedgerStorage), []);
+  return <RewardLedgerContext.Provider value={store}>{children}</RewardLedgerContext.Provider>;
 }
 
 export function useRewardLedger(): RewardLedgerContextValue {
-  const ctx = useContext(RewardLedgerContext);
-  if (!ctx) throw new Error("useRewardLedger must be used within a RewardLedgerProvider");
-  return ctx;
+  const store = useContext(RewardLedgerContext);
+  if (!store) throw new Error("useRewardLedger must be used within a RewardLedgerProvider");
+
+  const ledger = useSyncExternalStore(store.subscribe, store.getLedger);
+
+  return useMemo(
+    () => ({
+      ledger,
+      balance: (resource: string) => store.balance(resource),
+      grant: (event: RewardEvent) => {
+        store.grant(event);
+      },
+      spend: (request: SpendRequest) => store.spend(request),
+    }),
+    [ledger, store],
+  );
 }
