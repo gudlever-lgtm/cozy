@@ -1,0 +1,156 @@
+{
+  "schemaVersion": 1,
+  "status": "PROPOSED_LAYOUT_APPROVAL_PENDING",
+  "approvedArtworkManifest": "assets/v3/manifest.json",
+  "units": "dp",
+  "breakpoints": {
+    "compactMaxWidth": 390,
+    "smallPortrait": {
+      "width": 360,
+      "height": 800
+    },
+    "normalPortrait": {
+      "width": 390,
+      "height": 844
+    },
+    "landscape": {
+      "width": 844,
+      "height": 390
+    },
+    "tabletMinWidth": 600
+  },
+  "minTouchSize": 44,
+  "buttons": {
+    "primary": {
+      "asset": "assets/v3/ui/button-primary.svg",
+      "minWidth": 180,
+      "maxWidth": 300,
+      "minHeight": 58,
+      "maxHeight": 66,
+      "safeLabelFraction": {
+        "left": 0.21,
+        "right": 0.92
+      },
+      "fontSize": 16,
+      "maxLines": 2
+    },
+    "secondary": {
+      "asset": "assets/v3/ui/button-secondary.svg",
+      "minWidth": 150,
+      "maxWidth": 300,
+      "minHeight": 54,
+      "maxHeight": 64,
+      "safeLabelFraction": {
+        "left": 0.21,
+        "right": 0.92
+      },
+      "fontSize": 15,
+      "maxLines": 2
+    },
+    "wood": {
+      "asset": "assets/v3/ui/button-wood.svg",
+      "minWidth": 150,
+      "maxWidth": 300,
+      "minHeight": 54,
+      "maxHeight": 64,
+      "safeLabelFraction": {
+        "left": 0.21,
+        "right": 0.92
+      },
+      "fontSize": 15,
+      "maxLines": 2
+    },
+    "special": {
+      "asset": "assets/v3/ui/button-special.svg",
+      "minWidth": 150,
+      "maxWidth": 300,
+      "minHeight": 54,
+      "maxHeight": 64,
+      "safeLabelFraction": {
+        "left": 0.21,
+        "right": 0.92
+      },
+      "fontSize": 15,
+      "maxLines": 2
+    },
+    "disabled": {
+      "asset": "assets/v3/ui/button-disabled.svg",
+      "minHeight": 54
+    },
+    "icon": {
+      "asset": "assets/v3/ui/icon-button.svg",
+      "size": 56,
+      "iconMaxFraction": 0.56
+    }
+  },
+  "bottomTab": {
+    "asset": "assets/v3/ui/tab-background.svg",
+    "height": 70,
+    "iconSize": 28,
+    "captionFontSize": 11,
+    "slots": 4
+  },
+  "dialog": {
+    "asset": "assets/v3/ui/panel.svg",
+    "maxWidth": 440,
+    "outerInset": 16,
+    "verticalInset": 12,
+    "bodyFontSize": 16
+  },
+  "hudChip": {
+    "asset": "assets/v3/ui/hud-pill.svg",
+    "minWidth": 94,
+    "height": 42,
+    "iconSize": 22
+  },
+  "card": {
+    "widthUnits": 190,
+    "heightUnits": 270,
+    "minCornerInsetFraction": 0.08,
+    "faceStyleOptions": [
+      "blank",
+      "botanical",
+      "woodland"
+    ],
+    "backStyleOptions": [
+      "botanical",
+      "stars",
+      "woodland"
+    ]
+  },
+  "garden": {
+    "sceneIndependentFromHUD": true,
+    "panWhenZoomed": true,
+    "zoomMin": 1,
+    "zoomMaxProposed": 3
+  },
+  "qa": {
+    "targetViewports": [
+      {
+        "width": 360,
+        "height": 800
+      },
+      {
+        "width": 390,
+        "height": 844
+      },
+      {
+        "width": 844,
+        "height": 390
+      },
+      {
+        "width": 768,
+        "height": 1024
+      }
+    ],
+    "languages": [
+      "da",
+      "en"
+    ],
+    "fontScaleChecks": [
+      1,
+      2
+    ],
+    "requiresPhoneApproval": true
+  }
+}
