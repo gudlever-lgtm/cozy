@@ -4,18 +4,22 @@
 - [x] Arkivér den sidste Cozy 2.x-kode i `archive/cozy-v2-final-2026-11-09`.
 - [x] Nulstil `main` til planlægningsmateriale.
 - [x] Fjern v2-workflows, assets og buildanmodninger fra `main`.
-- [ ] Bekræft at ejeren accepterer designproces og reference-retning.
+- [x] Bekræft at ejeren accepterer designproces og reference-retning.
 
 ## Fase 1 – Visuelt fundament (INGEN PRODUKTIONSKODE)
-- [ ] Afgør visuel retning: Premium Cozy Storybook foreslået.
+- [x] Godkend V3-grafikpakken i Premium Cozy Storybook-retning (57 SVG-assets, 2026-11-10).
 - [ ] Udarbejd komplet moodboard og farver/typografi.
 - [ ] Godkend skærmlayout til have, kabale, minispil, hovedmenu og indstillinger.
 - [ ] Godkend klikbare flows, baggrunde, kort, avatarer og grafiske kontroller.
 - [ ] Lås alle dimensioner, skaleringsregler og design-tokens.
 
-**Gate D1:** Ejer har godkendt designpakken og tekst/layout på små telefoner.
+**Gate D1a (bestået):** Grafikpakken er eksplicit godkendt.
+
+**Gate D1b (åben):** Responsive skærmlayouts, tekster og tapområder skal verificeres og godkendes på telefon, før UI erklæres færdig.
 
 ## Fase 2 – Arkitektur og gameplaygrundlag
+
+**Næste leverance (Claude Code):** Byg isoleret, testbar Klondike-engine (seeded RNG, move legality, stock 1/3, undo/hint/autofinish, saveformat), uden UI-redesign eller APK.
 - [ ] Vælg native stack og appstruktur (fælles kodebase, Android/iOS).
 - [ ] Definér interfaces for kabale, minispil, have, ressourcer og gemt status.
 - [ ] Design lokal/offline lagring og evt. migrering fra v2.

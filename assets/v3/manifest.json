@@ -1,6 +1,6 @@
 {
   "package": "Cozy Solitaire 3.0",
-  "status": "DESIGN_DRAFT_NOT_APPROVED",
+  "status": "GRAPHICS_APPROVED_2026-11-10",
   "version": "0.1.0",
   "format": "SVG",
   "textPolicy": "All text is rendered by native Text components, never baked into artwork",
@@ -10,287 +10,292 @@
     {
       "path": "assets/v3/avatars/bird.svg",
       "role": "avatars",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/avatars/cat.svg",
       "role": "avatars",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/avatars/fox.svg",
       "role": "avatars",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/avatars/hedgehog.svg",
       "role": "avatars",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/avatars/owl.svg",
       "role": "avatars",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/avatars/rabbit.svg",
       "role": "avatars",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/backgrounds/garden-autumn.svg",
       "role": "backgrounds",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/backgrounds/garden-spring.svg",
       "role": "backgrounds",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/backgrounds/garden-summer.svg",
       "role": "backgrounds",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/backgrounds/garden-winter.svg",
       "role": "backgrounds",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/cards/back-botanical.svg",
       "role": "cards",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/cards/back-stars.svg",
       "role": "cards",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/cards/back-woodland.svg",
       "role": "cards",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/cards/face-blank.svg",
       "role": "cards",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/cards/face-botanical.svg",
       "role": "cards",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/cards/face-woodland.svg",
       "role": "cards",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/decorations/bench.svg",
       "role": "decorations",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/decorations/birdhouse.svg",
       "role": "decorations",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/decorations/flower-cart.svg",
       "role": "decorations",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/decorations/flower-pot.svg",
       "role": "decorations",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/decorations/fountain.svg",
       "role": "decorations",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/decorations/lantern.svg",
       "role": "decorations",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/decorations/trellis.svg",
       "role": "decorations",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/decorations/watering-can.svg",
       "role": "decorations",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/icons/arrow-left.svg",
       "role": "icons",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/icons/basket.svg",
       "role": "icons",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/icons/cards.svg",
       "role": "icons",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/icons/chair.svg",
       "role": "icons",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/icons/close.svg",
       "role": "icons",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/icons/flower.svg",
       "role": "icons",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/icons/garden.svg",
       "role": "icons",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/icons/hammer.svg",
       "role": "icons",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/icons/hint.svg",
       "role": "icons",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/icons/home.svg",
       "role": "icons",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/icons/lock.svg",
       "role": "icons",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/icons/menu.svg",
       "role": "icons",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/icons/mini.svg",
       "role": "icons",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/icons/play.svg",
       "role": "icons",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/icons/quests.svg",
       "role": "icons",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/icons/settings.svg",
       "role": "icons",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/icons/star.svg",
       "role": "icons",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/icons/undo.svg",
       "role": "icons",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/ui/button-disabled.svg",
       "role": "ui",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/ui/button-primary.svg",
       "role": "ui",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/ui/button-secondary.svg",
       "role": "ui",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/ui/button-special.svg",
       "role": "ui",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/ui/button-wood.svg",
       "role": "ui",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/ui/card-slot.svg",
       "role": "ui",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/ui/header-banner.svg",
       "role": "ui",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/ui/hud-pill.svg",
       "role": "ui",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/ui/icon-button.svg",
       "role": "ui",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/ui/panel-wide.svg",
       "role": "ui",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/ui/panel.svg",
       "role": "ui",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/ui/progress-fill.svg",
       "role": "ui",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/ui/progress-track.svg",
       "role": "ui",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/ui/tab-background.svg",
       "role": "ui",
-      "approved": false
+      "approved": true
     },
     {
       "path": "assets/v3/ui/tooltip.svg",
       "role": "ui",
-      "approved": false
+      "approved": true
     }
-  ]
+  ],
+  "approval": {
+    "date": "2026-11-10",
+    "scope": "57 SVG assets in assets/v3 approved as graphic baseline",
+    "note": "Functional screen layouts, final text spacing and touch behavior still require device-specific verification"
+  }
 }

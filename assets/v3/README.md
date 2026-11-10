@@ -1,6 +1,6 @@
 # Cozy 3.0 — Grafisk V3 UI-kit (udkast)
 
-**Status: DESIGN DRAFT — IKKE GODKENDT.** Disse filer er **selvstændige originale SVG-assets**, ikke beskårne udsnit af et oversigtsbillede. De er skalerbare og har ingen indbygget UI-tekst.
+**Status: GRAFIKPAKKE GODKENDT 2026-11-10.** Disse filer er **selvstændige originale SVG-assets**, ikke beskårne udsnit af et oversigtsbillede. De er skalerbare og har ingen indbygget UI-tekst.
 
 ## Leveret
 - **Knapper/paneler:** primær, sekundær, træ, special, deaktiveret, ikonknap, navigation, paneler, banner, status-chips, progress og tooltip.
@@ -25,4 +25,4 @@ Filerne er vektor-grafik i SVG. I **Expo/React Native** importeres de **ikke** s
 Filerne udgør en **første funktionel grafikpakke** og en tydelig teknisk struktur. Nogle små elementer og hele sæsonbaggrundene er enkle SVG-illustrationer; de matcher endnu ikke detaljegraden i det godkendelses-afventende billedoplæg. Opdateres først, når ejeren har godkendt looket.
 
 ## Kvalitetsport
-Før produktionsbrug skal hvert asset kontrolleres mod overbliksbilledet og godkendes: udseende, farver, proportioner, alpha, størrelse, kontrast og semantisk mapping.
+Grafikpakken er godkendt. Før mobilrelease skal den tekniske integration kontrolleres: proportioner, alpha, størrelse, kontrast, semantisk mapping og rendering på enheder.

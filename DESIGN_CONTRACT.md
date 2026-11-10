@@ -1,13 +1,15 @@
-# Cozy Solitaire 3.0 — Designkontrakt (Udkast)
+# Cozy Solitaire 3.0 — Designkontrakt
 
-**Status: AFVENTER GODKENDELSE**
+**Status: V3-grafik godkendt 2026-11-10; endelig skærmlayout- og telefonaccept afventer.**
+
+**Låst grafikbaseline:** `assets/v3/manifest.json` (57 SVG-filer). Udskift ikke grafik, proportioner eller farver uden ejerens godkendelse.
 
 ## Grundprincip
 **Design → skriftlig godkendelse → kode → pixel- og funktionstest → telefonaccept.**
 
 Et udviklingsværktøj må ikke selv skifte illustration, layout eller kontrolform uden en begrundet og godkendt ændring.
 
-## Visuel retning (forslag)
+## Visuel retning (godkendt for grafikpakken)
 - Premium, varm cottage garden og eventyrbogs-æstetik.
 - Rolige, lyse papirflader til indhold og dekorative illustrationer som supplement.
 - Få primære handlinger på hver skærm; ingen overfyldte menuer.
@@ -49,4 +51,4 @@ Hver skærm skal vises på dansk og engelsk med både korte og lange labels. God
 - Ingen APK før alle relevante gates og designreferencer er klar.
 
 ## Godkendelse
-Dette dokument er et **udkast**. Dets status ændres kun til GODKENDT efter eksplicit accept fra ejeren. Enhver designafvigelse kræver en synlig change request med før/efter.
+Grafikpakken er **godkendt**, men færdig skærm-layout og touch-interaktion er **ikke** godkendt endnu. Enhver designafvigelse kræver en synlig change request med før/efter.

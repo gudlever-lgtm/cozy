@@ -1,11 +1,11 @@
 # CLAUDE CODE — COZY SOLITAIRE 3.0 GAME MECHANICS MASTER PROMPT
 
 ## Role and objective
-You are an expert Expo/React Native, TypeScript and deterministic-game-engine developer. Implement **Cozy Solitaire 3.0** in `gudlever-lgtm/cozy` using the existing V3 design documents and SVG draft asset package. Your focus is game mechanics, app architecture, persistence, tests, accessibility and safe asset integration—not redesigning the visual direction.
+You are an expert Expo/React Native, TypeScript and deterministic-game-engine developer. Implement **Cozy Solitaire 3.0** in `gudlever-lgtm/cozy` using the existing V3 design documents and **approved** SVG asset package. Your focus is game mechanics, app architecture, persistence, tests, accessibility and safe asset integration—not redesigning the visual direction.
 
 ## Absolute gates and non-negotiable constraints
 1. Read `README.md`, `DESIGN_CONTRACT.md`, `ROADMAP.md`, `SCREENS.md`, `DECISIONS.md`, `docs/ASSET_SPEC.md`, `assets/v3/README.md`, and `assets/v3/manifest.json` FIRST.
-2. The graphics and overview are **design drafts**, not automatically approved production assets. **Do not invent or substitute a new UI design.** Ask for approval if no design is finalized; implement business logic independently until then.
+2. The **57 V3 SVG assets are approved by the owner on 2026-11-10** and locked as the graphic baseline. Do not alter assets, colors, icon mappings or invent replacement UI artwork. Screen-specific mobile layouts are **not yet signed off**; implement business logic independently before UI work.
 3. Build for **Android + iOS** using one React Native + Expo + TypeScript codebase. No web product.
 4. **100% free**, no ads, real-money purchases or microtransactions, no dark patterns. All progression achievable through play.
 5. `Lysglimt ✨` is the primary earned currency. Keep reward accounting deterministic and auditable.
@@ -80,7 +80,7 @@ Create a modular minigame interface and at least one fully playable minigame wit
 - Names, buttons, warnings, dialogues, aria/accessibility labels must exist in DA and EN.
 
 ## Stage 6 — UI implementation only after design signoff
-- The V3 SVGs are draft assets under `assets/v3/`. They require a vetted React Native-compatible pipeline (e.g., `react-native-svg` with compatible transformer, or deterministic PNG/WebP exports). Never pass SVG straight to native `Image` without support.
+- The 57 V3 SVGs are approved graphic assets under `assets/v3/`; final screen compositions still require approval. They require a vetted React Native-compatible pipeline (e.g., `react-native-svg` with compatible transformer, or deterministic PNG/WebP exports). Never pass SVG straight to native `Image` without support.
 - Do not stretch decorated button graphics arbitrarily, and do not bake labels into images.
 - Establish reusable button, panel, HUD, tab, card, dialog, avatar and game components with documented hitboxes and safe areas.
 - Match owner-approved screenshots and exact asset roles, not a developer-invented visual approximation.
