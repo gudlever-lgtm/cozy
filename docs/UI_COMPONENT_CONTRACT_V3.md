@@ -1,6 +1,6 @@
 # Cozy Solitaire 3.0 — UI Component Contract v0.1
 
-**Status:** Proposed responsive layout rules; **57 V3 SVG artworks approved** on 2026-11-10. UI dimensions below are *engineering proposals pending screen approval*. This file has no game-engine implementation.
+**Status: OVERALL MOBILE SCREEN LAYOUT AND 57 V3 SVG ASSETS APPROVED BY OWNER ON 2026-11-10.** Layout values below form the implementation baseline; exact native rendering, text clipping, tap targets and edge-device adaptation remain to be validated. This file has no game-engine implementation.
 
 ## Design baseline and working rules
 
@@ -31,7 +31,7 @@
 | `CozyDecoration` | `decorations/*.svg` | scene-scale independent of HUD | hitboxes match art bounds; preserve full alpha | tap, place, drag, rotate |
 | `CozyTooltip` | `ui/tooltip.svg` | max W 240, content H | 13–15 sp, anchored near control; never full-screen modal | long press / dismiss |
 
-Values above are a **starting layout proposal, not claims of observed Android rendering**.
+Values above are the **approved implementation starting baseline**, not claims of observed Android rendering. Minor responsive adjustments require screenshot evidence; material visual changes require owner approval.
 
 ## Responsive rules (portrait and landscape)
 
@@ -73,7 +73,7 @@ Values above are a **starting layout proposal, not claims of observed Android re
 3. Assert icon stays in its allocated slot; artwork aspect ratio and floral corners remain correct.
 4. Exercise disabled/selected/pressed, 200% text, long-press tooltips, and screen reader labels.
 5. Camera drag and card drag remain separate; buttons and overlays do not swallow touch gestures.
-6. Owner explicitly accepts on-device visual rendering **before production release**.
+6. Owner has approved the overall visual layout; owner must still accept on-device visual rendering **before production release**.
 
 ## Implementation contract (for Claude Code)
 

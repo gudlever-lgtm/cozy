@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "status": "PROPOSED_LAYOUT_APPROVAL_PENDING",
+  "status": "OVERALL_LAYOUT_APPROVED_NATIVE_VALIDATION_PENDING",
   "approvedArtworkManifest": "assets/v3/manifest.json",
   "units": "dp",
   "breakpoints": {
@@ -152,5 +152,11 @@
       2
     ],
     "requiresPhoneApproval": true
+  },
+  "approval": {
+    "date": "2026-11-10",
+    "scope": "Overall Cozy 3.0 mobile screen layout approved in conversation; component tokens accepted as implementation baseline",
+    "requiresOnDeviceVerification": true,
+    "referenceMockup": "Latest approved Cozy 3.0 full mobile UI layout image in the conversation; image has not yet been committed to repository"
   }
 }

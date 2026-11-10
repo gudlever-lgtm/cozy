@@ -1,6 +1,8 @@
 # Cozy Solitaire 3.0 — Designkontrakt
 
-**Status: V3-grafik godkendt 2026-11-10; endelig skærmlayout- og telefonaccept afventer.**
+**Status: V3-grafik OG det samlede mobillayout godkendt 2026-11-10. Native skærmverifikation og funktionel telefonaccept afventer.**
+
+**Låst layoutbaseline:** Den af brugeren godkendte helheds-mockup fra designfasen (Forside, Min have, Kabale, Minispil, Opgaver, Kortdesign, Indstillinger, Spillerprofil, Sæson, Sejr og navigation) samt `docs/UI_COMPONENT_CONTRACT_V3.md` og `docs/ui-layout-tokens.v3.json`. Den godkendte billedreference findes foreløbig i samtalen, ikke som GitHub-billedfil.
 
 **Låst grafikbaseline:** `assets/v3/manifest.json` (57 SVG-filer). Udskift ikke grafik, proportioner eller farver uden ejerens godkendelse.
 
@@ -30,7 +32,7 @@ For hver komponent fastlægges: original asset-størrelse, tegnet/gengivet stør
 **Forbud:** Stræk ikke en illustreret knap til tilfældige proportioner. Tekst må aldrig ligge på dekorationer eller udenfor knapgrænsen; løs med dimensioner/indhold, ikke vilkårlig fontreduktion. Brug ikke ukendte fallback-ikoner til manglende grafik.
 
 ## Visuel skærm-godkendelse
-Der skal foreligge separate godkendte mockups til:
+Det samlede skærmlayout er godkendt som designretning. Implementering skal dokumenteres med faktiske tests/screenshots til:
 - Telefon 360 × 800 og 390 × 844 (portræt)
 - Telefon landscape 844 × 390
 - En større telefon/tablet
@@ -51,4 +53,4 @@ Hver skærm skal vises på dansk og engelsk med både korte og lange labels. God
 - Ingen APK før alle relevante gates og designreferencer er klar.
 
 ## Godkendelse
-Grafikpakken er **godkendt**, men færdig skærm-layout og touch-interaktion er **ikke** godkendt endnu. Enhver designafvigelse kræver en synlig change request med før/efter.
+Grafikpakken **og det samlede skærmlayout** er **godkendt**; faktisk native rendering, responsiv tilpasning, læsbarhed og touch-interaktion skal stadig testes og accepteres. Enhver designafvigelse kræver en synlig change request med før/efter.
