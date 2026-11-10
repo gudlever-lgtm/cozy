@@ -18,12 +18,14 @@ import {
 } from "../domain/garden/garden";
 import type { CameraBounds, CameraState, GardenState, Season } from "../domain/garden/types";
 import { loadSavedGarden, saveGarden } from "../application/gardenPersistence";
-import { DECORATION_ART, DECORATION_KINDS, decorationSizeFraction, type DecorationKind } from "../ui/theme/decorationCatalog";
+import { DECORATION_ART, DECORATION_KINDS, DECORATION_LABEL_KEY, decorationSizeFraction, type DecorationKind } from "../ui/theme/decorationCatalog";
 import { CozyIconButton } from "../ui/components/CozyIconButton";
 import { CozyHUDChip } from "../ui/components/CozyHUDChip";
 import { CozyPanel } from "../ui/components/CozyPanel";
 import { textColors } from "../ui/theme/colors";
 import { gardenTokens } from "../ui/theme/layoutTokens";
+import { useLocale } from "../i18n/LocaleContext";
+import { useRewardLedger } from "../ui/providers/RewardLedgerContext";
 
 // Candidate "Premium Art V1" raster backgrounds (assets/v3-premium/, see
 // docs/PREMIUM_ART_IMPORT.md) replace the geometric SVG season scenes here. World
@@ -32,6 +34,22 @@ import { gardenTokens } from "../ui/theme/layoutTokens";
 // only ever took the scene size as a parameter.
 const SCENE = PREMIUM_SCENE;
 const SEASON_ART: Record<Season, number> = PREMIUM_SEASON_BACKGROUNDS;
+
+/**
+ * createGarden()'s fitCamera() starts anchored at the scene's top-left corner — fine
+ * for the old uniform SVG scenes, but the premium backgrounds' painted content sits
+ * roughly in the vertical middle (see SEASON_SHARP_BAND in premiumArt.ts), with a
+ * blurred fill above and below. On a wide/short (landscape) viewport, cover-zoom
+ * stretches the scene tall enough that a top-left start shows almost nothing but
+ * blur. Re-centers vertically on a FRESH garden only — a loaded save keeps the
+ * player's own last camera position untouched.
+ */
+function createCenteredGarden(bounds: CameraBounds): GardenState {
+  const fresh = createGarden(bounds);
+  const targetOffsetY = SCENE.height / 2 - bounds.viewport.height / 2 / fresh.camera.zoom;
+  const deltaY = (fresh.camera.offsetY - targetOffsetY) * fresh.camera.zoom;
+  return { ...fresh, camera: panCamera(fresh.camera, { x: 0, y: deltaY }, bounds) };
+}
 
 /**
  * Fullscreen garden world. Pan/pinch-zoom and decoration placement are driven by the
@@ -47,6 +65,8 @@ const SEASON_ART: Record<Season, number> = PREMIUM_SEASON_BACKGROUNDS;
  * report.
  */
 export function GardenScreen() {
+  const { t } = useLocale();
+  const { balance } = useRewardLedger();
   const { width, height } = useWindowDimensions();
   const bounds: CameraBounds = useMemo(
     () => ({
@@ -67,7 +87,7 @@ export function GardenScreen() {
     let cancelled = false;
     loadSavedGarden().then((saved) => {
       if (cancelled) return;
-      setGarden(saved ?? createGarden(bounds));
+      setGarden(saved ?? createCenteredGarden(bounds));
     });
     return () => {
       cancelled = true;
@@ -235,18 +255,18 @@ export function GardenScreen() {
           ]}
         >
           <CozyPanel style={styles.selectionPanel}>
-            <Text style={styles.selectionHint}>Tryk et nyt sted for at flytte</Text>
+            <Text style={styles.selectionHint}>{t("moveHint")}</Text>
             <View style={styles.selectionActions}>
               <CozyIconButton
                 icon={UndoIcon}
-                accessibilityLabel="Rotér"
-                longPressHint="Rotér 45°"
+                accessibilityLabel={t("rotate")}
+                longPressHint={t("rotateHint")}
                 onPress={() => setGarden((g) => (g ? rotateDecoration(g, selected.id, selected.rotation + 45).state : g))}
               />
               <CozyIconButton
                 icon={CloseIcon}
-                accessibilityLabel="Fjern"
-                longPressHint="Fjern dekorationen"
+                accessibilityLabel={t("remove")}
+                longPressHint={t("removeHint")}
                 onPress={() => {
                   setGarden((g) => (g ? removeDecoration(g, selected.id).state : g));
                   setSelectedDecorationId(null);
@@ -259,11 +279,11 @@ export function GardenScreen() {
 
       <SafeAreaView style={styles.hud} pointerEvents="box-none" edges={["top"]}>
         <View style={styles.hudRow} pointerEvents="box-none">
-          <CozyHUDChip icon={StarIcon} value={0} label="Lysglimt" />
+          <CozyHUDChip icon={StarIcon} value={balance("lysglimt")} label={t("lysglimt")} />
           <CozyIconButton
             icon={HammerIcon}
-            accessibilityLabel={buildMode ? "Exit build mode" : "Build mode"}
-            longPressHint="Place and arrange decorations"
+            accessibilityLabel={buildMode ? t("exitBuildMode") : t("buildMode")}
+            longPressHint={t("buildModeHint")}
             selected={buildMode}
             onPress={() => {
               setBuildMode((v) => !v);
@@ -284,7 +304,7 @@ export function GardenScreen() {
                 key={kind}
                 onPress={() => setSelectedKind(kind)}
                 accessibilityRole="button"
-                accessibilityLabel={kind}
+                accessibilityLabel={t(DECORATION_LABEL_KEY[kind])}
                 accessibilityState={{ selected: active }}
                 style={[styles.paletteItem, active ? styles.paletteItemActive : null]}
               >

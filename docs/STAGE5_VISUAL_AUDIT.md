@@ -26,23 +26,18 @@ comparison that wasn't possible.
   amount of rendering correction fixes it.
 - **MISSING** — a asset the concept needs doesn't exist at all in `assets/v3/`.
 
-## 2. Backgrounds (`assets/v3/backgrounds/*.svg`)
+## 2. Backgrounds — SUPERSEDED by Premium Art V1 (see §11)
 
-| File | Intrinsic | Used by | Display | Aspect | Classification |
-|---|---|---|---|---|---|
-| `garden-spring.svg` | 720×1280 | `WelcomeScreen`, `GardenScreen` | fullscreen, `preserveAspectRatio="xMidYMid slice"` (Welcome) / exact scene-unit sizing (Garden) | 9:16, matches both | **ART REPLACEMENT REQUIRED** (see below) |
-| `garden-summer.svg` / `-autumn.svg` / `-winter.svg` | 720×1280 each | `GardenScreen` (season switch) | same as spring | 9:16 | **ART REPLACEMENT REQUIRED** |
-
-**Why "art replacement required" despite being structurally correct and previously
-approved as a technical baseline:** each background is one sky gradient, one sun/moon
-circle, two flat hill shapes, one house, two tree-circles and 3–4 flower clusters — a
-single small vignette, not a garden *world*. I measured the house (~235 scene units wide)
-and each tree (~250 units wide, i.e. ⅓ of the 720-unit canvas) directly from the file's own
-path/circle coordinates. On a phone screen at cover-zoom this reads as "a tiny yard with two
-huge trees crowding a shed", not the "world the player can explore" the master prompt and
-Stage 5 instructions call for. This is a content/composition limitation in the art itself —
-rendering it correctly (which it now is, see §4) cannot fix it. It is visually serviceable
-as a placeholder, not as final "Premium Cozy Storybook" art.
+The 4 geometric SVG season backgrounds (`garden-spring/summer/autumn/winter.svg`,
+720×1280 each) and the Welcome screen's reuse of `garden-spring.svg` described in this
+section when it was first written are **no longer rendered by any screen** as of the
+Premium Art V1 integration (commit `889ae538` + this pass's fixes). They remain in
+`assets/v3/backgrounds/` untouched (not deleted — still the owner-approved SVG baseline,
+available as a fallback) but `WelcomeScreen` and `GardenScreen` now use
+`assets/v3-premium/backgrounds/*.png` instead. See §11 for the full findings on the new
+art. The original critique (single small vignette, not an explorable world) is **carried
+forward** — the premium pack's own README says explicitly it is "raster 2D backdrops, not
+a multi-layer free-roaming garden world" — so this is not resolved, only visually upgraded.
 
 ## 3. Cards (`assets/v3/cards/*.svg`)
 
@@ -153,3 +148,57 @@ mode, the bottom navigation bar, and Solitaire. All captured from the real Expo 
 via Playwright, not mockups. **This is web-rendered verification, not native iOS/Android
 device verification** — `docs/UI_COMPONENT_CONTRACT_V3.md` requires the latter before
 production, and this container has no simulator to provide it.
+
+## 11. Premium Art V1 integration QA (this pass)
+
+Full integration report lives in `docs/PREMIUM_ART_IMPORT.md`. This section records what
+changed and what was found/fixed specifically during this QA pass (after the initial
+import in commit `889ae538`):
+
+**Two real bugs found and fixed, not cosmetic tuning:**
+
+1. **Welcome background ignored its container size on web.** `<Image
+   style={StyleSheet.absoluteFillObject} resizeMode="cover" />` rendered at the PNG's
+   bundled intrinsic size (768×1280) instead of filling the screen — confirmed via
+   `getBoundingClientRect()` on the live DOM `<img>`, not assumed from a screenshot. This
+   was invisible in portrait by coincidence (768 vs ~390 screen width, content already
+   roughly centered) but produced a visible blank grey gap on the right in landscape
+   (844 screen width > 768 image width). **Fixed**: explicit `width: "100%", height:
+   "100%"` in the style array alongside `absoluteFillObject`.
+2. **Garden camera started anchored at the scene's top-left corner.** Harmless for the
+   old uniform SVGs, but the premium backgrounds' sharp painted content sits roughly in
+   the vertical middle with blurred fill above/below (measured per-row image-sharpness,
+   see `docs/PREMIUM_ART_IMPORT.md`). At landscape's wide/short aspect, cover-zoom
+   stretches the scene tall enough that a top-left start showed almost nothing but
+   blurred sky — confirmed via screenshot. **Fixed**: a new `createCenteredGarden()`
+   helper in `GardenScreen.tsx` re-centers a *freshly created* garden's camera
+   vertically on the scene midpoint (reusing the existing pure `pan()` function, no
+   domain changes); a loaded save keeps the player's own last camera position
+   untouched.
+
+**Checked and confirmed working, not just re-screenshotted:**
+- Millie and Marmalade are visible, reasonably sized (~130 scene units, clearly smaller
+  than the house) and never covered by the HUD at any of the 3 required viewport sizes.
+- Zoom/pan, decoration placement, selection, move and 45°-rotation all still work
+  end-to-end (verified via the same tap/drag Playwright flows as the Stage 5.3 pass).
+- The Lysglimt HUD chip now reads from the real `RewardLedger`
+  (`src/ui/providers/RewardLedgerContext.tsx`, AsyncStorage-backed) instead of a
+  hardcoded `0` — it still *displays* 0 on a fresh install because no gameplay grants
+  Lysglimt yet (that's Stage 5.4), but the plumbing is real, not a literal.
+- Danish/English strings for build mode, the selection toolbar, and all 8 decoration
+  accessibility labels were hardcoded Danish (or in two cases raw English or the kind's
+  internal id, e.g. accessibility label `"flower-cart"`) — moved into
+  `src/i18n/strings.ts` with both locales.
+
+**Still open (unchanged from `docs/PREMIUM_ART_IMPORT.md`):** the blurred-margin seam
+where cover-fit still shows some blur at certain pan positions (not eliminated, only
+the worst top-left-anchored case fixed), and the character cutouts' hard-edged alpha
+mask with minor stray artifacts on Marmalade.
+
+**Verified on:** web only (Expo web bundle, react-native-web, headless Chromium via
+Playwright) at 360×800, 390×844 and 844×390 landscape, for Welcome, Garden, Garden
+build menu and Garden object-editing. **Not verified on Android or iOS** — this
+container has no simulator/emulator for either; do not treat the web result as
+equivalent to native, since `react-native-svg`'s native (Skia) renderer and
+`react-native`'s native `Image` component are different code paths from their web
+counterparts (the two bugs above were both web-rendering-path-specific findings).

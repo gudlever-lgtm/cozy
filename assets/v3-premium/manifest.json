@@ -1,6 +1,20 @@
 {
   "package": "Cozy Solitaire 3.0 Premium Art V1",
   "status": "CANDIDATE_NOT_INTEGRATED_NOT_APPROVED_FOR_PRODUCTION",
+  "integrationStatus": {
+    "updated": "2026-11-10",
+    "note": "Original pack contents/checksums above are untouched. This block records actual code integration status as of commit 889ae538 + the following QA pass — see docs/PREMIUM_ART_IMPORT.md's 'Integration report' and docs/STAGE5_VISUAL_AUDIT.md for full detail.",
+    "integratedInCode": true,
+    "mapping": "src/ui/theme/premiumArt.ts",
+    "usedBy": ["src/screens/WelcomeScreen.tsx", "src/screens/GardenScreen.tsx"],
+    "verifiedOn": ["web (Expo web bundle via Playwright, headless Chromium)"],
+    "notVerifiedOn": ["Android device/emulator", "iOS device/simulator"],
+    "ownerApprovedForProduction": false,
+    "knownIssues": [
+      "Every background has a blurred full-bleed margin above/below the sharp painted scene (pack's own documented limitation). A portrait-screen crop fix was tried for the welcome background and reverted: it cropped Marmalade out of frame.",
+      "Character cutout alpha masks are hard-edged (0% soft/partial-transparency edge pixels measured) with minor stray artifacts on marmalade-premium.png visible against dark backgrounds."
+    ]
+  },
   "source": "Original generated premium storybook illustration sheet, segmented into individual PNG files",
   "note": "Season scenes are reframed from square references into portrait backgrounds with blurred full-bleed margins; artwork is raster, not layer-separated world tiles. Validate on device before replacement.",
   "intendedIntegration": {

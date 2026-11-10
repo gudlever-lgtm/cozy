@@ -56,7 +56,16 @@ export function WelcomeScreen({ navigation }: Props) {
           sharp band to fill the height requires zooming in ~1.7x, which crops Marmalade
           out of frame entirely — worse than the documented blurred-margin seam it was
           meant to fix. See docs/PREMIUM_ART_IMPORT.md and this pass's report. */}
-      <Image source={PREMIUM_WELCOME_BACKGROUND} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+      {/* react-native-web's Image renders at the asset's bundled intrinsic size
+          (768x1280) unless width/height are explicitly set — StyleSheet.absoluteFillObject
+          alone (top/left/right/bottom:0, no explicit width/height) does NOT override
+          that on web, confirmed via a landscape screenshot showing a blank gap where the
+          768px-wide image fell short of an 844px-wide screen. Explicit 100%/100% fixes it. */}
+      <Image
+        source={PREMIUM_WELCOME_BACKGROUND}
+        style={[StyleSheet.absoluteFillObject, { width: "100%", height: "100%" }]}
+        resizeMode="cover"
+      />
       {isLandscape ? (
         <SafeAreaView style={styles.safeLandscape}>
           <Animated.View style={[styles.landscapeLeft, { opacity: entrance }]}>{hero}</Animated.View>

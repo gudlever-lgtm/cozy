@@ -1,5 +1,6 @@
 import type { FC } from "react";
 import type { SvgProps } from "react-native-svg";
+import type { StringKey } from "../../i18n/strings";
 import Bench from "../../../assets/v3/decorations/bench.svg";
 import Birdhouse from "../../../assets/v3/decorations/birdhouse.svg";
 import FlowerCart from "../../../assets/v3/decorations/flower-cart.svg";
@@ -20,6 +21,18 @@ export const DECORATION_ART: Record<DecorationKind, FC<SvgProps>> = {
   lantern: Lantern,
   trellis: Trellis,
   "watering-can": WateringCan,
+};
+
+// Localized, human-readable accessibility labels — not the raw "flower-cart" kind id.
+export const DECORATION_LABEL_KEY: Record<DecorationKind, StringKey> = {
+  bench: "decorationBench",
+  birdhouse: "decorationBirdhouse",
+  "flower-cart": "decorationFlowerCart",
+  "flower-pot": "decorationFlowerPot",
+  fountain: "decorationFountain",
+  lantern: "decorationLantern",
+  trellis: "decorationTrellis",
+  "watering-can": "decorationWateringCan",
 };
 
 export const DECORATION_KINDS: readonly DecorationKind[] = [
