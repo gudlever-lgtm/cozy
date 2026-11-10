@@ -24,6 +24,7 @@ import { loadSavedGarden, saveGarden } from "../application/gardenPersistence";
 import { DECORATION_ART, DECORATION_KINDS, decorationSizeFraction, type DecorationKind } from "../ui/theme/decorationCatalog";
 import { CozyIconButton } from "../ui/components/CozyIconButton";
 import { CozyHUDChip } from "../ui/components/CozyHUDChip";
+import { CozyPanel } from "../ui/components/CozyPanel";
 import { textColors } from "../ui/theme/colors";
 import { gardenTokens } from "../ui/theme/layoutTokens";
 
@@ -220,12 +221,35 @@ export function GardenScreen() {
       </GestureDetector>
 
       {selected && selectedScreen ? (
-        <View style={[styles.selectionToolbar, { left: Math.max(8, selectedScreen.x - 60), top: Math.max(8, selectedScreen.y - 64) }]}>
-          <CozyIconButton icon={UndoIcon} accessibilityLabel="Rotate" onPress={() => setGarden((g) => (g ? rotateDecoration(g, selected.id, selected.rotation + 45).state : g))} />
-          <CozyIconButton icon={CloseIcon} accessibilityLabel="Remove" onPress={() => {
-            setGarden((g) => (g ? removeDecoration(g, selected.id).state : g));
-            setSelectedDecorationId(null);
-          }} />
+        <View
+          style={[
+            styles.selectionToolbarWrap,
+            {
+              left: Math.min(Math.max(8, selectedScreen.x - 110), width - 228),
+              top: Math.max(8, selectedScreen.y - 108),
+            },
+          ]}
+        >
+          <CozyPanel style={styles.selectionPanel}>
+            <Text style={styles.selectionHint}>Tryk et nyt sted for at flytte</Text>
+            <View style={styles.selectionActions}>
+              <CozyIconButton
+                icon={UndoIcon}
+                accessibilityLabel="Rotér"
+                longPressHint="Rotér 45°"
+                onPress={() => setGarden((g) => (g ? rotateDecoration(g, selected.id, selected.rotation + 45).state : g))}
+              />
+              <CozyIconButton
+                icon={CloseIcon}
+                accessibilityLabel="Fjern"
+                longPressHint="Fjern dekorationen"
+                onPress={() => {
+                  setGarden((g) => (g ? removeDecoration(g, selected.id).state : g));
+                  setSelectedDecorationId(null);
+                }}
+              />
+            </View>
+          </CozyPanel>
         </View>
       ) : null}
 
@@ -290,8 +314,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   characterLabel: { fontSize: 9, fontWeight: "700", color: textColors.onLightPanel, textAlign: "center" },
-  decorationSelected: { borderWidth: 2, borderColor: textColors.onLightPanel, borderRadius: 8 },
-  selectionToolbar: { position: "absolute", flexDirection: "row", gap: 8, zIndex: 5 },
+  // A soft glow instead of a hard black rectangle — gold tone sampled from the
+  // approved UI frames' own border color (#d2a44d), not an invented brand color.
+  decorationSelected: {
+    borderWidth: 3,
+    borderColor: "#d2a44d",
+    borderRadius: 999,
+    shadowColor: "#d2a44d",
+    shadowOpacity: 0.6,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  selectionToolbarWrap: { position: "absolute", width: 220, zIndex: 5 },
+  selectionPanel: { minHeight: 0 },
+  selectionHint: { fontSize: 12, color: textColors.onLightPanel, textAlign: "center" },
+  selectionActions: { flexDirection: "row", justifyContent: "center", gap: 16, marginTop: 8 },
   palette: {
     position: "absolute",
     left: 12,

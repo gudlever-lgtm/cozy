@@ -31,7 +31,11 @@ export function CozyIconButton({ icon: Icon, accessibilityLabel, onPress, longPr
         accessibilityLabel={accessibilityLabel}
         accessibilityState={{ disabled: !!disabled, selected: !!selected }}
         hitSlop={4}
-        style={({ pressed }) => [styles.pressable, { width: size, height: size, opacity: pressed ? 0.85 : disabled ? 0.5 : 1 }]}
+        style={({ pressed }) => [
+          styles.pressable,
+          { width: size, height: size, opacity: pressed ? 0.85 : disabled ? 0.5 : 1 },
+          selected ? styles.selected : null,
+        ]}
       >
         <View style={StyleSheet.absoluteFill}>
           <IconButtonArt width={size} height={size} />
@@ -46,6 +50,9 @@ export function CozyIconButton({ icon: Icon, accessibilityLabel, onPress, longPr
 }
 
 const styles = StyleSheet.create({
-  pressable: { alignItems: "center", justifyContent: "center" },
+  pressable: { alignItems: "center", justifyContent: "center", borderRadius: 999 },
   iconCenter: { position: "absolute", alignItems: "center", justifyContent: "center", width: "100%", height: "100%" },
+  // Same gold tone as the decoration-selection glow (sampled from the approved UI
+  // frames' own border color) so "selected" reads consistently across the app.
+  selected: { borderWidth: 2, borderColor: "#d2a44d" },
 });

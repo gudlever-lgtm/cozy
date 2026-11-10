@@ -33,8 +33,15 @@ export const DECORATION_KINDS: readonly DecorationKind[] = [
   "watering-can",
 ];
 
-// docs/ASSET_SPEC.md: Dekorationer 220x220, contain, placement by normalized coordinates.
-// Expressed as a fraction of the scene so it matches src/domain/garden's DecorationSize.
+// docs/ASSET_SPEC.md's "220x220" is the decoration's own INTRINSIC SVG canvas size
+// (contain-fit within that square), not the size it should occupy in the garden
+// scene. Measured directly off backgrounds/garden-spring.svg: the house's roof spans
+// ~235 of the background's 720 scene units, and its two trees are ~250 units wide.
+// Using the intrinsic 220 units directly (the original implementation's bug) made a
+// bench render nearly as large as the house. A garden bench/lantern/pot should read
+// as clearly smaller than the house — about a third of its width reads right.
+const DECORATION_SCENE_SIZE = 80;
+
 export function decorationSizeFraction(sceneWidth: number, sceneHeight: number) {
-  return { width: 220 / sceneWidth, height: 220 / sceneHeight };
+  return { width: DECORATION_SCENE_SIZE / sceneWidth, height: DECORATION_SCENE_SIZE / sceneHeight };
 }
