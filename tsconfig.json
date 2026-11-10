@@ -3,7 +3,9 @@
     "target": "ES2020",
     "module": "CommonJS",
     "moduleResolution": "node",
-    "lib": ["ES2020"],
+    "lib": [
+      "ES2020"
+    ],
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -12,5 +14,16 @@
     "noEmit": true,
     "resolveJsonModule": true
   },
-  "include": ["src", "tests"]
+  "include": [
+    "src",
+    "tests"
+  ],
+  "exclude": [
+    "src/ui",
+    "src/navigation",
+    "src/screens",
+    "src/i18n",
+    "App.tsx",
+    "index.ts"
+  ]
 }

@@ -1,0 +1,7 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true
+  },
+  "include": ["App.tsx", "index.ts", "src/ui", "src/navigation", "src/screens", "src/i18n", "src/types"]
+}

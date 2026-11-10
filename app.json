@@ -1,0 +1,21 @@
+{
+  "expo": {
+    "name": "Cozy Solitaire",
+    "slug": "cozy-solitaire",
+    "scheme": "cozysolitaire",
+    "version": "0.1.0",
+    "orientation": "default",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "eu.cozysolitaire.app"
+    },
+    "android": {
+      "package": "eu.cozysolitaire.app"
+    },
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}
