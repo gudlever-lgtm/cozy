@@ -10,8 +10,14 @@
 - Have: fuldskærm, zoom og panorering.
 - Proces: design først, kode efter eksplicit godkendelse.
 
+## Godkendt 10. november 2026
+- **Grafikpakken V3 er godkendt** af produktejeren: alle 57 SVG-filer i `assets/v3/` er fastlagt som grafisk udgangspunkt.
+- Grafik og asset-roller må ikke ændres eller erstattes uden eksplicit ændringsgodkendelse.
+- Godkendelsen gælder **grafikpakken**; den er ikke dokumentation for pixelperfekt skærmlayout eller native funktioner.
+- Næste fase: deterministisk Klondike-spilmotor i Claude Code, uden omdesign af brugerfladen.
+
 ## Åbne designbeslutninger
-- A/B/C grafisk retning (Premium Cozy Storybook er foreløbigt forslag).
+- Premium Cozy Storybook er valgt som grafisk basis; præcise responsive skærmmockups og native layoutgodkendelse mangler fortsat.
 - Endeligt logo, typografi, farver og illustrationer.
 - Endelig forside, kabalebord, navigation og modaldesign.
 - Endelig designkomponentpakke (mål, safe area og skalering).
