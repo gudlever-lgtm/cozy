@@ -1,0 +1,65 @@
+{
+  "package": "Cozy V3 integration pack 1.1",
+  "basedOnScreenshotsCommit": "8a06494eef598d2a20fdfac2b499a37f4a1116e4",
+  "reviewPlatform": "Expo web via Playwright",
+  "screenResults": [
+    {
+      "screen": "solitaire",
+      "viewport": "390x844",
+      "status": "fail",
+      "issues": [
+        "large blank field",
+        "missing themed standalone tabletop"
+      ]
+    },
+    {
+      "screen": "solitaire",
+      "viewport": "844x390",
+      "status": "blocker",
+      "issues": [
+        "actions overlap tableau",
+        "navigation occludes cards"
+      ]
+    },
+    {
+      "screen": "garden",
+      "viewport": "390x844",
+      "status": "conditional",
+      "issues": [
+        "flat raster garden rather than layered world"
+      ]
+    },
+    {
+      "screen": "garden",
+      "viewport": "844x390",
+      "status": "fail",
+      "issues": [
+        "nav covers excessive scene height"
+      ]
+    },
+    {
+      "screen": "minigames",
+      "viewport": "390x844",
+      "status": "fail",
+      "issues": [
+        "unified scene background absent",
+        "empty area"
+      ]
+    },
+    {
+      "screen": "settings",
+      "viewport": "390x844",
+      "status": "review",
+      "issues": [
+        "unified themed chrome incomplete"
+      ]
+    }
+  ],
+  "readyForImplementation": false,
+  "assetsToProduce": [
+    "premium-solitaire-tabletop-background",
+    "premium menu/quests/settings backdrop if no suitable asset exists",
+    "high-quality garden world layers later"
+  ],
+  "keepGameplayAndStateUnchanged": true
+}
