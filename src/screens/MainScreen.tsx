@@ -6,6 +6,7 @@ import { CozyBottomNavigation, type NavTabKey } from "../ui/components/CozyBotto
 import { CozyIconButton } from "../ui/components/CozyIconButton";
 import SettingsIcon from "../../assets/v3/icons/settings.svg";
 import { ScaffoldScreen } from "./placeholders";
+import { GardenScreen } from "./GardenScreen";
 import { useLocale } from "../i18n/LocaleContext";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 
@@ -16,7 +17,7 @@ export function MainScreen({ navigation, route }: Props) {
   const [active, setActive] = useState<NavTabKey>(route.params?.tab ?? "garden");
 
   const screens: Record<NavTabKey, React.ReactNode> = {
-    garden: <ScaffoldScreen title={t("garden")} note="Stage 5.2: full garden world (camera, decorations, seasons)." />,
+    garden: <GardenScreen />,
     solitaire: <ScaffoldScreen title={t("solitaire")} note="Stage 5.3: full Klondike board wired to the Stage 1 engine." />,
     minigames: <ScaffoldScreen title={t("minigames")} note="Stage 5.4: Memory (Stage 4 engine) is the only real minigame so far." />,
     quests: <ScaffoldScreen title={t("quests")} note="Stage 5.4: quest list wired to the Stage 2 reward ledger." />,
@@ -24,8 +25,8 @@ export function MainScreen({ navigation, route }: Props) {
 
   return (
     <View style={styles.container}>
-      <SafeAreaView style={styles.header} edges={["top"]}>
-        <View style={styles.headerRow}>
+      <SafeAreaView style={styles.header} edges={["top"]} pointerEvents="box-none">
+        <View style={styles.headerRow} pointerEvents="box-none">
           <CozyIconButton
             icon={SettingsIcon}
             accessibilityLabel={t("settings")}

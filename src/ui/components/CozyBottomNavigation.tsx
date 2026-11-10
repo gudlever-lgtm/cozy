@@ -89,7 +89,7 @@ export function CozyBottomNavigation({ active, onSelect, labels }: CozyBottomNav
 }
 
 const styles = StyleSheet.create({
-  wrapper: { position: "absolute" },
+  wrapper: { position: "absolute", zIndex: 6 },
   row: { flex: 1, flexDirection: "row" },
   tab: { flex: 1, alignItems: "center", justifyContent: "center", gap: 2 },
   caption: { color: textColors.onLightPanel, fontWeight: "600" },
