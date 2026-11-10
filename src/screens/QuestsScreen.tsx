@@ -73,5 +73,5 @@ const styles = StyleSheet.create({
   title: { fontSize: 16, fontWeight: "700", color: textColors.onLightPanel },
   progress: { fontSize: 13, color: textColors.onLightPanel, marginTop: 4, marginBottom: 10 },
   claimedText: { fontSize: 13, color: textColors.onLightPanel, fontWeight: "600" },
-  note: { fontSize: 12, color: textColors.onLightPanel, textAlign: "center", paddingHorizontal: 12 },
+  note: { fontSize: 12, color: "#f8efd6", textAlign: "center", paddingHorizontal: 12 },
 });

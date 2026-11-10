@@ -9,6 +9,7 @@ import type { StringKey } from "../i18n/strings";
 import LockIcon from "../../assets/v3/icons/lock.svg";
 import { MemoryGameScreen } from "./MemoryGameScreen";
 import { textColors } from "../ui/theme/colors";
+import MenuBackdrop from "../../assets/v3-premium/backgrounds/cozy-menu-botanical.svg";
 
 interface GameEntry {
   readonly titleKey: StringKey;
@@ -38,6 +39,9 @@ export function MinigamesScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+      <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+        <MenuBackdrop width="100%" height="100%" preserveAspectRatio="xMidYMid slice" />
+      </View>
       <View style={styles.list}>
         {GAMES.map((game) => (
           <CozyPanel key={game.titleKey} style={styles.panel}>

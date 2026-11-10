@@ -11,6 +11,7 @@ import { AVATAR_LABEL_KEY, CARD_BACK_LABEL_KEY, CARD_FACE_LABEL_KEY, SEASON_LABE
 import type { CardBackStyle, CardFaceStyle, SeasonOverride } from "../application/preferencesStore";
 import type { Season } from "../domain/garden/types";
 import { textColors } from "../ui/theme/colors";
+import MenuBackdrop from "../../assets/v3-premium/backgrounds/cozy-menu-botanical.svg";
 import type { Locale } from "../i18n/strings";
 
 const CARD_FACE_STYLES: readonly CardFaceStyle[] = ["blank", "botanical", "woodland"];
@@ -24,6 +25,9 @@ export function SettingsScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
+      <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+        <MenuBackdrop width="100%" height="100%" preserveAspectRatio="xMidYMid slice" />
+      </View>
       <ScrollView contentContainerStyle={styles.scroll}>
         <CozyPanel wide style={styles.panel}>
           <Text style={styles.sectionTitle}>{t("settingsProfile")}</Text>
