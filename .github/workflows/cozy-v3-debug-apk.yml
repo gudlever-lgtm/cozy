@@ -72,7 +72,9 @@ jobs:
           test -s "$APK"
           unzip -t "$APK" | tail -1
           echo "Check that Hermes/JS bundle is actually embedded in the standalone APK"
-          unzip -Z1 "$APK" | grep -E '(^|/)index.android.bundle          BUILD_TOOLS="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          unzip -Z1 "$APK" | grep -Fx 'assets/index.android.bundle'
+          echo "Embedded JavaScript bundle found; Metro is NOT required."
+          BUILD_TOOLS="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
           "$BUILD_TOOLS/apksigner" verify --verbose "$APK"
           cp "$APK" "$APK_NAME"
           ls -lh "$APK_NAME"
