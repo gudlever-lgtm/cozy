@@ -1,6 +1,7 @@
 import React from "react";
 import { View, type ViewStyle } from "react-native";
 import type { SvgProps } from "react-native-svg";
+import { useUniqueSvgIdsRef } from "./useUniqueSvgIds";
 
 export interface NineSliceFrameProps {
   readonly Source: React.FC<SvgProps>;
@@ -38,6 +39,12 @@ export function NineSliceFrame({
   height,
   style,
 }: NineSliceFrameProps) {
+  // One seed for the whole frame: all nine pieces are slices of the very same source
+  // file and are meant to share identical gradient colors, so they may share ids with
+  // each other — only a DIFFERENT NineSliceFrame instance (another panel, the tab bar)
+  // must not collide with this one. See useUniqueSvgIds.ts for the underlying bug.
+  const uidRef = useUniqueSvgIdsRef();
+
   // Uniform scale derived from width keeps corner ornaments proportioned exactly as
   // they'd look if the whole asset were scaled by width — never squashed or enlarged
   // relative to the rest of the frame.
@@ -66,7 +73,7 @@ export function NineSliceFrame({
   ) => {
     if (outW <= 0 || outH <= 0 || srcW <= 0 || srcH <= 0) return null;
     return (
-      <View key={key} style={{ position: "absolute", left: x, top: y, width: outW, height: outH, overflow: "hidden" }}>
+      <View key={key} ref={uidRef} style={{ position: "absolute", left: x, top: y, width: outW, height: outH, overflow: "hidden" }}>
         <Source width={outW} height={outH} viewBox={`${srcX} ${srcY} ${srcW} ${srcH}`} preserveAspectRatio={stretch ? "none" : "xMidYMid meet"} />
       </View>
     );

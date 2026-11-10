@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, View } from "react-native";
 import IconButtonArt from "../../../assets/v3/ui/icon-button.svg";
 import { buttonTokens } from "../theme/layoutTokens";
 import { CozyTooltip } from "./CozyTooltip";
+import { useUniqueSvgIdsRef } from "./useUniqueSvgIds";
 
 export interface CozyIconButtonProps {
   readonly icon: React.FC<any>;
@@ -18,6 +19,7 @@ export interface CozyIconButtonProps {
  * than relying on the icon alone to explain itself. */
 export function CozyIconButton({ icon: Icon, accessibilityLabel, onPress, longPressHint, selected, disabled }: CozyIconButtonProps) {
   const [showTooltip, setShowTooltip] = useState(false);
+  const uidRef = useUniqueSvgIdsRef();
   const size = buttonTokens.icon.size;
   const iconSize = size * buttonTokens.icon.iconMaxFraction;
 
@@ -37,7 +39,7 @@ export function CozyIconButton({ icon: Icon, accessibilityLabel, onPress, longPr
           selected ? styles.selected : null,
         ]}
       >
-        <View style={StyleSheet.absoluteFill}>
+        <View style={StyleSheet.absoluteFill} ref={uidRef}>
           <IconButtonArt width={size} height={size} />
         </View>
         <View style={styles.iconCenter}>

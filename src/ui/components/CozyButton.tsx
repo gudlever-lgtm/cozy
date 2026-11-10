@@ -7,6 +7,7 @@ import ButtonSpecial from "../../../assets/v3/ui/button-special.svg";
 import ButtonDisabled from "../../../assets/v3/ui/button-disabled.svg";
 import { buttonTokens } from "../theme/layoutTokens";
 import { textColors } from "../theme/colors";
+import { useUniqueSvgIdsRef } from "./useUniqueSvgIds";
 
 export type CozyButtonVariant = "primary" | "secondary" | "wood" | "special";
 
@@ -37,6 +38,7 @@ export interface CozyButtonProps {
  * per docs/ASSET_SPEC.md; the label is native Text drawn in the safe label zone from
  * docs/ui-layout-tokens.v3.json, never baked into the artwork. */
 export function CozyButton({ label, onPress, variant = "primary", disabled = false, width, accessibilityLabel }: CozyButtonProps) {
+  const uidRef = useUniqueSvgIdsRef();
   const token = buttonTokens[variant];
   const w = Math.min(Math.max(width ?? token.minWidth, token.minWidth), token.maxWidth);
   const h = token.minHeight;
@@ -54,7 +56,7 @@ export function CozyButton({ label, onPress, variant = "primary", disabled = fal
       hitSlop={8}
       style={({ pressed }) => [{ width: w, height: h, opacity: pressed ? 0.85 : 1 }]}
     >
-      <View style={StyleSheet.absoluteFill}>
+      <View style={StyleSheet.absoluteFill} ref={uidRef}>
         <Art width={w} height={h} />
       </View>
       <View
