@@ -1,0 +1,87 @@
+{
+  "version": "1.0.0",
+  "status": "DESIGN_HANDOFF_DRAFT",
+  "sourceCommit": "626da2e2322730b21e44f631a361c8060b1cb4d0",
+  "scope": [
+    "welcome",
+    "garden",
+    "solitaire"
+  ],
+  "ownership": {
+    "visual": "ChatGPT/design branch",
+    "implementation": "Claude Code, after Stage 5.7 complete",
+    "gameplay": "Claude Code"
+  },
+  "assets": {
+    "welcome": {
+      "background": "assets/v3-premium/backgrounds/welcome-garden-premium.png",
+      "logo": "assets/v3-premium/branding/cozy-solitaire-premium-logo.png",
+      "primaryButton": "assets/v3/ui/button-primary.svg",
+      "secondaryButton": "assets/v3/ui/button-secondary.svg",
+      "charactersAlreadyBakedInBackground": true
+    },
+    "garden": {
+      "backgrounds": {
+        "spring": "assets/v3-premium/backgrounds/garden-spring-premium.png",
+        "summer": "assets/v3-premium/backgrounds/garden-summer-premium.png",
+        "autumn": "assets/v3-premium/backgrounds/garden-autumn-premium.png",
+        "winter": "assets/v3-premium/backgrounds/garden-winter-premium.png"
+      },
+      "characters": {
+        "millie": "assets/v3-premium/characters/millie-premium.png",
+        "marmalade": "assets/v3-premium/characters/marmalade-premium.png"
+      },
+      "decorations": "assets/v3/decorations/",
+      "hud": "assets/v3/ui/hud-pill.svg",
+      "buildButton": "assets/v3/ui/icon-button.svg",
+      "palette": "assets/v3/ui/panel-wide.svg",
+      "bottomNav": "assets/v3/ui/tab-background.svg"
+    },
+    "solitaire": {
+      "tabletopBackground": null,
+      "tabletopBackgroundStatus": "MISSING_HIGH_FIDELITY_ART",
+      "cardFaces": [
+        "assets/v3/cards/face-blank.svg",
+        "assets/v3/cards/face-botanical.svg",
+        "assets/v3/cards/face-woodland.svg"
+      ],
+      "cardBacks": [
+        "assets/v3/cards/back-botanical.svg",
+        "assets/v3/cards/back-stars.svg",
+        "assets/v3/cards/back-woodland.svg"
+      ],
+      "emptyPile": "assets/v3/ui/card-slot.svg",
+      "actionButton": "assets/v3/ui/icon-button.svg",
+      "bottomNav": "assets/v3/ui/tab-background.svg"
+    }
+  },
+  "screens": {
+    "targetViewports": [
+      {
+        "width": 360,
+        "height": 800
+      },
+      {
+        "width": 390,
+        "height": 844
+      },
+      {
+        "width": 844,
+        "height": 390
+      }
+    ],
+    "languages": [
+      "da",
+      "en"
+    ],
+    "requiresScreenshots": true,
+    "requiresOwnerVisualApproval": true
+  },
+  "cannotShip": [
+    "blurred top/bottom scene bands",
+    "intermittent green button gradient washout",
+    "missing premium solitaire tabletop",
+    "untested native rendering"
+  ],
+  "artifactNotes": "The generated concept overview exists only in this conversation, not as a committed production asset. Do not cut controls out of this overview."
+}
