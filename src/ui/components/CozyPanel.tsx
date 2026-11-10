@@ -1,7 +1,9 @@
-import React from "react";
-import { ScrollView, StyleSheet, View, type ViewStyle } from "react-native";
+import React, { useState } from "react";
+import { ScrollView, StyleSheet, View, type LayoutChangeEvent, type ViewStyle } from "react-native";
 import PanelArt from "../../../assets/v3/ui/panel.svg";
 import WidePanelArt from "../../../assets/v3/ui/panel-wide.svg";
+import { NineSliceFrame } from "./NineSliceFrame";
+import { panelGeometry, panelWideGeometry } from "../theme/assetGeometry";
 
 export interface CozyPanelProps {
   readonly wide?: boolean;
@@ -11,28 +13,41 @@ export interface CozyPanelProps {
 }
 
 /**
- * Panel background art has a fixed intrinsic aspect ratio (720x900 / 820x360) with
- * floral corner ornaments. Content height is driven by the settings/quest lists this
- * wraps, which can be taller than that ratio allows — so, per
- * docs/UI_COMPONENT_CONTRACT_V3.md's explicit fallback ("a documented 9-slice strategy
- * OR an explicitly separate fixed-aspect decorative frame with independently laid out
- * content"), content is laid out independently of the background instead of stretching
- * the art to fit. preserveAspectRatio defaults to "meet" (non-destructive), so the frame
- * never distorts; it may show interior padding above/below short content.
- *
- * OPEN QUESTION for the owner: true 9-slice (fixed corners, repeating/stretching edges
- * only) is not yet implemented — flag if on-device QA finds this frame inset insufficient
- * for long scrollable content.
+ * Real 9-slice panel: corners/ornaments render 1:1 from assets/v3/ui/panel(-wide).svg,
+ * only the flat paper strips stretch (NineSliceFrame), so the filled cream background
+ * and gold border cover the whole frame at any content height — no letterboxing, no
+ * thin/incomplete look. Height is measured from the content (onLayout) so panels
+ * holding a tall settings/quest list still show the full filled background behind them.
  */
 export function CozyPanel({ wide = false, scroll = false, style, children }: CozyPanelProps) {
+  const geometry = wide ? panelWideGeometry : panelGeometry;
   const Art = wide ? WidePanelArt : PanelArt;
+  const [size, setSize] = useState({ width: 0, height: geometry.intrinsicHeight * 0.4 });
+
+  const onLayout = (e: LayoutChangeEvent) => {
+    const { width, height } = e.nativeEvent.layout;
+    if (width !== size.width || height !== size.height) setSize({ width, height });
+  };
+
   const Content = scroll ? ScrollView : View;
+
   return (
-    <View style={[styles.wrapper, style]}>
-      {/* preserveAspectRatio defaults to "meet": uniform scale, centered, never stretched. */}
-      <View style={StyleSheet.absoluteFill} pointerEvents="none">
-        <Art width="100%" height="100%" />
-      </View>
+    <View style={[styles.wrapper, style]} onLayout={onLayout}>
+      {size.width > 0 ? (
+        <View style={StyleSheet.absoluteFill} pointerEvents="none">
+          <NineSliceFrame
+            Source={Art}
+            intrinsicWidth={geometry.intrinsicWidth}
+            intrinsicHeight={geometry.intrinsicHeight}
+            insetLeft={geometry.inset}
+            insetRight={geometry.inset}
+            insetTop={geometry.inset}
+            insetBottom={geometry.inset}
+            width={size.width}
+            height={size.height}
+          />
+        </View>
+      ) : null}
       <Content style={styles.content} contentContainerStyle={scroll ? styles.contentPadding : undefined}>
         {scroll ? children : <View style={styles.contentPadding}>{children}</View>}
       </Content>
@@ -41,7 +56,8 @@ export function CozyPanel({ wide = false, scroll = false, style, children }: Coz
 }
 
 const styles = StyleSheet.create({
-  wrapper: { borderRadius: 18, overflow: "hidden" },
+  wrapper: { borderRadius: 18 },
   content: { flex: 1 },
-  contentPadding: { padding: 20 },
+  // Extra top/left clearance: the panel art's corner flower ornament sits in that corner.
+  contentPadding: { paddingHorizontal: 24, paddingTop: 44, paddingBottom: 24 },
 });

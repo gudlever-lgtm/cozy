@@ -21,7 +21,7 @@ export function ScaffoldScreen({ title, note }: { title: string; note: string })
 }
 
 const styles = StyleSheet.create({
-  wrapper: { flex: 1, padding: 16, paddingBottom: 90, justifyContent: "center" },
+  wrapper: { flex: 1, padding: 16, paddingBottom: 110, justifyContent: "center" },
   panel: { minHeight: 160 },
   title: { fontSize: 20, fontWeight: "700", color: textColors.onLightPanel, marginBottom: 8 },
   note: { fontSize: 14, color: textColors.onLightPanel },
