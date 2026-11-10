@@ -1,0 +1,15 @@
+{
+  "name": "cozy-solitaire",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Cozy Solitaire 3.0 - domain engine (Stage 1: Klondike rules, no UI).",
+  "scripts": {
+    "test": "node -r ts-node/register --test tests/**/*.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2"
+  }
+}
