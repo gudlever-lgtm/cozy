@@ -1,14 +1,20 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { DrawMode } from "../domain/solitaire/types";
+import type { Season } from "../domain/garden/types";
+import type { AvatarKey } from "../ui/theme/avatarKeys";
 
 export type CardFaceStyle = "blank" | "botanical" | "woodland";
 export type CardBackStyle = "botanical" | "stars" | "woodland";
+export type SeasonOverride = "automatic" | Season;
 
 export interface Preferences {
   readonly faceStyle: CardFaceStyle;
   readonly backStyle: CardBackStyle;
   readonly drawMode: DrawMode;
   readonly reducedMotion: boolean;
+  readonly playerName: string;
+  readonly avatarKey: AvatarKey;
+  readonly seasonOverride: SeasonOverride;
 }
 
 export const DEFAULT_PREFERENCES: Preferences = {
@@ -16,6 +22,9 @@ export const DEFAULT_PREFERENCES: Preferences = {
   backStyle: "botanical",
   drawMode: 1,
   reducedMotion: false,
+  playerName: "",
+  avatarKey: "cat",
+  seasonOverride: "automatic",
 };
 
 const STORAGE_KEY = "cozy.preferences.v1";

@@ -7,11 +7,11 @@ import Hedgehog from "../../../assets/v3/avatars/hedgehog.svg";
 import Owl from "../../../assets/v3/avatars/owl.svg";
 import Rabbit from "../../../assets/v3/avatars/rabbit.svg";
 import { textColors } from "../theme/colors";
+import { AVATAR_KEYS, type AvatarKey } from "../theme/avatarKeys";
 
-export type AvatarKey = "bird" | "cat" | "fox" | "hedgehog" | "owl" | "rabbit";
-
+export type { AvatarKey };
+export { AVATAR_KEYS };
 export const AVATAR_ART: Record<AvatarKey, React.FC<any>> = { bird: Bird, cat: Cat, fox: Fox, hedgehog: Hedgehog, owl: Owl, rabbit: Rabbit };
-export const AVATAR_KEYS: readonly AvatarKey[] = ["bird", "cat", "fox", "hedgehog", "owl", "rabbit"];
 
 export interface CozyAvatarProps {
   readonly avatarKey: AvatarKey;

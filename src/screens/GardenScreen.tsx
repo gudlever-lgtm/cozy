@@ -26,6 +26,7 @@ import { textColors } from "../ui/theme/colors";
 import { gardenTokens } from "../ui/theme/layoutTokens";
 import { useLocale } from "../i18n/LocaleContext";
 import { useRewardLedger } from "../ui/providers/RewardLedgerContext";
+import { usePreferences } from "../ui/providers/PreferencesContext";
 
 // Candidate "Premium Art V1" raster backgrounds (assets/v3-premium/, see
 // docs/PREMIUM_ART_IMPORT.md) replace the geometric SVG season scenes here. World
@@ -67,6 +68,7 @@ function createCenteredGarden(bounds: CameraBounds): GardenState {
 export function GardenScreen() {
   const { t } = useLocale();
   const { balance } = useRewardLedger();
+  const { preferences } = usePreferences();
   const { width, height } = useWindowDimensions();
   const bounds: CameraBounds = useMemo(
     () => ({
@@ -180,7 +182,7 @@ export function GardenScreen() {
   if (!garden) return <View style={styles.container} />;
 
   const camera = garden.camera;
-  const season = currentSeason(garden, new Date());
+  const season = preferences.seasonOverride === "automatic" ? currentSeason(garden, new Date()) : preferences.seasonOverride;
   const seasonBackground = SEASON_ART[season];
   const characterSize = 130 * camera.zoom; // 1:1 aspect, see PREMIUM_CHARACTER_ASPECT
   const toScreen = (normX: number, normY: number) => ({
