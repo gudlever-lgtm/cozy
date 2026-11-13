@@ -1,8 +1,20 @@
-# Cozy Solitaire 3.0 — Clean Slate
+# Cozy Solitaire 3.0 — Android og iOS
 
-**Status: DESIGNFASE — INGEN IMPLEMENTERING GODKENDT**
+**Status: Spilbar udviklingsversion, endnu ikke releasegodkendt.**
 
-Dette repository er nulstillet fra Cozy 2.x og indeholder nu planlægningsmateriale samt en **ikke-godkendt SVG-grafikpakke** til Cozy 3.0. Der er endnu ingen ny spilimplementation. Alt tidligere spilindhold findes i den særskilte arkivbranch [archive/cozy-v2-final-2026-11-09](https://github.com/gudlever-lgtm/cozy/tree/archive/cozy-v2-final-2026-11-09).
+Dette repository indeholder Expo/React Native-appen i `mobile/`, domænekode i `src/`, tests i `tests/` og den godkendte V3 SVG-grafik i `assets/v3/`. Tidligere Cozy 2.x findes i arkivbranchen [archive/cozy-v2-final-2026-11-09](https://github.com/gudlever-lgtm/cozy/tree/archive/cozy-v2-final-2026-11-09).
+
+## Build på Windows
+
+Fra roden af det klonede Git-repository (`E:\cozy`):
+
+```powershell
+.\build-apk.ps1 -Platform apk   # Lokal APK -> Downloads\cozy.apk
+.\build-apk.ps1 -Platform aab   # Lokal AAB -> Downloads\cozy.aab
+.\build-apk.ps1 -Platform ios   # iOS-build i Expo EAS, ikke lokalt på Windows
+```
+
+APK/AAB kræver Node.js, JDK og Android SDK. iOS kræver Expo/EAS-login og en Apple-signering. Scriptet henter som standard seneste `main`, kontrollerer TypeScript og stopper ved lokale Git-ændringer. Brug `-SkipPull` til bevidst at bygge lokalt ændret kode. Android-formater bygges af lokal Gradle, ikke i Expo-cloud. Der er endnu ikke udført fuld enhedstest. For en første installation se også [mobile/README.md](mobile/README.md).
 
 ## Produktvision
 Et hyggeligt, visuelt gennemført mobilspil, der kombinerer kabale, minispil og en levende have, hvor spillerens fremskridt giver adgang til dekorationer og historier.
@@ -23,10 +35,10 @@ Et hyggeligt, visuelt gennemført mobilspil, der kombinerer kabale, minispil og 
 - [DECISIONS.md](DECISIONS.md): besluttede og åbne spørgsmål
 
 ## Retning
-**Premium Cozy Storybook er et foreløbigt forslag, ikke godkendt design.** Der skabes først detaljerede mockups og en grafisk komponentpakke, som ejeren skal godkende.
+**Premium Cozy Storybook** og V3 SVG-pakken er godkendt som implementeringsgrundlag. Den faktiske mobile rendering kræver stadig kvalitetstjek på fysisk enhed.
 
 ## Arbejdsregel
-Ingen nye implementationer, APK-builds eller assets til produktionsbrug, før der foreligger et godkendt design. Udvikling sker én skærm ad gangen og bliver sammenlignet visuelt med godkendte referencer. Grønt CI er ikke ensbetydende med visuelt godkendt UI.
+Udvikling sker med visuel sammenligning mod godkendte referencer. Grønt CI eller en fungerende APK er ikke ensbetydende med visuelt godkendt UI. En APK-testbuild må gerne bygges lokalt efter ejerens ønske.
 
 ## V3-grafik og Claude Code
 - [Grafikpakken](assets/v3/README.md) — 57 separate SVG'er, udkast til godkendelse.
@@ -36,4 +48,4 @@ Ingen nye implementationer, APK-builds eller assets til produktionsbrug, før de
 - [Claude Code Master Prompt](docs/CLAUDE_CODE_MASTER_PROMPT.md) — spilmekanik, test og arkitektur.
 
 ## Nuværende tilstand
-Dette repository indeholder ikke en byggelig app. Det er bevidst. Gamle GitHub Actions-workflows og buildanmodninger er fjernet fra `main`. Arkivbranchen er read-only reference.
+Klondike, et vendespil, quests, Lysglimt, haveplaceringer og sæsonvalg er implementeret i den mobile udviklingsversion. Se [ROADMAP.md](ROADMAP.md) og [mobile/README.md](mobile/README.md) for kendte mangler og releasekriterier.
