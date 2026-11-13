@@ -111,9 +111,11 @@ export default function App() {
   const offsetRef = useRef(offset);
   offsetRef.current=offset;
   const {width,height} = useWindowDimensions();
-  // Seven columns should fill most of the phone without touching each other.
-  const cardWidth = Math.min(64,(width-24)/7-1);
+  // Fill the available width while preserving a small gap between seven columns.
+  const cardWidth = Math.min(66,(width-12)/7-0.7);
   const cardHeight = cardWidth*270/190;
+  // Reserve room for long tableau runs before the action buttons begin.
+  const tableauHeight = Math.max(cardHeight+265,height*0.44);
   const gardenHeight=measuredGardenHeight || Math.max(200,height-124);
   gardenViewportRef.current={width,height:gardenHeight,zoom};
   useEffect(()=>setOffset(current=>clampGardenOffset(current,zoom,width,gardenHeight)),[zoom,width,gardenHeight]);
@@ -398,8 +400,8 @@ export default function App() {
           </View>
         </View>
       </View>
-      <View style={styles.piles}>{game.tableau.map((pile,index)=><Pressable ref={view=>{tableauTargets.current[index]=view;}} key={index} onPress={()=>move('tableau',index)}
-        accessibilityLabel={`Kolonne ${index+1}`} style={{width:cardWidth,minHeight:cardHeight+150,zIndex:draggingCard&&pile.some(c=>c.id===draggingCard)?100:0}}>
+      <View style={[styles.piles,{minHeight:tableauHeight}]}>{game.tableau.map((pile,index)=><Pressable ref={view=>{tableauTargets.current[index]=view;}} key={index} onPress={()=>move('tableau',index)}
+        accessibilityLabel={`Kolonne ${index+1}`} style={{width:cardWidth,minHeight:tableauHeight,zIndex:draggingCard&&pile.some(c=>c.id===draggingCard)?100:0}}>
         {pile.map((value,at)=><View key={value.id} style={{marginTop:at?-cardHeight+27:0,zIndex:draggingCard===value.id?999:at,elevation:draggingCard===value.id?15:0}}>
           {card(value,()=>chosen?move('tableau',index):value.up&&setChosen({kind:'tableau',from:index,at}),{kind:'tableau',from:index,at},pile.slice(at))}</View>)}
         {!pile.length&&<View style={[styles.slot,{height:cardHeight}]}><View style={[styles.emptySlot,{width:cardWidth,height:cardHeight}]}/></View>}
