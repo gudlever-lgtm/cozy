@@ -24,9 +24,9 @@ jobs:
     env:
       CI: '1'
       EXPO_NO_TELEMETRY: '1'
-      TAG: cozy-v3-stabilized-20261113-test2
-      APK_NAME: cozy-v3-stabilized-20261113-test2.apk
-      QR_NAME: cozy-v3-stabilized-20261113-test2-qr.png
+      TAG: cozy-v3-raster-fix-20261113-test3
+      APK_NAME: cozy-v3-raster-fix-20261113-test3.apk
+      QR_NAME: cozy-v3-raster-fix-20261113-test3-qr.png
     steps:
       - name: Checkout triggering branch commit
         uses: actions/checkout@v4
@@ -104,8 +104,8 @@ jobs:
           else
             gh release create "$TAG" "$APK_NAME" "$QR_NAME" "$APK_NAME.sha256" \
               --target "$GITHUB_SHA" \
-              --title "Cozy Solitaire V3 – stabilized test APK (2026-11-13)" \
-              --notes "Standalone Android APK with bundled JavaScript. Includes panel layout fixes, solitaire tap/drag and foundation moves, garden Lysglimt economy, and improved Memory cards. Signed for test installation. Native visual and touch acceptance still pending." \
+              --title "Cozy Solitaire V3 – raster graphics test APK (2026-11-13)" \
+              --notes "Standalone Android APK with bundled JavaScript. Uses rasterized original artwork for cards, panels, buttons, icons and garden decoration; native Pressable card taps; dedicated garden zoom controls. Signed for test installation. Native device acceptance still pending." \
               --prerelease
           fi
 
