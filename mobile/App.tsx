@@ -10,9 +10,11 @@ import {nativeSaveStore} from './src/nativeSave';
 import {readGarden,writeGarden} from './src/nativeGarden';
 import type {DecorationPlacement} from '../src/domain/garden/layout';
 import {clampGardenOffset} from '../src/domain/garden/viewport';
+import {moveGardenDecoration} from '../src/domain/garden/drag';
 import {readSettings,writeSettings} from './src/nativeSettings';
 import type {Season} from './src/nativeSettings';
 import {CardFace,DraggableCard} from './src/DraggableCard';
+import {DraggableDecoration} from './src/DraggableDecoration';
 import {autoPlace} from '../src/domain/solitaire/autoPlace';
 import {cardForVisualMove,tableauLandingOffset} from '../src/domain/solitaire/visualMoves';
 import {CozyButton} from './src/CozyButton';
@@ -141,6 +143,12 @@ export default function App() {
       }catch{setMessage('Du skal bruge 5 Lysglimt for at placere en dekoration');}
       setGardenTool(null);
     }
+  }
+  function dragGardenDecoration(id:string,dx:number,dy:number){
+    if(Math.abs(dx)<6&&Math.abs(dy)<6)return;
+    setPlaced(items=>items.map(item=>item.id===id?moveGardenDecoration(item,dx,dy,zoom,width,gardenHeight):item));
+    setMovingDecoration(null);setGardenTool(null);
+    setMessage('Dekoration flyttet og gemt');
   }
 
   useEffect(()=>{
@@ -344,12 +352,13 @@ export default function App() {
         <Pressable onPress={event=>placeInGarden(event.nativeEvent.locationX,event.nativeEvent.locationY)}
           style={{width,height:gardenHeight,transform:[{translateX:offset.x},{translateY:offset.y},{scale:zoom}]}}>
           <Image source={gardenIllustrations[actualSeason]} resizeMode="cover" style={{width,height:gardenHeight}}/>
-          {placed.map(item=>{const art=decorations[item.kind].image;return <Pressable key={item.id}
-            accessibilityLabel={`Flyt ${decorations[item.kind].name}`}
-            onPress={event=>{event.stopPropagation();setGardenTool(null);setMovingDecoration(item.id);setMessage('Tryk på et nyt sted i haven');}}
-            style={{position:'absolute',left:width*item.x-42,top:gardenHeight*item.y-42,
-              borderWidth:movingDecoration===item.id?3:0,borderColor:'#ffe778',borderRadius:12}}>
-            <Image source={art} resizeMode="contain" style={{width:84,height:84}}/></Pressable>;})}
+          {placed.map(item=>{const art=decorations[item.kind].image;return <View key={item.id}
+            style={{position:'absolute',left:width*item.x-42,top:gardenHeight*item.y-42}}>
+            <DraggableDecoration image={art} name={decorations[item.kind].name} zoom={zoom}
+              selected={movingDecoration===item.id}
+              onTap={()=>{setGardenTool(null);setMovingDecoration(item.id);setMessage('Træk dekorationen med fingeren, eller tryk et nyt sted i haven');}}
+              onDrop={(dx,dy)=>dragGardenDecoration(item.id,dx,dy)}/>
+          </View>;})}
         </Pressable>
       </View>
       <View style={styles.hud}>
