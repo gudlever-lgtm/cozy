@@ -28,6 +28,7 @@ import HeaderBanner from '../assets/v3/ui/header-banner.svg';
 import TabBackground from '../assets/v3/ui/tab-background.svg';
 import PanelWide from '../assets/v3/ui/panel-wide.svg';
 import CardSlot from '../assets/v3/ui/card-slot.svg';
+import {checkForCozyUpdate} from './src/checkUpdate';
 
 type Screen = 'garden' | 'cards' | 'mini' | 'quests' | 'settings';
 type Source = {kind:'waste' | 'tableau' | 'foundation'; from:number; at:number};
@@ -51,6 +52,10 @@ const gardenIllustrations={
 const solitaireTable=require('./assets/illustrations/solitaire-table.webp');
 
 export default function App() {
+  useEffect(()=>{
+    const timer=setTimeout(()=>{void checkForCozyUpdate();},6500);
+    return ()=>clearTimeout(timer);
+  },[]);
   const [screen,setScreen] = useState<Screen>('garden');
   const [game,setGame] = useState(() => newGame(20261113));
   const [ledger,setLedger] = useState<Ledger>(()=>emptyLedger());
@@ -306,6 +311,7 @@ export default function App() {
           key={value} wide secondary={value!==season} label={`${value===season?'✓ ':''}${{auto:'Automatisk',spring:'Forår',summer:'Sommer',autumn:'Efterår',winter:'Vinter'}[value]}`}
           onPress={()=>setSeason(value)}/>)}
         <Text style={styles.info}>Spillet er gratis, uden reklamer eller køb for rigtige penge.</Text>
+        <CozyButton label="Søg efter opdatering" wide secondary onPress={()=>{void checkForCozyUpdate(true);}}/>
       </ScrollView>:<ImageBackground source={gardenIllustrations[actualSeason]} resizeMode="cover" style={{flex:1}}><ScrollView style={styles.board} contentContainerStyle={styles.questList}>
         <Text style={styles.title}>Mine opgaver</Text><Text style={styles.info}>Små mål med Lysglimt som belønning ✨</Text>
         {quests(ledger,placed.length).map(q=><View key={q.id} style={styles.quest}>

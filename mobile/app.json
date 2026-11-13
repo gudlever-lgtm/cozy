@@ -8,6 +8,6 @@
     "ios": {
       "supportsTablet": true
     },
-    "android": {"package": "eu.cozy.solitaire", "predictiveBackGestureEnabled": false}
+    "android": {"package": "eu.cozy.solitaire", "versionCode": 30000, "predictiveBackGestureEnabled": false}
   }
 }
