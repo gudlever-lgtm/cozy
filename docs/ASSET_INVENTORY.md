@@ -12,10 +12,11 @@ Status: 13. november 2026. Inventaret beskriver filerne i repoet og deres faktis
 | `nav-premium.webp` | Nederste navigationsbjælke | I brug |
 | `nav-icon-0.webp` til `nav-icon-4.webp` | Fem illustrerede 3D-ikoner til navigationen | I brug |
 | `card-back-premium.webp` | Kortbagsider i kabale og vendespil | I brug |
+| `card-face-premium.webp` | Illustreret creme-/guldramme til kortforsider i kabalen | I brug |
 | `memory-animal-0.webp` til `memory-animal-3.webp` | Ræv, kat, kanin og ugle i vendespillet | I brug |
 | `button-premium.webp` | Primære handlingsknapper | I brug |
 
-Disse 20 WebP-filer er de nyere billedillustrationer. Ældre SVG-udgaver ligger fortsat i `assets/v3/` som alternativer; de vises ikke i de opdaterede mobilskærme.
+Disse 21 WebP-filer er de nyere billedillustrationer. Ældre SVG-udgaver ligger fortsat i `assets/v3/` som alternativer; de vises ikke i de opdaterede mobilskærme.
 
 ## SVG-samling (`assets/v3/`)
 
@@ -28,12 +29,12 @@ Disse 20 WebP-filer er de nyere billedillustrationer. Ældre SVG-udgaver ligger 
 | Ikoner | 18 | `arrow-left`, `basket`, `cards`, `chair`, `close`, `flower`, `garden`, `hammer`, `hint`, `home`, `lock`, `menu`, `mini`, `play`, `quests`, `settings`, `star`, `undo` |
 | UI-elementer | 15 | `button-disabled`, `button-primary`, `button-secondary`, `button-special`, `button-wood`, `card-slot`, `header-banner`, `hud-pill`, `icon-button`, `panel-wide`, `panel`, `progress-fill`, `progress-track`, `tab-background`, `tooltip` |
 
-**I alt: 57 SVG'er + 20 nyere WebP-illustrationer = 77 grafikfiler** (eksklusive dokumentation og manifest).
+**I alt: 57 SVG'er + 21 nyere WebP-illustrationer = 78 grafikfiler** (eksklusive dokumentation og manifest).
 
 ## Faktisk brug i mobilappen
 
 - Bundnavigation: fem `nav-icon-*.webp` over `nav-premium.webp`.
-- Kabale: grafisk indrammede kortforsider, `card-back-premium.webp`, indlagte tomme felter og `solitaire-table.webp`.
+- Kabale: `card-face-premium.webp` med læsbare dynamiske rang- og kulørsymboler, `card-back-premium.webp`, indlagte tomme felter og `solitaire-table.webp`.
 - Vendespil: fire `memory-animal-*.webp` og den nye kortbagside.
 - Knapper: `button-premium.webp` og indrammede sekundære knapper.
 - Haven: illustrerede sæsonbaggrunde og de tre WebP-dekorationer, med poleret panel til status og værktøj.

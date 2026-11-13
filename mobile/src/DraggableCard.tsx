@@ -5,16 +5,16 @@ import type {Card} from '../../src/domain/solitaire/klondike';
 const ranks:Record<number,string>={1:'A',11:'J',12:'Q',13:'K'};
 const suit:Record<string,string>={C:'♣',D:'♦',H:'♥',S:'♠'};
 const premiumBack=require('../assets/illustrations/card-back-premium.webp');
+const premiumFace=require('../assets/illustrations/card-face-premium.webp');
 
 function CardFace({card,width,height}:{card:Card;width:number;height:number}){
   const red=card.suit==='D'||card.suit==='H';
   const color=red?'#c6384b':'#194557';
   return <View style={[styles.face,{width,height}]}>
-    <View style={styles.innerBorder}/>
-    <Text style={[styles.corner,{color,fontSize:Math.max(14,width*0.24)}]}>{ranks[card.rank]??card.rank}</Text>
-    <Text style={[styles.suitCorner,{color,fontSize:Math.max(12,width*0.23)}]}>{suit[card.suit]}</Text>
-    <Text style={[styles.centerSuit,{color,fontSize:Math.max(22,width*0.58)}]}>{suit[card.suit]}</Text>
-    <Text style={[styles.bottomCorner,{color,fontSize:Math.max(12,width*0.21)}]}>{ranks[card.rank]??card.rank}</Text>
+    <Image source={premiumFace} resizeMode="stretch" style={{width,height}}/>
+    <Text style={[styles.corner,{color,fontSize:Math.max(12,width*0.22)}]}>{ranks[card.rank]??card.rank}{suit[card.suit]}</Text>
+    <Text style={[styles.centerSuit,{color,fontSize:Math.max(19,width*0.48)}]}>{suit[card.suit]}</Text>
+    <Text style={[styles.bottomCorner,{color,fontSize:Math.max(11,width*0.20)}]}>{ranks[card.rank]??card.rank}</Text>
   </View>;
 }
 
@@ -64,10 +64,8 @@ export function DraggableCard({card,width,height,onTap,onDoubleTap,onDrop,onDrag
 }
 
 const styles=StyleSheet.create({
-  face:{borderRadius:7,backgroundColor:'#fff9ed',borderWidth:2,borderColor:'#e8c78e',overflow:'hidden',shadowColor:'#182d30',shadowOpacity:0.22,shadowRadius:2,elevation:2},
-  innerBorder:{position:'absolute',top:3,left:3,right:3,bottom:3,borderRadius:5,borderWidth:1,borderColor:'#f8e8c4'},
-  corner:{position:'absolute',left:5,top:1,fontWeight:'900'},
-  suitCorner:{position:'absolute',left:6,top:19,fontWeight:'700'},
-  centerSuit:{position:'absolute',alignSelf:'center',top:'34%',fontWeight:'800',textShadowColor:'#f3d29b',textShadowOffset:{width:0,height:2},textShadowRadius:2},
-  bottomCorner:{position:'absolute',right:5,bottom:1,fontWeight:'900',transform:[{rotate:'180deg'}]},
+  face:{borderRadius:7,backgroundColor:'#fff9ed',overflow:'hidden',shadowColor:'#182d30',shadowOpacity:0.22,shadowRadius:2,elevation:2},
+  corner:{position:'absolute',left:5,top:3,fontWeight:'900'},
+  centerSuit:{position:'absolute',alignSelf:'center',top:'39%',fontWeight:'800',textShadowColor:'#f3d29b',textShadowOffset:{width:0,height:2},textShadowRadius:2},
+  bottomCorner:{position:'absolute',right:6,bottom:4,fontWeight:'900',transform:[{rotate:'180deg'}]},
 });
