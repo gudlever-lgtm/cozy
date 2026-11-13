@@ -124,24 +124,26 @@ export function SolitaireScreen() {
   }
 
   function makeDragGesture(source: DragSource, cards: Card[]) {
-    return Gesture.Pan()
+    const tap = Gesture.Tap()
+      .runOnJS(true)
+      .onEnd(() => attemptTapMove(source));
+    const pan = Gesture.Pan()
       .runOnJS(true)
       .onBegin(() => setDrag({ source, cards, dx: 0, dy: 0 }))
       .onUpdate((e) => setDrag({ source, cards, dx: e.translationX, dy: e.translationY }))
       .onEnd((e) => {
-        const distance = Math.hypot(e.translationX, e.translationY);
-        if (distance < 6) {
-          attemptTapMove(source);
-        } else {
-          const originX = source.type === "waste" ? MARGIN + cardWidth + GAP : columnX(source.column);
-          const originY =
-            source.type === "waste"
-              ? boardTopInset + MARGIN
-              : tableauTop + stackedOffset(game!.tableau[source.column], source.cardIndex, faceDownStep, faceUpStep) - tableauScrollY.current;
-          attemptTableauDrop(source, originX + e.translationX, originY + e.translationY);
-        }
+        const originX = source.type === "waste" ? MARGIN + cardWidth + GAP : columnX(source.column);
+        const originY =
+          source.type === "waste"
+            ? boardTopInset + MARGIN
+            : tableauTop + stackedOffset(game!.tableau[source.column], source.cardIndex, faceDownStep, faceUpStep) - tableauScrollY.current;
+        attemptTableauDrop(source, originX + e.translationX, originY + e.translationY);
         setDrag(null);
-      });
+      })
+      .onFinalize(() => setDrag(null));
+    // A Pan recognizer does not activate for a stationary tap on Android.
+    // Give taps their own recognizer so both simple moves and dragging work.
+    return Gesture.Race(tap, pan);
   }
 
   const draggingIds = new Set(drag?.cards.map((c) => c.id) ?? []);
