@@ -298,6 +298,9 @@ export default function App() {
             {q.complete&&!q.claimed&&<CozyButton label="Hent belønning" wide onPress={()=>claimQuest(q.id,q.reward)}/>}</View>
         </View>)}
       </ScrollView>}
+    {message&&screen!=='cards'&&<Pressable accessibilityRole="button" accessibilityLabel="Luk besked" onPress={()=>setMessage('')} style={styles.notice}>
+      <Text style={styles.info}>{message} · Luk ×</Text>
+    </Pressable>}
     <View style={styles.nav}><TabBackground width="100%" height={72} preserveAspectRatio="none" style={StyleSheet.absoluteFill}/>{tabs.map(tab=><Pressable key={tab.id} accessibilityRole="tab"
       accessibilityState={{selected:screen===tab.id}} onPress={()=>{setScreen(tab.id);setChosen(null);}}
       style={[styles.tab,screen===tab.id&&styles.selected]}><tab.icon width={27} height={27}/>
@@ -317,4 +320,5 @@ const styles=StyleSheet.create({
   actions:{flexDirection:'row',gap:7,justifyContent:'center',flexWrap:'wrap'},button:{padding:12,minHeight:44,backgroundColor:'#e9d6aa',borderRadius:9},
   questList:{alignItems:'center',padding:18,gap:14},quest:{width:'100%',maxWidth:420,minHeight:154,alignItems:'center'},questInner:{width:'100%',alignItems:'center',padding:17},
   questTitle:{fontSize:19,fontWeight:'700',color:'#53462f'},
+  notice:{position:'absolute',left:12,right:12,bottom:79,minHeight:48,borderRadius:12,backgroundColor:'#fff7e5',borderWidth:1,borderColor:'#c8a16b',paddingHorizontal:10},
 });
