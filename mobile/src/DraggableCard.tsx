@@ -1,11 +1,22 @@
 import React, {useMemo, useRef, useState} from 'react';
-import {PanResponder, StyleSheet, Text, View} from 'react-native';
-import Face from '../../assets/v3/cards/face-woodland.svg';
-import Back from '../../assets/v3/cards/back-botanical.svg';
+import {Image, PanResponder, StyleSheet, Text, View} from 'react-native';
 import type {Card} from '../../src/domain/solitaire/klondike';
 
 const ranks:Record<number,string>={1:'A',11:'J',12:'Q',13:'K'};
 const suit:Record<string,string>={C:'♣',D:'♦',H:'♥',S:'♠'};
+const premiumBack=require('../assets/illustrations/card-back-premium.webp');
+
+function CardFace({card,width,height}:{card:Card;width:number;height:number}){
+  const red=card.suit==='D'||card.suit==='H';
+  const color=red?'#c6384b':'#194557';
+  return <View style={[styles.face,{width,height}]}>
+    <View style={styles.innerBorder}/>
+    <Text style={[styles.corner,{color,fontSize:Math.max(14,width*0.24)}]}>{ranks[card.rank]??card.rank}</Text>
+    <Text style={[styles.suitCorner,{color,fontSize:Math.max(12,width*0.23)}]}>{suit[card.suit]}</Text>
+    <Text style={[styles.centerSuit,{color,fontSize:Math.max(22,width*0.58)}]}>{suit[card.suit]}</Text>
+    <Text style={[styles.bottomCorner,{color,fontSize:Math.max(12,width*0.21)}]}>{ranks[card.rank]??card.rank}</Text>
+  </View>;
+}
 
 type Props={card:Card;width:number;height:number;onTap:()=>void;onDoubleTap?:()=>void;onDrop?:(x:number,y:number)=>void;onDragChange?:(active:boolean)=>void;run?:Card[]};
 
@@ -45,12 +56,18 @@ export function DraggableCard({card,width,height,onTap,onDoubleTap,onDrop,onDrag
   return <View {...gesture.panHandlers} accessible accessibilityRole="button"
     accessibilityLabel={enabled?`${ranks[card.rank]??card.rank} ${suit[card.suit]}`:'Skjult kort'}
     style={{width,height,transform:[{translateX:shift.x},{translateY:shift.y}],zIndex:shift.x||shift.y?100:0,elevation:shift.x||shift.y?14:0}}>
-    {card.up?<Face width={width} height={height}/>:<Back width={width} height={height}/>}
-    {card.up&&<Text style={[styles.rank,{color:card.suit==='D'||card.suit==='H'?'#a03546':'#283b3b'}]}>{ranks[card.rank]??card.rank}{suit[card.suit]}</Text>}
+    {card.up?<CardFace card={card} width={width} height={height}/>:<Image source={premiumBack} resizeMode="stretch" style={{width,height}}/>}
     {(shift.x!==0||shift.y!==0)&&run.slice(1).map((next,i)=><View key={next.id} pointerEvents="none" style={{position:'absolute',top:(i+1)*27,left:0,width,height}}>
-      <Face width={width} height={height}/><Text style={[styles.rank,{color:next.suit==='D'||next.suit==='H'?'#a03546':'#283b3b'}]}>{ranks[next.rank]??next.rank}{suit[next.suit]}</Text>
+      <CardFace card={next} width={width} height={height}/>
     </View>)}
   </View>;
 }
 
-const styles=StyleSheet.create({rank:{position:'absolute',left:4,top:5,fontSize:12,fontWeight:'800'}});
+const styles=StyleSheet.create({
+  face:{borderRadius:7,backgroundColor:'#fff9ed',borderWidth:2,borderColor:'#e8c78e',overflow:'hidden',shadowColor:'#182d30',shadowOpacity:0.22,shadowRadius:2,elevation:2},
+  innerBorder:{position:'absolute',top:3,left:3,right:3,bottom:3,borderRadius:5,borderWidth:1,borderColor:'#f8e8c4'},
+  corner:{position:'absolute',left:5,top:1,fontWeight:'900'},
+  suitCorner:{position:'absolute',left:6,top:19,fontWeight:'700'},
+  centerSuit:{position:'absolute',alignSelf:'center',top:'34%',fontWeight:'800',textShadowColor:'#f3d29b',textShadowOffset:{width:0,height:2},textShadowRadius:2},
+  bottomCorner:{position:'absolute',right:5,bottom:1,fontWeight:'900',transform:[{rotate:'180deg'}]},
+});

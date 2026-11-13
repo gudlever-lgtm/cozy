@@ -12,7 +12,6 @@ import type {DecorationPlacement} from '../src/domain/garden/layout';
 import {clampGardenOffset} from '../src/domain/garden/viewport';
 import {readSettings,writeSettings} from './src/nativeSettings';
 import type {Season} from './src/nativeSettings';
-import Back from '../assets/v3/cards/back-botanical.svg';
 import {DraggableCard} from './src/DraggableCard';
 import {autoPlace} from '../src/domain/solitaire/autoPlace';
 import {CozyButton} from './src/CozyButton';
@@ -20,23 +19,17 @@ import {MemoryBoard} from './src/MemoryBoard';
 import {newMemoryGame,revealMemory,hideMismatch,memoryWon} from '../src/domain/minigames/memory';
 import {readMemory,writeMemory} from './src/nativeMemory';
 import {quests} from '../src/domain/quests/quests';
-import IconGarden from '../assets/v3/icons/garden.svg';
-import IconCards from '../assets/v3/icons/cards.svg';
-import IconMini from '../assets/v3/icons/mini.svg';
-import IconQuests from '../assets/v3/icons/quests.svg';
-import IconSettings from '../assets/v3/icons/settings.svg';
-import HeaderBanner from '../assets/v3/ui/header-banner.svg';
-import PanelWide from '../assets/v3/ui/panel-wide.svg';
-import CardSlot from '../assets/v3/ui/card-slot.svg';
 import {checkForCozyUpdate} from './src/checkUpdate';
 
 type Screen = 'garden' | 'cards' | 'mini' | 'quests' | 'settings';
 type Source = {kind:'waste' | 'tableau' | 'foundation'; from:number; at:number};
 type MeasuredElement={measureInWindow:(callback:(x:number,y:number,width:number,height:number)=>void)=>void};
 const tabs = [
-  {id:'garden', label:'Have', icon:IconGarden}, {id:'cards',label:'Kabale',icon:IconCards},
-  {id:'mini',label:'Minispil',icon:IconMini}, {id:'quests',label:'Opgaver',icon:IconQuests},
-  {id:'settings',label:'Indstil',icon:IconSettings},
+  {id:'garden', label:'Have', icon:require('./assets/illustrations/nav-icon-0.webp')},
+  {id:'cards',label:'Kabale',icon:require('./assets/illustrations/nav-icon-1.webp')},
+  {id:'mini',label:'Minispil',icon:require('./assets/illustrations/nav-icon-2.webp')},
+  {id:'quests',label:'Opgaver',icon:require('./assets/illustrations/nav-icon-3.webp')},
+  {id:'settings',label:'Indstil',icon:require('./assets/illustrations/nav-icon-4.webp')},
 ] as const;
 const decorations = [
   {name:'Bænk',image:require('./assets/illustrations/bench.webp')},
@@ -51,6 +44,7 @@ const gardenIllustrations={
 };
 const solitaireTable=require('./assets/illustrations/solitaire-table.webp');
 const premiumNav=require('./assets/illustrations/nav-premium.webp');
+const premiumCardBack=require('./assets/illustrations/card-back-premium.webp');
 
 export default function App() {
   useEffect(()=>{
@@ -268,7 +262,7 @@ export default function App() {
             <Image source={art} resizeMode="contain" style={{width:84,height:84}}/></Pressable>;})}
         </Pressable>
       </View>
-      <View style={styles.hud}><HeaderBanner width="100%" height={92} preserveAspectRatio="none"/>
+      <View style={styles.hud}>
         <View style={styles.hudText}><Text style={styles.title}>Min have</Text><Text>Lysglimt ✨ {balance(ledger)}</Text><Text style={styles.tabText}>Dekorationer: 5 ✨</Text></View>
       </View>
       <View style={styles.gardenTools}>
@@ -287,18 +281,18 @@ export default function App() {
       <Text style={styles.boardTitle}>Kabale · Klondike</Text><Text style={styles.boardMeta}>Flytninger: {game.moves} · Lysglimt ✨ {balance(ledger)}</Text>
       <View style={styles.piles}>
         <Pressable onPress={draw} accessibilityLabel="Træk fra bunken" style={[styles.slot,{width:cardWidth,height:cardHeight}]}>
-          {game.stock.length ? <Back width={cardWidth} height={cardHeight}/> : <><CardSlot width={cardWidth} height={cardHeight}/><Text style={styles.emptyMark}>↻</Text></>}</Pressable>
+          {game.stock.length ? <Image source={premiumCardBack} resizeMode="stretch" style={{width:cardWidth,height:cardHeight}}/> : <><View style={[styles.emptySlot,{width:cardWidth,height:cardHeight}]}/><Text style={styles.emptyMark}>↻</Text></>}</Pressable>
         {game.waste.length ? card(game.waste.at(-1)!,()=>setChosen({kind:'waste',from:0,at:0}),{kind:'waste',from:0,at:0}) :
-          <View style={[styles.slot,{width:cardWidth,height:cardHeight}]}><CardSlot width={cardWidth} height={cardHeight}/></View>}
+          <View style={[styles.slot,{width:cardWidth,height:cardHeight}]}><View style={[styles.emptySlot,{width:cardWidth,height:cardHeight}]}/></View>}
         {game.foundations.map((pile,index)=><Pressable ref={view=>{foundationTargets.current[index]=view;}} key={index} onPress={()=>chosen?move('foundation',index):pile.length?setChosen({kind:'foundation',from:index,at:pile.length-1}):undefined}
           accessibilityLabel={`Grundbunke ${index+1}`} style={[styles.slot,{width:cardWidth,height:cardHeight}]}>
-          {pile.length ? card(pile.at(-1)!,()=>chosen?move('foundation',index):setChosen({kind:'foundation',from:index,at:pile.length-1}),{kind:'foundation',from:index,at:pile.length-1}) : <><CardSlot width={cardWidth} height={cardHeight}/><Text style={styles.emptyMark}>A</Text></>}</Pressable>)}
+          {pile.length ? card(pile.at(-1)!,()=>chosen?move('foundation',index):setChosen({kind:'foundation',from:index,at:pile.length-1}),{kind:'foundation',from:index,at:pile.length-1}) : <><View style={[styles.emptySlot,{width:cardWidth,height:cardHeight}]}/><Text style={styles.emptyMark}>A</Text></>}</Pressable>)}
       </View>
       <View style={styles.piles}>{game.tableau.map((pile,index)=><Pressable ref={view=>{tableauTargets.current[index]=view;}} key={index} onPress={()=>move('tableau',index)}
         accessibilityLabel={`Kolonne ${index+1}`} style={{width:cardWidth,minHeight:cardHeight+150,zIndex:draggingCard&&pile.some(c=>c.id===draggingCard)?100:0}}>
         {pile.map((value,at)=><View key={value.id} style={{marginTop:at?-cardHeight+27:0,zIndex:draggingCard===value.id?999:at,elevation:draggingCard===value.id?15:0}}>
           {card(value,()=>chosen?move('tableau',index):value.up&&setChosen({kind:'tableau',from:index,at}),{kind:'tableau',from:index,at},pile.slice(at))}</View>)}
-        {!pile.length&&<View style={[styles.slot,{height:cardHeight}]}><CardSlot width={cardWidth} height={cardHeight}/></View>}
+        {!pile.length&&<View style={[styles.slot,{height:cardHeight}]}><View style={[styles.emptySlot,{width:cardWidth,height:cardHeight}]}/></View>}
       </Pressable>)}</View>
       <Text style={styles.boardInfo}>{message || (chosen ? 'Vælg en bunke' : 'Træk kort · Dobbelttryk for automatisk flytning')}</Text>
       <View style={styles.actions}>
@@ -313,17 +307,17 @@ export default function App() {
         <View style={styles.illustratedPanel}><MemoryBoard game={memory} onFlip={flipMemory}
           onNew={()=>setMemory(newMemoryGame(Math.max(Date.now(),memory.round+1)))}/></View>
       </ScrollView></ImageBackground> :
-      screen==='settings'?<ScrollView style={styles.board} contentContainerStyle={styles.questList}>
+      screen==='settings'?<ImageBackground source={gardenIllustrations[actualSeason]} resizeMode="cover" style={{flex:1}}><ScrollView style={styles.board} contentContainerStyle={styles.questList}>
+        <View style={styles.illustratedPanel}><Text style={styles.panelCaption}>En hyggelig stund i haven</Text></View>
         <Text style={styles.title}>Indstillinger</Text><Text style={styles.info}>Vælg havens sæson</Text>
         {(['auto','spring','summer','autumn','winter'] as Season[]).map(value=><CozyButton
           key={value} wide secondary={value!==season} label={`${value===season?'✓ ':''}${{auto:'Automatisk',spring:'Forår',summer:'Sommer',autumn:'Efterår',winter:'Vinter'}[value]}`}
           onPress={()=>setSeason(value)}/>)}
         <Text style={styles.info}>Spillet er gratis, uden reklamer eller køb for rigtige penge.</Text>
         <CozyButton label="Søg efter opdatering" wide secondary onPress={()=>{void checkForCozyUpdate(true);}}/>
-      </ScrollView>:<ImageBackground source={gardenIllustrations[actualSeason]} resizeMode="cover" style={{flex:1}}><ScrollView style={styles.board} contentContainerStyle={styles.questList}>
+      </ScrollView></ImageBackground>:<ImageBackground source={gardenIllustrations[actualSeason]} resizeMode="cover" style={{flex:1}}><ScrollView style={styles.board} contentContainerStyle={styles.questList}>
         <Text style={styles.title}>Mine opgaver</Text><Text style={styles.info}>Små mål med Lysglimt som belønning ✨</Text>
         {quests(ledger,placed.length).map(q=><View key={q.id} style={styles.quest}>
-          <PanelWide width="100%" height="100%" preserveAspectRatio="none" style={StyleSheet.absoluteFill}/>
           <View style={styles.questInner}><Text style={styles.questTitle}>{q.title}</Text><Text style={styles.info}>{q.description}</Text>
             <Text style={styles.info}>{q.claimed?'Fuldført og indløst':q.complete?'Klar til at indløse':'I gang'} · +{q.reward} ✨</Text>
             {q.complete&&!q.claimed&&<CozyButton label="Hent belønning" wide onPress={()=>claimQuest(q.id,q.reward)}/>}</View>
@@ -334,27 +328,27 @@ export default function App() {
     </Pressable>}
     <View style={styles.nav}><Image source={premiumNav} resizeMode="stretch" style={StyleSheet.absoluteFill}/>{tabs.map(tab=><Pressable key={tab.id} accessibilityRole="tab"
       accessibilityState={{selected:screen===tab.id}} onPress={()=>{setScreen(tab.id);setChosen(null);}}
-      style={styles.tab}><View style={screen===tab.id?styles.activeIcon:styles.inactiveIcon}><tab.icon width={26} height={26}/></View>
+      style={styles.tab}><View style={screen===tab.id?styles.activeIcon:styles.inactiveIcon}><Image source={tab.icon} resizeMode="contain" style={styles.tabIcon}/></View>
       <Text style={[styles.tabText,screen===tab.id&&styles.activeLabel]}>{tab.label}</Text></Pressable>)}</View>
   </View>;
 }
 
 const styles=StyleSheet.create({
   root:{flex:1,paddingTop:28,backgroundColor:'#f5ecd8'},garden:{flex:1,overflow:'hidden'},
-  hud:{position:'absolute',top:14,left:16,right:16,height:92},hudText:{position:'absolute',top:14,left:22,right:18},
-  title:{fontSize:22,fontWeight:'700',color:'#4e543b'},gardenTools:{position:'absolute',bottom:8,alignSelf:'center',backgroundColor:'#fff7e8e8',padding:7,borderRadius:12,gap:7},decorButton:{minWidth:82,alignItems:'center',padding:4,backgroundColor:'#e9d6aa',borderRadius:9},
+  hud:{position:'absolute',top:14,left:16,right:16,height:92,backgroundColor:'#fff1cfef',borderRadius:23,borderWidth:4,borderColor:'#e5af55',shadowColor:'#4a2b17',shadowOpacity:0.3,shadowRadius:8,elevation:7},hudText:{position:'absolute',top:11,left:18,right:18},
+  title:{fontSize:23,fontWeight:'900',color:'#1c5663',textShadowColor:'#fffaf0',textShadowRadius:2},gardenTools:{position:'absolute',bottom:8,alignSelf:'center',backgroundColor:'#fff4d9f5',padding:9,borderRadius:20,borderWidth:3,borderColor:'#e8b95f',gap:7,shadowColor:'#382b18',shadowRadius:8,shadowOpacity:0.28,elevation:6},decorButton:{minWidth:82,alignItems:'center',padding:4,backgroundColor:'#ffe6b0',borderRadius:13,borderWidth:2,borderColor:'#d9af64'},
   boardTitle:{fontSize:23,fontWeight:'800',textAlign:'center',color:'#fbeccf',textShadowColor:'#172a18',textShadowRadius:5,textShadowOffset:{width:0,height:2}},
   boardMeta:{color:'#fff1d5',textAlign:'center',fontWeight:'700',marginTop:5},boardInfo:{marginVertical:15,textAlign:'center',color:'#f8e8c5',fontWeight:'700'},
-  illustratedPanel:{backgroundColor:'#fff5e9ed',borderRadius:24,borderWidth:2,borderColor:'#d3ad76',shadowColor:'#49351f',shadowRadius:15,shadowOpacity:0.25,elevation:7},
+  illustratedPanel:{backgroundColor:'#fff1cfef',borderRadius:24,borderWidth:4,borderColor:'#dfad55',shadowColor:'#49351f',shadowRadius:15,shadowOpacity:0.32,elevation:7,padding:5},panelCaption:{color:'#285563',fontSize:14,fontWeight:'800',textAlign:'center'},
   nav:{height:88,flexDirection:'row',backgroundColor:'#fff4df',alignItems:'center',paddingHorizontal:6},
   tab:{flex:1,justifyContent:'center',alignItems:'center',gap:0,paddingTop:3},selected:{backgroundColor:'#fce3a6'},
-  activeIcon:{transform:[{scale:1.16}]},inactiveIcon:{opacity:0.75},activeLabel:{color:'#123f71',fontWeight:'900'},
+  activeIcon:{transform:[{scale:1.12}]},inactiveIcon:{opacity:0.86},tabIcon:{width:46,height:49},activeLabel:{color:'#123f71',fontWeight:'900'},
   tabText:{fontSize:11,color:'#604d30',fontWeight:'700'},
   board:{flex:1},boardContent:{paddingHorizontal:6,paddingTop:12,paddingBottom:30},piles:{flexDirection:'row',justifyContent:'space-between',marginTop:15},
-  slot:{borderRadius:6,alignItems:'center',justifyContent:'center'},emptyMark:{position:'absolute',fontSize:20,color:'#8a7049',fontWeight:'700'},
+  slot:{borderRadius:8,alignItems:'center',justifyContent:'center'},emptySlot:{borderRadius:9,backgroundColor:'#194b47a8',borderWidth:2,borderColor:'#d7b775',shadowColor:'#091b1e',shadowOpacity:0.2,shadowRadius:3},emptyMark:{position:'absolute',fontSize:20,color:'#fff5d4',fontWeight:'900'},
   rank:{position:'absolute',top:5,left:4,fontWeight:'800',fontSize:12},info:{marginVertical:15,textAlign:'center',color:'#65573d'},
   actions:{flexDirection:'row',gap:7,justifyContent:'center',flexWrap:'wrap'},button:{padding:12,minHeight:44,backgroundColor:'#e9d6aa',borderRadius:9},
-  questList:{alignItems:'center',padding:18,gap:14},quest:{width:'100%',maxWidth:420,minHeight:154,alignItems:'center'},questInner:{width:'100%',alignItems:'center',padding:17},
-  questTitle:{fontSize:19,fontWeight:'700',color:'#53462f'},
+  questList:{alignItems:'center',padding:18,gap:14},quest:{width:'100%',maxWidth:420,minHeight:154,alignItems:'center',backgroundColor:'#fff3d6f5',borderRadius:21,borderWidth:4,borderColor:'#e0ab52',shadowColor:'#49351f',shadowRadius:9,shadowOpacity:0.28,elevation:5},questInner:{width:'100%',alignItems:'center',padding:17},
+  questTitle:{fontSize:20,fontWeight:'900',color:'#205667'},
   notice:{position:'absolute',left:12,right:12,bottom:79,minHeight:48,borderRadius:12,backgroundColor:'#fff7e5',borderWidth:1,borderColor:'#c8a16b',paddingHorizontal:10},
 });
