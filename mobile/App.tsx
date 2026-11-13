@@ -8,6 +8,7 @@ import type {Ledger} from '../src/domain/rewards/ledger';
 import {loadGame, saveGame} from '../src/persistence/save';
 import {nativeSaveStore} from './src/nativeSave';
 import {readGarden,writeGarden} from './src/nativeGarden';
+import type {DecorationPlacement} from '../src/domain/garden/layout';
 import SpringGarden from '../assets/v3/backgrounds/garden-spring.svg';
 import Face from '../assets/v3/cards/face-blank.svg';
 import Back from '../assets/v3/cards/back-botanical.svg';
@@ -40,7 +41,9 @@ export default function App() {
   const [message,setMessage] = useState('');
   const [zoom,setZoom] = useState(1);
   const [offset,setOffset] = useState({x:0,y:0});
-  const [placed,setPlaced] = useState<number[]>([]);
+  const [placed,setPlaced] = useState<DecorationPlacement[]>([]);
+  const [gardenTool,setGardenTool] = useState<0|1|2|null>(null);
+  const [movingDecoration,setMovingDecoration] = useState<string|null>(null);
   const panOrigin = useRef({x:0,y:0});
   const pan = useRef(PanResponder.create({
     onMoveShouldSetPanResponder: (_,g)=>Math.abs(g.dx)>8 || Math.abs(g.dy)>8,
@@ -52,6 +55,20 @@ export default function App() {
   const {width,height} = useWindowDimensions();
   const cardWidth = Math.min(56,(width-34)/7-3);
   const cardHeight = cardWidth*270/190;
+  const gardenHeight=height-110;
+
+  function placeInGarden(x:number,y:number){
+    // SVG art and touch surface share the same scaled coordinate system.
+    const nx=Math.max(0.04,Math.min(0.94,x/width));
+    const ny=Math.max(0.08,Math.min(0.91,y/gardenHeight));
+    if(movingDecoration){
+      setPlaced(items=>items.map(item=>item.id===movingDecoration?{...item,x:nx,y:ny}:item));
+      setMovingDecoration(null);
+    }else if(gardenTool!==null){
+      setPlaced(items=>items.length>=64?items:[...items,{id:`decor-${Date.now()}-${items.length}`,kind:gardenTool,x:nx,y:ny}]);
+      setGardenTool(null);
+    }
+  }
 
   useEffect(()=>{
     let mounted=true;
@@ -101,6 +118,20 @@ export default function App() {
     if (legalMoves(game).some(m => m.kind === kind)) setGame(applyMove(game,{kind}));
     else setMessage('Ingen flere kort at trække');
   }
+  function showHint(){
+    const candidate=hint(game).move;
+    if(!candidate){setMessage('Ingen lovlige træk');return;}
+    if(candidate.kind==='draw'){setMessage('Træk et kort fra bunken øverst til venstre');return;}
+    if(candidate.kind==='recycle'){setMessage('Vend den tomme trækbunke');return;}
+    if(candidate.kind==='foundation'){
+      setChosen({kind:'foundation',from:candidate.from,at:0});
+      setMessage(`Flyt fra grundbunke ${candidate.from+1} til kolonne ${candidate.to+1}`);
+      return;
+    }
+    if(candidate.kind==='waste')setChosen({kind:'waste',from:0,at:0});
+    else setChosen({kind:'tableau',from:candidate.from,at:candidate.at});
+    setMessage(`Flyt til ${candidate.to==='foundation'?'grundbunke':'kolonne'} ${candidate.index+1}`);
+  }
   function card(value:{rank:number;suit:string;up:boolean},onPress?:()=>void) {
     return <Pressable onPress={onPress} accessibilityRole="button"
       accessibilityLabel={value.up ? `${faceRank(value.rank)} ${suitSign(value.suit)}` : 'Skjult kort'}
@@ -114,19 +145,29 @@ export default function App() {
     <StatusBar style="dark"/>
     {screen === 'garden' ? <View style={styles.garden}>
       <View style={{flex:1,overflow:'hidden'}} {...pan.panHandlers}>
-        <View style={{width,height:height-110,transform:[{translateX:offset.x},{translateY:offset.y},{scale:zoom}]}}>
-          <SpringGarden width={width} height={height-110} preserveAspectRatio="xMidYMid slice"/>
-          {placed.map((item,index)=>{const Art=decorations[item].art;return <View key={index} pointerEvents="none" style={{position:'absolute',left:width*(0.12+(index%4)*0.19),top:height*(0.38+Math.floor(index/4)*0.16)}}><Art width={84} height={84}/></View>;})}
-        </View>
+        <Pressable onPress={event=>placeInGarden(event.nativeEvent.locationX,event.nativeEvent.locationY)}
+          style={{width,height:gardenHeight,transform:[{translateX:offset.x},{translateY:offset.y},{scale:zoom}]}}>
+          <SpringGarden width={width} height={gardenHeight} preserveAspectRatio="xMidYMid slice"/>
+          {placed.map(item=>{const Art=decorations[item.kind].art;return <Pressable key={item.id}
+            accessibilityLabel={`Flyt ${decorations[item.kind].name}`}
+            onPress={()=>{setGardenTool(null);setMovingDecoration(item.id);}}
+            style={{position:'absolute',left:width*item.x-42,top:gardenHeight*item.y-42,
+              borderWidth:movingDecoration===item.id?2:0,borderColor:'#e0b75b',borderRadius:12}}>
+            <Art width={84} height={84}/></Pressable>;})}
+        </Pressable>
       </View>
       <View style={styles.hud}><Text style={styles.title}>Min have</Text><Text>Lysglimt ✨ {balance(ledger)}</Text></View>
       <View style={styles.gardenTools}>
+        {(gardenTool!==null||movingDecoration!==null)&&<Text style={styles.info}>Tryk på stedet i haven {movingDecoration?'for at flytte':'for at placere'} · <Text onPress={()=>{setGardenTool(null);setMovingDecoration(null);}}>Annullér</Text></Text>}
+        {movingDecoration&&<Pressable style={styles.button} onPress={()=>{setPlaced(p=>p.filter(d=>d.id!==movingDecoration));setMovingDecoration(null);}}><Text>Fjern den valgte dekoration</Text></Pressable>}
         <View style={styles.actions}>
           <Pressable style={styles.button} onPress={()=>setZoom(v=>Math.max(1,v-0.25))}><Text>− Zoom</Text></Pressable>
           <Pressable style={styles.button} onPress={()=>{setZoom(1);setOffset({x:0,y:0});}}><Text>Nulstil</Text></Pressable>
           <Pressable style={styles.button} onPress={()=>setZoom(v=>Math.min(2.5,v+0.25))}><Text>+ Zoom</Text></Pressable>
         </View>
-        <View style={styles.actions}>{decorations.map((d,i)=><Pressable key={d.name} style={styles.decorButton} onPress={()=>setPlaced(p=>p.length<64?[...p,i]:p)} accessibilityLabel={`Placér ${d.name}`}><d.art width={44} height={44}/><Text style={styles.tabText}>{d.name}</Text></Pressable>)}</View>
+        <View style={styles.actions}>{decorations.map((d,i)=><Pressable key={d.name}
+          style={[styles.decorButton,gardenTool===i&&styles.selected]} onPress={()=>{setGardenTool(i as 0|1|2);setMovingDecoration(null);}}
+          accessibilityLabel={`Vælg ${d.name}`}><d.art width={44} height={44}/><Text style={styles.tabText}>{d.name}</Text></Pressable>)}</View>
       </View>
     </View> : screen === 'cards' ? <ScrollView style={styles.board} contentContainerStyle={styles.boardContent}>
       <Text style={styles.title}>Kabale · Klondike</Text><Text>Flytninger: {game.moves} · Lysglimt ✨ {balance(ledger)}</Text>
@@ -148,7 +189,7 @@ export default function App() {
       <Text style={styles.info}>{message || (chosen ? 'Vælg en bunke' : 'Vælg kort og destination')}</Text>
       <View style={styles.actions}>
         <Pressable style={styles.button} onPress={()=>{setGame(undo(game));setChosen(null);}}><Text>Fortryd</Text></Pressable>
-        <Pressable style={styles.button} onPress={()=>setMessage(hint(game).move?'Muligt træk fundet':'Ingen lovlige træk')}><Text>Tip</Text></Pressable>
+        <Pressable style={styles.button} onPress={showHint}><Text>Tip</Text></Pressable>
         {canAutoFinish(game)&&<Pressable style={styles.button} onPress={()=>setGame(autoFinish(game))}><Text>Afslut</Text></Pressable>}
         <Pressable style={styles.button} onPress={()=>{setGame(newGame(Date.now()));setChosen(null);}}><Text>Nyt spil</Text></Pressable>
       </View>
