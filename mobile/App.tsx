@@ -12,6 +12,7 @@ import type {DecorationPlacement} from '../src/domain/garden/layout';
 import SpringGarden from '../assets/v3/backgrounds/garden-spring.svg';
 import Back from '../assets/v3/cards/back-botanical.svg';
 import {DraggableCard} from './src/DraggableCard';
+import {CozyButton} from './src/CozyButton';
 import IconGarden from '../assets/v3/icons/garden.svg';
 import IconCards from '../assets/v3/icons/cards.svg';
 import IconMini from '../assets/v3/icons/mini.svg';
@@ -173,11 +174,11 @@ export default function App() {
       <View style={styles.hud}><Text style={styles.title}>Min have</Text><Text>Lysglimt ✨ {balance(ledger)}</Text></View>
       <View style={styles.gardenTools}>
         {(gardenTool!==null||movingDecoration!==null)&&<Text style={styles.info}>Tryk på stedet i haven {movingDecoration?'for at flytte':'for at placere'} · <Text onPress={()=>{setGardenTool(null);setMovingDecoration(null);}}>Annullér</Text></Text>}
-        {movingDecoration&&<Pressable style={styles.button} onPress={()=>{setPlaced(p=>p.filter(d=>d.id!==movingDecoration));setMovingDecoration(null);}}><Text>Fjern den valgte dekoration</Text></Pressable>}
+        {movingDecoration&&<CozyButton wide label="Fjern dekoration" onPress={()=>{setPlaced(p=>p.filter(d=>d.id!==movingDecoration));setMovingDecoration(null);}}/>}
         <View style={styles.actions}>
-          <Pressable style={styles.button} onPress={()=>setZoom(v=>Math.max(1,v-0.25))}><Text>− Zoom</Text></Pressable>
-          <Pressable style={styles.button} onPress={()=>{setZoom(1);setOffset({x:0,y:0});}}><Text>Nulstil</Text></Pressable>
-          <Pressable style={styles.button} onPress={()=>setZoom(v=>Math.min(2.5,v+0.25))}><Text>+ Zoom</Text></Pressable>
+          <CozyButton label="− Zoom" secondary onPress={()=>setZoom(v=>Math.max(1,v-0.25))}/>
+          <CozyButton label="Nulstil" secondary onPress={()=>{setZoom(1);setOffset({x:0,y:0});}}/>
+          <CozyButton label="+ Zoom" secondary onPress={()=>setZoom(v=>Math.min(2.5,v+0.25))}/>
         </View>
         <View style={styles.actions}>{decorations.map((d,i)=><Pressable key={d.name}
           style={[styles.decorButton,gardenTool===i&&styles.selected]} onPress={()=>{setGardenTool(i as 0|1|2);setMovingDecoration(null);}}
@@ -202,10 +203,10 @@ export default function App() {
       </Pressable>)}</View>
       <Text style={styles.info}>{message || (chosen ? 'Vælg en bunke' : 'Vælg kort og destination')}</Text>
       <View style={styles.actions}>
-        <Pressable style={styles.button} onPress={()=>{setGame(undo(game));setChosen(null);}}><Text>Fortryd</Text></Pressable>
-        <Pressable style={styles.button} onPress={showHint}><Text>Tip</Text></Pressable>
-        {canAutoFinish(game)&&<Pressable style={styles.button} onPress={()=>setGame(autoFinish(game))}><Text>Afslut</Text></Pressable>}
-        <Pressable style={styles.button} onPress={()=>{setGame(newGame(Date.now()));setChosen(null);}}><Text>Nyt spil</Text></Pressable>
+        <CozyButton label="Fortryd" secondary onPress={()=>{setGame(undo(game));setChosen(null);}}/>
+        <CozyButton label="Tip" secondary onPress={showHint}/>
+        {canAutoFinish(game)&&<CozyButton label="Afslut" onPress={()=>setGame(autoFinish(game))}/>}
+        <CozyButton label="Nyt spil" onPress={()=>{setGame(newGame(Date.now()));setChosen(null);}}/>
       </View>
       {isWon(game)&&<Text style={styles.title}>Tillykke! Du har vundet ✨</Text>}
     </ScrollView> : <View style={styles.pending}><Text style={styles.title}>{screen==='mini'?'Minispil':'Opgaver'}</Text>
