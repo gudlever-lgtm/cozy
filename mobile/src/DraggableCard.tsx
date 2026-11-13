@@ -10,11 +10,13 @@ const premiumFace=require('../assets/illustrations/card-face-premium.webp');
 function CardFace({card,width,height}:{card:Card;width:number;height:number}){
   const red=card.suit==='D'||card.suit==='H';
   const color=red?'#c6384b':'#194557';
+  const cornerSize=Math.min(13,Math.max(10,width*0.19));
+  const centerSize=Math.min(23,Math.max(15,width*0.34));
   return <View style={[styles.face,{width,height}]}>
     <Image source={premiumFace} resizeMode="stretch" style={{width,height}}/>
-    <Text style={[styles.corner,{color,fontSize:Math.max(12,width*0.22)}]}>{ranks[card.rank]??card.rank}{suit[card.suit]}</Text>
-    <Text style={[styles.centerSuit,{color,fontSize:Math.max(19,width*0.48)}]}>{suit[card.suit]}</Text>
-    <Text style={[styles.bottomCorner,{color,fontSize:Math.max(11,width*0.20)}]}>{ranks[card.rank]??card.rank}</Text>
+    <Text style={[styles.corner,{color,fontSize:cornerSize,lineHeight:cornerSize+2}]}>{ranks[card.rank]??card.rank}{suit[card.suit]}</Text>
+    <Text style={[styles.centerSuit,{color,fontSize:centerSize,lineHeight:centerSize+3}]}>{suit[card.suit]}</Text>
+    <Text style={[styles.bottomCorner,{color,fontSize:cornerSize,lineHeight:cornerSize+2}]}>{ranks[card.rank]??card.rank}</Text>
   </View>;
 }
 
@@ -65,7 +67,7 @@ export function DraggableCard({card,width,height,onTap,onDoubleTap,onDrop,onDrag
 
 const styles=StyleSheet.create({
   face:{borderRadius:7,backgroundColor:'#fff9ed',overflow:'hidden',shadowColor:'#182d30',shadowOpacity:0.22,shadowRadius:2,elevation:2},
-  corner:{position:'absolute',left:5,top:3,fontWeight:'900'},
-  centerSuit:{position:'absolute',alignSelf:'center',top:'39%',fontWeight:'800',textShadowColor:'#f3d29b',textShadowOffset:{width:0,height:2},textShadowRadius:2},
-  bottomCorner:{position:'absolute',right:6,bottom:4,fontWeight:'900',transform:[{rotate:'180deg'}]},
+  corner:{position:'absolute',left:5,top:4,fontWeight:'900',includeFontPadding:false},
+  centerSuit:{position:'absolute',alignSelf:'center',top:'40%',fontWeight:'800',includeFontPadding:false,textShadowColor:'#f3d29b',textShadowOffset:{width:0,height:1},textShadowRadius:1},
+  bottomCorner:{position:'absolute',right:5,bottom:4,fontWeight:'900',includeFontPadding:false,transform:[{rotate:'180deg'}]},
 });

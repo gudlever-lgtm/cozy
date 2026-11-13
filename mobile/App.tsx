@@ -331,7 +331,7 @@ export default function App() {
       <Text style={styles.info}>{message} · Luk ×</Text>
     </Pressable>}
     <View style={styles.nav}>{tabs.map(tab=><Pressable key={tab.id} accessibilityRole="tab"
-      accessibilityState={{selected:screen===tab.id}} onPress={()=>{setScreen(tab.id);setChosen(null);}}
+      accessibilityState={{selected:screen===tab.id}} onPress={()=>{setScreen(tab.id);setChosen(null);setMessage('');}}
       style={styles.tab}><View style={screen===tab.id?styles.activeIcon:styles.inactiveIcon}><Image source={tab.icon} resizeMode="contain" style={styles.tabIcon}/></View>
       <Text style={[styles.tabText,screen===tab.id&&styles.activeLabel]}>{tab.label}</Text></Pressable>)}</View>
   </ImageBackground>;
