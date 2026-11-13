@@ -269,9 +269,9 @@ export default function App() {
         {(gardenTool!==null||movingDecoration!==null)&&<Text style={styles.info}>Tryk på stedet i haven {movingDecoration?'for at flytte':'for at placere'} · <Text onPress={()=>{setGardenTool(null);setMovingDecoration(null);}}>Annullér</Text></Text>}
         {movingDecoration&&<CozyButton wide label="Fjern dekoration" onPress={()=>{setPlaced(p=>p.filter(d=>d.id!==movingDecoration));setMovingDecoration(null);}}/>}
         <View style={styles.actions}>
-          <CozyButton label="− Zoom" secondary onPress={()=>setZoom(v=>Math.max(1,v-0.25))}/>
-          <CozyButton label="Nulstil" secondary onPress={()=>{setZoom(1);setOffset({x:0,y:0});}}/>
-          <CozyButton label="+ Zoom" secondary onPress={()=>setZoom(v=>Math.min(2.5,v+0.25))}/>
+          <CozyButton label="− Zoom" compact secondary onPress={()=>setZoom(v=>Math.max(1,v-0.25))}/>
+          <CozyButton label="Nulstil" compact secondary onPress={()=>{setZoom(1);setOffset({x:0,y:0});}}/>
+          <CozyButton label="+ Zoom" compact secondary onPress={()=>setZoom(v=>Math.min(2.5,v+0.25))}/>
         </View>
         <View style={styles.actions}>{decorations.map((d,i)=><Pressable key={d.name}
           style={[styles.decorButton,gardenTool===i&&styles.selected]} onPress={()=>{setGardenTool(i as 0|1|2);setMovingDecoration(null);}}
@@ -308,15 +308,16 @@ export default function App() {
           onNew={()=>setMemory(newMemoryGame(Math.max(Date.now(),memory.round+1)))}/></View>
       </ScrollView></ImageBackground> :
       screen==='settings'?<ImageBackground source={gardenIllustrations[actualSeason]} resizeMode="cover" style={{flex:1}}><ScrollView style={styles.board} contentContainerStyle={styles.questList}>
-        <View style={styles.illustratedPanel}><Text style={styles.panelCaption}>En hyggelig stund i haven</Text></View>
-        <Text style={styles.title}>Indstillinger</Text><Text style={styles.info}>Vælg havens sæson</Text>
+        <View style={[styles.illustratedPanel,styles.settingsPanel]}>
+        <Text style={styles.title}>Indstillinger</Text><Text style={styles.panelCaption}>Vælg havens årstid 🌷</Text>
         {(['auto','spring','summer','autumn','winter'] as Season[]).map(value=><CozyButton
           key={value} wide secondary={value!==season} label={`${value===season?'✓ ':''}${{auto:'Automatisk',spring:'Forår',summer:'Sommer',autumn:'Efterår',winter:'Vinter'}[value]}`}
           onPress={()=>setSeason(value)}/>)}
-        <Text style={styles.info}>Spillet er gratis, uden reklamer eller køb for rigtige penge.</Text>
+        <Text style={styles.info}>Gratis hygge – ingen reklamer og ingen køb.</Text>
         <CozyButton label="Søg efter opdatering" wide secondary onPress={()=>{void checkForCozyUpdate(true);}}/>
+        </View>
       </ScrollView></ImageBackground>:<ImageBackground source={gardenIllustrations[actualSeason]} resizeMode="cover" style={{flex:1}}><ScrollView style={styles.board} contentContainerStyle={styles.questList}>
-        <Text style={styles.title}>Mine opgaver</Text><Text style={styles.info}>Små mål med Lysglimt som belønning ✨</Text>
+        <View style={styles.sectionHeader}><Text style={styles.title}>Mine opgaver ✨</Text><Text style={styles.panelCaption}>Små mål med Lysglimt som belønning</Text></View>
         {quests(ledger,placed.length).map(q=><View key={q.id} style={styles.quest}>
           <View style={styles.questInner}><Text style={styles.questTitle}>{q.title}</Text><Text style={styles.info}>{q.description}</Text>
             <Text style={styles.info}>{q.claimed?'Fuldført og indløst':q.complete?'Klar til at indløse':'I gang'} · +{q.reward} ✨</Text>
@@ -336,10 +337,10 @@ export default function App() {
 const styles=StyleSheet.create({
   root:{flex:1,paddingTop:28,backgroundColor:'#f5ecd8'},garden:{flex:1,overflow:'hidden'},
   hud:{position:'absolute',top:14,left:16,right:16,height:92,backgroundColor:'#fff1cfef',borderRadius:23,borderWidth:4,borderColor:'#e5af55',shadowColor:'#4a2b17',shadowOpacity:0.3,shadowRadius:8,elevation:7},hudText:{position:'absolute',top:11,left:18,right:18},
-  title:{fontSize:23,fontWeight:'900',color:'#1c5663',textShadowColor:'#fffaf0',textShadowRadius:2},gardenTools:{position:'absolute',bottom:8,alignSelf:'center',backgroundColor:'#fff4d9f5',padding:9,borderRadius:20,borderWidth:3,borderColor:'#e8b95f',gap:7,shadowColor:'#382b18',shadowRadius:8,shadowOpacity:0.28,elevation:6},decorButton:{minWidth:82,alignItems:'center',padding:4,backgroundColor:'#ffe6b0',borderRadius:13,borderWidth:2,borderColor:'#d9af64'},
+  title:{fontSize:23,fontWeight:'900',color:'#1c5663',textShadowColor:'#fffaf0',textShadowRadius:2},gardenTools:{position:'absolute',bottom:8,alignSelf:'center',backgroundColor:'#fff4d9f5',padding:7,borderRadius:20,borderWidth:3,borderColor:'#e8b95f',gap:6,shadowColor:'#382b18',shadowRadius:8,shadowOpacity:0.28,elevation:6},decorButton:{minWidth:82,alignItems:'center',padding:4,backgroundColor:'#ffe6b0',borderRadius:13,borderWidth:2,borderColor:'#d9af64'},
   boardTitle:{fontSize:23,fontWeight:'800',textAlign:'center',color:'#fbeccf',textShadowColor:'#172a18',textShadowRadius:5,textShadowOffset:{width:0,height:2}},
   boardMeta:{color:'#fff1d5',textAlign:'center',fontWeight:'700',marginTop:5},boardInfo:{marginVertical:15,textAlign:'center',color:'#f8e8c5',fontWeight:'700'},
-  illustratedPanel:{backgroundColor:'#fff1cfef',borderRadius:24,borderWidth:4,borderColor:'#dfad55',shadowColor:'#49351f',shadowRadius:15,shadowOpacity:0.32,elevation:7,padding:5},panelCaption:{color:'#285563',fontSize:14,fontWeight:'800',textAlign:'center'},
+  illustratedPanel:{backgroundColor:'#fff1cfef',borderRadius:24,borderWidth:4,borderColor:'#dfad55',shadowColor:'#49351f',shadowRadius:15,shadowOpacity:0.32,elevation:7,padding:5},settingsPanel:{alignItems:'center',width:'100%',maxWidth:380,padding:18,gap:10},sectionHeader:{alignItems:'center',width:'100%',maxWidth:420,padding:14,borderRadius:20,backgroundColor:'#fff1cfef',borderWidth:3,borderColor:'#dfad55'},panelCaption:{color:'#285563',fontSize:14,fontWeight:'800',textAlign:'center'},
   nav:{height:88,flexDirection:'row',backgroundColor:'#fff4df',alignItems:'center',paddingHorizontal:6},
   tab:{flex:1,justifyContent:'center',alignItems:'center',gap:0,paddingTop:3},selected:{backgroundColor:'#fce3a6'},
   activeIcon:{transform:[{scale:1.12}]},inactiveIcon:{opacity:0.86},tabIcon:{width:46,height:49},activeLabel:{color:'#123f71',fontWeight:'900'},

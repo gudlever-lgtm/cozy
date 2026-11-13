@@ -26,8 +26,8 @@ const styles=StyleSheet.create({
   wrap:{alignItems:'center',paddingVertical:22,paddingHorizontal:12,gap:15},
   title:{fontSize:23,fontWeight:'900',color:'#19465b',textAlign:'center'},
   caption:{fontSize:14,fontWeight:'700',color:'#6b5135',textAlign:'center'},
-  grid:{maxWidth:320,flexDirection:'row',flexWrap:'wrap',justifyContent:'center',gap:12},
-  tile:{width:70,height:83,borderRadius:13,alignItems:'center',justifyContent:'center',backgroundColor:'#fff0d4',borderWidth:2,borderColor:'#dbb66d',shadowColor:'#49331a',shadowOpacity:0.32,shadowRadius:5,elevation:4},
-  back:{width:64,height:78},animal:{width:65,height:72},
+  grid:{width:238,maxWidth:'100%',flexDirection:'row',flexWrap:'wrap',justifyContent:'center',gap:6},
+  tile:{width:55,height:72,borderRadius:12,alignItems:'center',justifyContent:'center',backgroundColor:'#fff0d4',borderWidth:2,borderColor:'#dbb66d',shadowColor:'#49331a',shadowOpacity:0.32,shadowRadius:5,elevation:4},
+  back:{width:50,height:68},animal:{width:50,height:62},
   matched:{backgroundColor:'#dcf5c7',borderColor:'#80b968'},
 });
