@@ -388,7 +388,7 @@ export default function App() {
           style={[styles.decorButton,gardenTool===i&&styles.selected]} onPress={()=>{setGardenTool(i as 0|1|2);setMovingDecoration(null);}}
           accessibilityLabel={`Vælg ${d.name}`}><Image source={d.image} resizeMode="contain" style={{width:52,height:52}}/><Text style={styles.tabText}>{d.name}</Text></Pressable>)}</View>
       </View>
-    </View> : screen === 'cards' ? <View style={{flex:1}}><ImageBackground source={solitaireTable} resizeMode="cover" style={StyleSheet.absoluteFill}/><ScrollView style={styles.board} contentContainerStyle={styles.boardContent}>
+    </View> : screen === 'cards' ? <View style={{flex:1}}><ImageBackground source={solitaireTable} resizeMode="cover" style={StyleSheet.absoluteFill}/><ScrollView style={styles.board} contentContainerStyle={[styles.boardContent,{flexGrow:1}]}>
       <Text style={styles.boardTitle}>Kabale · Klondike</Text><Text style={styles.boardMeta}>Flytninger: {game.moves} · Lysglimt ✨ {balance(ledger)}</Text>
       <View style={styles.topPiles}>
         <View style={styles.drawZone} accessibilityLabel="Trækbunke og vendte kort">
@@ -400,8 +400,16 @@ export default function App() {
           <View style={[styles.slot,{width:cardWidth,height:cardHeight}]}><View style={[styles.emptySlot,{width:cardWidth,height:cardHeight}]}/></View>}</View>
           </View>
         </View>
+        <View style={styles.foundationZone} accessibilityLabel="Pladser til esserne">
+          <Text style={styles.zoneLabel}>ESSER · GRUNDBUNKER</Text>
+          <View style={styles.zoneCards}>
+            {game.foundations.map((pile,index)=><Pressable ref={view=>{foundationTargets.current[index]=view;}} key={index} onPress={()=>chosen?move('foundation',index):pile.length?setChosen({kind:'foundation',from:index,at:pile.length-1}):undefined}
+              accessibilityLabel={`Grundbunke ${index+1}`} style={[styles.slot,{width:cardWidth,height:cardHeight}]}>
+              {pile.length ? card(pile.at(-1)!,()=>chosen?move('foundation',index):setChosen({kind:'foundation',from:index,at:pile.length-1}),{kind:'foundation',from:index,at:pile.length-1}) : <><View style={[styles.emptySlot,{width:cardWidth,height:cardHeight}]}/><Text style={styles.emptyMark}>A</Text></>}</Pressable>)}
+          </View>
+        </View>
       </View>
-      <View style={[styles.piles,{minHeight:tableauHeight}]}>{game.tableau.map((pile,index)=><Pressable ref={view=>{tableauTargets.current[index]=view;}} key={index} onPress={()=>move('tableau',index)}
+      <View style={[styles.piles,{minHeight:tableauHeight,flexGrow:1}]}>{game.tableau.map((pile,index)=><Pressable ref={view=>{tableauTargets.current[index]=view;}} key={index} onPress={()=>move('tableau',index)}
         accessibilityLabel={`Kolonne ${index+1}`} style={{width:cardWidth,minHeight:tableauHeight,zIndex:draggingCard&&pile.some(c=>c.id===draggingCard)?100:0}}>
         {pile.map((value,at)=><View key={value.id} style={{marginTop:at?-cardHeight+27:0,zIndex:draggingCard===value.id?999:at,elevation:draggingCard===value.id?15:0}}>
           {card(value,()=>chosen?move('tableau',index):value.up&&setChosen({kind:'tableau',from:index,at}),{kind:'tableau',from:index,at},pile.slice(at))}</View>)}
@@ -410,14 +418,6 @@ export default function App() {
       {isWon(game)&&<View style={styles.victory}><Text style={styles.victoryText}>✨ Tillykke! ✨</Text><Text style={styles.victorySubtitle}>En vidunderlig kabale er fuldført</Text></View>}
     </ScrollView>
     <View style={styles.solitaireDock}>
-      <View style={styles.foundationZone} accessibilityLabel="Pladser til esserne">
-        <Text style={styles.zoneLabel}>ESSER · GRUNDBUNKER</Text>
-        <View style={styles.zoneCards}>
-          {game.foundations.map((pile,index)=><Pressable ref={view=>{foundationTargets.current[index]=view;}} key={index} onPress={()=>chosen?move('foundation',index):pile.length?setChosen({kind:'foundation',from:index,at:pile.length-1}):undefined}
-            accessibilityLabel={`Grundbunke ${index+1}`} style={[styles.slot,{width:cardWidth,height:cardHeight}]}>
-            {pile.length ? card(pile.at(-1)!,()=>chosen?move('foundation',index):setChosen({kind:'foundation',from:index,at:pile.length-1}),{kind:'foundation',from:index,at:pile.length-1}) : <><View style={[styles.emptySlot,{width:cardWidth,height:cardHeight}]}/><Text style={styles.emptyMark}>A</Text></>}</Pressable>)}
-        </View>
-      </View>
       <Text style={styles.boardInfo}>{message || (chosen ? 'Vælg en bunke' : 'Træk kort · Dobbelttryk for automatisk flytning')}</Text>
       <View style={styles.actions}>
         <CozyButton label="Fortryd" secondary disabled={autoRunning} onPress={()=>{stopVisualCue();setGame(undo(game));setChosen(null);}}/>
@@ -491,7 +491,7 @@ const styles=StyleSheet.create({
   activeIcon:{transform:[{scale:1.1}]},inactiveIcon:{opacity:0.86},tabIcon:{width:38,height:40},activeLabel:{color:'#123f71',fontWeight:'900'},
   tabText:{fontSize:11,color:'#604d30',fontWeight:'700'},
   board:{flex:1},boardContent:{paddingHorizontal:6,paddingTop:12,paddingBottom:30},piles:{flexDirection:'row',justifyContent:'space-between',marginTop:15},
-  topPiles:{flexDirection:'row',justifyContent:'flex-start',alignItems:'flex-start',marginTop:13,gap:5},
+  topPiles:{flexDirection:'row',justifyContent:'space-between',alignItems:'flex-start',marginTop:13,gap:5},
   solitaireDock:{paddingHorizontal:8,paddingTop:8,paddingBottom:12,alignItems:'center',backgroundColor:'#183b34e3',borderTopWidth:2,borderTopColor:'#e4c586'},
   drawZone:{backgroundColor:'#71532ca3',borderWidth:1.5,borderColor:'#f0ce89',borderRadius:13,padding:3,shadowColor:'#e7bb70',shadowOpacity:0.25,shadowRadius:4},
   foundationZone:{backgroundColor:'#20554eaf',borderWidth:1.5,borderColor:'#a6dbbf',borderRadius:13,padding:3,shadowColor:'#9dd6bb',shadowOpacity:0.25,shadowRadius:4,alignSelf:'center'},
