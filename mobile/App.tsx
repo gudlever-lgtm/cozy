@@ -9,6 +9,7 @@ import {loadGame, saveGame} from '../src/persistence/save';
 import {nativeSaveStore} from './src/nativeSave';
 import {readGarden,writeGarden} from './src/nativeGarden';
 import type {DecorationPlacement} from '../src/domain/garden/layout';
+import {clampGardenOffset} from '../src/domain/garden/viewport';
 import {readSettings,writeSettings} from './src/nativeSettings';
 import type {Season} from './src/nativeSettings';
 import Back from '../assets/v3/cards/back-botanical.svg';
@@ -25,7 +26,6 @@ import IconMini from '../assets/v3/icons/mini.svg';
 import IconQuests from '../assets/v3/icons/quests.svg';
 import IconSettings from '../assets/v3/icons/settings.svg';
 import HeaderBanner from '../assets/v3/ui/header-banner.svg';
-import TabBackground from '../assets/v3/ui/tab-background.svg';
 import PanelWide from '../assets/v3/ui/panel-wide.svg';
 import CardSlot from '../assets/v3/ui/card-slot.svg';
 import {checkForCozyUpdate} from './src/checkUpdate';
@@ -50,6 +50,7 @@ const gardenIllustrations={
   winter:require('./assets/illustrations/garden-winter.webp'),
 };
 const solitaireTable=require('./assets/illustrations/solitaire-table.webp');
+const premiumNav=require('./assets/illustrations/nav-premium.webp');
 
 export default function App() {
   useEffect(()=>{
@@ -80,10 +81,14 @@ export default function App() {
   const [gardenTool,setGardenTool] = useState<0|1|2|null>(null);
   const [movingDecoration,setMovingDecoration] = useState<string|null>(null);
   const panOrigin = useRef({x:0,y:0});
+  const gardenViewportRef=useRef({width:1,height:1,zoom:1});
   const pan = useRef(PanResponder.create({
     onMoveShouldSetPanResponder: (_,g)=>Math.abs(g.dx)>8 || Math.abs(g.dy)>8,
     onPanResponderGrant:()=>{panOrigin.current=offsetRef.current;},
-    onPanResponderMove:(_,g)=>setOffset({x:panOrigin.current.x+g.dx,y:panOrigin.current.y+g.dy}),
+    onPanResponderMove:(_,g)=>{
+      const viewport=gardenViewportRef.current;
+      setOffset(clampGardenOffset({x:panOrigin.current.x+g.dx,y:panOrigin.current.y+g.dy},viewport.zoom,viewport.width,viewport.height));
+    },
   })).current;
   const offsetRef = useRef(offset);
   offsetRef.current=offset;
@@ -91,6 +96,8 @@ export default function App() {
   const cardWidth = Math.min(56,(width-34)/7-3);
   const cardHeight = cardWidth*270/190;
   const gardenHeight=height-110;
+  gardenViewportRef.current={width,height:gardenHeight,zoom};
+  useEffect(()=>setOffset(current=>clampGardenOffset(current,zoom,width,gardenHeight)),[zoom,width,gardenHeight]);
   const month=new Date().getMonth();
   const actualSeason=season==='auto'?(month===11||month<2?'winter':month<5?'spring':month<8?'summer':'autumn'):season;
 
@@ -324,10 +331,10 @@ export default function App() {
     {message&&screen!=='cards'&&<Pressable accessibilityRole="button" accessibilityLabel="Luk besked" onPress={()=>setMessage('')} style={styles.notice}>
       <Text style={styles.info}>{message} · Luk ×</Text>
     </Pressable>}
-    <View style={styles.nav}><TabBackground width="100%" height={72} preserveAspectRatio="none" style={StyleSheet.absoluteFill}/>{tabs.map(tab=><Pressable key={tab.id} accessibilityRole="tab"
+    <View style={styles.nav}><Image source={premiumNav} resizeMode="stretch" style={StyleSheet.absoluteFill}/>{tabs.map(tab=><Pressable key={tab.id} accessibilityRole="tab"
       accessibilityState={{selected:screen===tab.id}} onPress={()=>{setScreen(tab.id);setChosen(null);}}
-      style={[styles.tab,screen===tab.id&&styles.selected]}><tab.icon width={27} height={27}/>
-      <Text style={styles.tabText}>{tab.label}</Text></Pressable>)}</View>
+      style={styles.tab}><View style={screen===tab.id?styles.activeIcon:styles.inactiveIcon}><tab.icon width={26} height={26}/></View>
+      <Text style={[styles.tabText,screen===tab.id&&styles.activeLabel]}>{tab.label}</Text></Pressable>)}</View>
   </View>;
 }
 
@@ -338,8 +345,10 @@ const styles=StyleSheet.create({
   boardTitle:{fontSize:23,fontWeight:'800',textAlign:'center',color:'#fbeccf',textShadowColor:'#172a18',textShadowRadius:5,textShadowOffset:{width:0,height:2}},
   boardMeta:{color:'#fff1d5',textAlign:'center',fontWeight:'700',marginTop:5},boardInfo:{marginVertical:15,textAlign:'center',color:'#f8e8c5',fontWeight:'700'},
   illustratedPanel:{backgroundColor:'#fff5e9ed',borderRadius:24,borderWidth:2,borderColor:'#d3ad76',shadowColor:'#49351f',shadowRadius:15,shadowOpacity:0.25,elevation:7},
-  nav:{height:72,flexDirection:'row',backgroundColor:'#fff4df'},
-  tab:{flex:1,justifyContent:'center',alignItems:'center',gap:3},selected:{backgroundColor:'#ebdebd'},tabText:{fontSize:12,color:'#504631'},
+  nav:{height:88,flexDirection:'row',backgroundColor:'#fff4df',alignItems:'center',paddingHorizontal:6},
+  tab:{flex:1,justifyContent:'center',alignItems:'center',gap:0,paddingTop:3},selected:{backgroundColor:'#fce3a6'},
+  activeIcon:{transform:[{scale:1.16}]},inactiveIcon:{opacity:0.75},activeLabel:{color:'#123f71',fontWeight:'900'},
+  tabText:{fontSize:11,color:'#604d30',fontWeight:'700'},
   board:{flex:1},boardContent:{padding:10,paddingBottom:30},piles:{flexDirection:'row',justifyContent:'space-between',marginTop:22},
   slot:{borderRadius:6,alignItems:'center',justifyContent:'center'},emptyMark:{position:'absolute',fontSize:20,color:'#8a7049',fontWeight:'700'},
   rank:{position:'absolute',top:5,left:4,fontWeight:'800',fontSize:12},info:{marginVertical:15,textAlign:'center',color:'#65573d'},
