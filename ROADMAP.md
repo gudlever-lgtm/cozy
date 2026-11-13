@@ -22,6 +22,8 @@
 ## Fase 2 – Arkitektur og gameplaygrundlag
 
 **Næste leverance (Claude Code):** Byg isoleret, testbar Klondike-engine (seeded RNG, move legality, stock 1/3, undo/hint/autofinish, saveformat), uden UI-redesign eller APK.
+- [x] Første isolerede Klondike-engine tilføjet (`src/domain/solitaire/klondike.ts`) med 7 beståede Node-tests. Dette er en indledende implementation, **ikke** afsluttet Gate T1.
+- [ ] Udvid tests med konstruerede spiltilstande for hver foundation/tableau-regel, draw-3-genbesøg og komplet sejrssekvens; fastlæg scoring, save-versionering og sikkert auto-finish-kriterium.
 - [ ] Vælg native stack og appstruktur (fælles kodebase, Android/iOS).
 - [ ] Definér interfaces for kabale, minispil, have, ressourcer og gemt status.
 - [ ] Design lokal/offline lagring og evt. migrering fra v2.
