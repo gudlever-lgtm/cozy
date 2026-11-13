@@ -1,8 +1,8 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {Image, ImageBackground, PanResponder, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View} from 'react-native';
+import {Animated, Easing, Image, ImageBackground, PanResponder, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View} from 'react-native';
 import {StatusBar} from 'expo-status-bar';
-import {applyMove, autoFinish, canAutoFinish, hint, isWon, legalMoves, newGame, undo} from '../src/domain/solitaire/klondike';
-import type {Move} from '../src/domain/solitaire/klondike';
+import {applyMove, canAutoFinish, hint, isWon, legalMoves, newGame, undo} from '../src/domain/solitaire/klondike';
+import type {Card,Move,State} from '../src/domain/solitaire/klondike';
 import {balance, emptyLedger, record} from '../src/domain/rewards/ledger';
 import type {Ledger} from '../src/domain/rewards/ledger';
 import {loadGame, saveGame} from '../src/persistence/save';
@@ -12,8 +12,9 @@ import type {DecorationPlacement} from '../src/domain/garden/layout';
 import {clampGardenOffset} from '../src/domain/garden/viewport';
 import {readSettings,writeSettings} from './src/nativeSettings';
 import type {Season} from './src/nativeSettings';
-import {DraggableCard} from './src/DraggableCard';
+import {CardFace,DraggableCard} from './src/DraggableCard';
 import {autoPlace} from '../src/domain/solitaire/autoPlace';
+import {cardForVisualMove,tableauLandingOffset} from '../src/domain/solitaire/visualMoves';
 import {CozyButton} from './src/CozyButton';
 import {MemoryBoard} from './src/MemoryBoard';
 import {newMemoryGame,revealMemory,hideMismatch,memoryWon} from '../src/domain/minigames/memory';
@@ -24,6 +25,12 @@ import {checkForCozyUpdate} from './src/checkUpdate';
 type Screen = 'garden' | 'cards' | 'mini' | 'quests' | 'settings';
 type Source = {kind:'waste' | 'tableau' | 'foundation'; from:number; at:number};
 type MeasuredElement={measureInWindow:(callback:(x:number,y:number,width:number,height:number)=>void)=>void};
+type Rect={x:number;y:number;width:number;height:number};
+type CardFlight={card:Card;faceUp:boolean;mode:'hint'|'finish';from:Rect;dx:number;dy:number};
+function measure(element:MeasuredElement|null|undefined):Promise<Rect|null>{
+  return new Promise(resolve=>element?element.measureInWindow((x,y,width,height)=>
+    resolve(width>0&&height>0?{x,y,width,height}:null)):resolve(null));
+}
 const tabs = [
   {id:'garden', label:'Have', icon:require('./assets/illustrations/nav-icon-0.webp')},
   {id:'cards',label:'Kabale',icon:require('./assets/illustrations/nav-icon-1.webp')},
@@ -44,6 +51,7 @@ const gardenIllustrations={
 };
 const solitaireTable=require('./assets/illustrations/solitaire-table.webp');
 const premiumCardBack=require('./assets/illustrations/card-back-premium.webp');
+const cozyAppLogo=require('./assets/icon.png');
 
 export default function App() {
   useEffect(()=>{
@@ -67,6 +75,22 @@ export default function App() {
   const [draggingCard,setDraggingCard] = useState<string|null>(null);
   const tableauTargets=useRef<Array<MeasuredElement|null>>([]);
   const foundationTargets=useRef<Array<MeasuredElement|null>>([]);
+  const cardViews=useRef<Record<string,MeasuredElement|null>>({});
+  const stockView=useRef<MeasuredElement|null>(null);
+  const wasteView=useRef<MeasuredElement|null>(null);
+  const effectSurface=useRef<MeasuredElement|null>(null);
+  const [flight,setFlight]=useState<CardFlight|null>(null);
+  const [autoRunning,setAutoRunning]=useState(false);
+  const flightProgress=useRef(new Animated.Value(0)).current;
+  const ringPulse=useRef(new Animated.Value(0)).current;
+  const effectToken=useRef(0);
+  const hintPulseAnimation=useRef<Animated.CompositeAnimation|null>(null);
+  const hintGhostAnimation=useRef<Animated.CompositeAnimation|null>(null);
+  useEffect(()=>()=>{
+    effectToken.current++;
+    hintPulseAnimation.current?.stop();hintGhostAnimation.current?.stop();
+    flightProgress.stopAnimation();ringPulse.stopAnimation();
+  },[flightProgress,ringPulse]);
   const [message,setMessage] = useState('');
   const [zoom,setZoom] = useState(1);
   const [measuredGardenHeight,setMeasuredGardenHeight] = useState(0);
@@ -191,12 +215,54 @@ export default function App() {
   function move(to:'tableau' | 'foundation',index:number) {
     if(chosen)executeMove(chosen,to,index);
   }
+  function stopVisualCue(){
+    effectToken.current++;
+    hintPulseAnimation.current?.stop();hintGhostAnimation.current?.stop();
+    flightProgress.stopAnimation();ringPulse.stopAnimation();setFlight(null);
+  }
+  async function locateFlight(state:State,action:Move,mode:'hint'|'finish'):Promise<boolean>{
+    const visual=cardForVisualMove(state,action);
+    if(!visual)return false;
+    const source=action.kind==='draw'?stockView.current:action.kind==='recycle'||action.kind==='waste'?wasteView.current:cardViews.current[visual.id];
+    const destination=action.kind==='draw'?wasteView.current:action.kind==='recycle'?stockView.current:
+      action.kind==='foundation'?tableauTargets.current[action.to]:
+      action.to==='foundation'?foundationTargets.current[action.index]:tableauTargets.current[action.index];
+    const [start,end,base]=await Promise.all([measure(source),measure(destination),measure(effectSurface.current)]);
+    if(!start||!end||!base)return false;
+    setFlight({card:visual,faceUp:visual.up&&action.kind!=='recycle',mode,
+      from:{...start,x:start.x-base.x,y:start.y-base.y},
+      dx:end.x-start.x,dy:end.y+tableauLandingOffset(state,action)-start.y});
+    return true;
+  }
+  async function playFinish(){
+    if(!canAutoFinish(game)||autoRunning)return;
+    stopVisualCue();setAutoRunning(true);setChosen(null);
+    let current=game;
+    try{
+      for(let step=0;step<52;step++){
+        const action=legalMoves(current).find(candidate=>(candidate.kind==='waste'||candidate.kind==='tableau')&&candidate.to==='foundation');
+        if(!action)break;
+        const located=await locateFlight(current,action,'finish');
+        if(located){
+          flightProgress.setValue(0);
+          await new Promise<void>(resolve=>setTimeout(resolve,35));
+          await new Promise<void>(resolve=>Animated.timing(flightProgress,{toValue:1,duration:Math.max(250,510-step*7),easing:Easing.inOut(Easing.cubic),useNativeDriver:true}).start(()=>resolve()));
+        }
+        current=applyMove(current,action);
+        setGame(current);setFlight(null);
+        await new Promise<void>(resolve=>setTimeout(resolve,75));
+      }
+      setMessage(isWon(current)?'✨ Fantastisk! Kabalen er fuldført! ✨':'Automatisk tømning er afsluttet');
+    }finally{setAutoRunning(false);setFlight(null);}
+  }
   function autoMove(source:Source){
+    if(autoRunning)return;stopVisualCue();
     const action=autoPlace(game,source);
     if(action){setGame(current=>applyMove(current,action));setChosen(null);setMessage('');}
     else setMessage('Ingen lovlig plads til dette kort');
   }
   function executeMove(source:Source,to:'tableau'|'foundation',index:number){
+    if(autoRunning)return;stopVisualCue();
     if(source.kind==='foundation'&&to==='foundation'){setChosen(null);return;}
     const action:Move = source.kind === 'waste' ? {kind:'waste',to,index} :
       source.kind === 'foundation' ? {kind:'foundation',from:source.from,to:index} :
@@ -223,13 +289,31 @@ export default function App() {
     }));
   }
   function draw() {
+    if(autoRunning)return;stopVisualCue();
     const kind = game.stock.length ? 'draw' : 'recycle';
     if (legalMoves(game).some(m => m.kind === kind)) setGame(applyMove(game,{kind}));
     else setMessage('Ingen flere kort at trække');
   }
   function showHint(){
+    if(autoRunning)return;stopVisualCue();
     const candidate=hint(game).move;
     if(!candidate){setMessage('Ingen lovlige træk');return;}
+    const token=effectToken.current;
+    void locateFlight(game,candidate,'hint').then(located=>{
+      if(!located||token!==effectToken.current)return;
+      ringPulse.setValue(0);flightProgress.setValue(0);
+      hintPulseAnimation.current=Animated.loop(Animated.sequence([
+        Animated.timing(ringPulse,{toValue:1,duration:430,useNativeDriver:true}),
+        Animated.timing(ringPulse,{toValue:0,duration:430,useNativeDriver:true}),
+      ]),{iterations:3});
+      hintGhostAnimation.current=Animated.loop(Animated.sequence([
+        Animated.delay(130),
+        Animated.timing(flightProgress,{toValue:1,duration:1100,easing:Easing.inOut(Easing.cubic),useNativeDriver:true}),
+        Animated.timing(flightProgress,{toValue:0,duration:1,useNativeDriver:true}),
+      ]),{iterations:2});
+      hintPulseAnimation.current.start();
+      hintGhostAnimation.current.start(()=>{if(token===effectToken.current)setFlight(null);});
+    });
     if(candidate.kind==='draw'){setMessage('Træk et kort fra bunken øverst til venstre');return;}
     if(candidate.kind==='recycle'){setMessage('Vend den tomme trækbunke');return;}
     if(candidate.kind==='foundation'){
@@ -242,11 +326,11 @@ export default function App() {
     setMessage(`Flyt til ${candidate.to==='foundation'?'grundbunke':'kolonne'} ${candidate.index+1}`);
   }
   function card(value:import('../src/domain/solitaire/klondike').Card,onPress:()=>void,source?:Source,run?:import('../src/domain/solitaire/klondike').Card[]) {
-    return <DraggableCard card={value} width={cardWidth} height={cardHeight} onTap={onPress}
+    return <View ref={view=>{cardViews.current[value.id]=view;}} style={{width:cardWidth,height:cardHeight}}><DraggableCard card={value} width={cardWidth} height={cardHeight} onTap={onPress}
       onDoubleTap={source&&value.up?()=>autoMove(source):undefined}
       onDragChange={source?active=>setDraggingCard(active?value.id:null):undefined}
       run={run}
-      onDrop={source&&value.up?(x,y)=>dropCard(source,x,y):undefined}/>;
+      onDrop={source&&value.up?(x,y)=>dropCard(source,x,y):undefined}/></View>;
   }
   return <ImageBackground source={gardenIllustrations[actualSeason]} resizeMode="cover" style={styles.root}>
     <StatusBar style="dark"/>
@@ -296,10 +380,10 @@ export default function App() {
     </View> : screen === 'cards' ? <View style={{flex:1}}><ImageBackground source={solitaireTable} resizeMode="cover" style={StyleSheet.absoluteFill}/><ScrollView style={styles.board} contentContainerStyle={styles.boardContent}>
       <Text style={styles.boardTitle}>Kabale · Klondike</Text><Text style={styles.boardMeta}>Flytninger: {game.moves} · Lysglimt ✨ {balance(ledger)}</Text>
       <View style={styles.piles}>
-        <Pressable onPress={draw} accessibilityLabel="Træk fra bunken" style={[styles.slot,{width:cardWidth,height:cardHeight}]}>
+        <Pressable ref={view=>{stockView.current=view;}} onPress={draw} disabled={autoRunning} accessibilityLabel="Træk fra bunken" style={[styles.slot,{width:cardWidth,height:cardHeight}]}>
           {game.stock.length ? <Image source={premiumCardBack} resizeMode="stretch" style={{width:cardWidth,height:cardHeight}}/> : <><View style={[styles.emptySlot,{width:cardWidth,height:cardHeight}]}/><Text style={styles.emptyMark}>↻</Text></>}</Pressable>
-        {game.waste.length ? card(game.waste.at(-1)!,()=>setChosen({kind:'waste',from:0,at:0}),{kind:'waste',from:0,at:0}) :
-          <View style={[styles.slot,{width:cardWidth,height:cardHeight}]}><View style={[styles.emptySlot,{width:cardWidth,height:cardHeight}]}/></View>}
+        <View ref={view=>{wasteView.current=view;}} style={{width:cardWidth,height:cardHeight}}>{game.waste.length ? card(game.waste.at(-1)!,()=>setChosen({kind:'waste',from:0,at:0}),{kind:'waste',from:0,at:0}) :
+          <View style={[styles.slot,{width:cardWidth,height:cardHeight}]}><View style={[styles.emptySlot,{width:cardWidth,height:cardHeight}]}/></View>}</View>
         {game.foundations.map((pile,index)=><Pressable ref={view=>{foundationTargets.current[index]=view;}} key={index} onPress={()=>chosen?move('foundation',index):pile.length?setChosen({kind:'foundation',from:index,at:pile.length-1}):undefined}
           accessibilityLabel={`Grundbunke ${index+1}`} style={[styles.slot,{width:cardWidth,height:cardHeight}]}>
           {pile.length ? card(pile.at(-1)!,()=>chosen?move('foundation',index):setChosen({kind:'foundation',from:index,at:pile.length-1}),{kind:'foundation',from:index,at:pile.length-1}) : <><View style={[styles.emptySlot,{width:cardWidth,height:cardHeight}]}/><Text style={styles.emptyMark}>A</Text></>}</Pressable>)}
@@ -312,19 +396,21 @@ export default function App() {
       </Pressable>)}</View>
       <Text style={styles.boardInfo}>{message || (chosen ? 'Vælg en bunke' : 'Træk kort · Dobbelttryk for automatisk flytning')}</Text>
       <View style={styles.actions}>
-        <CozyButton label="Fortryd" secondary onPress={()=>{setGame(undo(game));setChosen(null);}}/>
-        <CozyButton label="Tip" secondary onPress={showHint}/>
-        {canAutoFinish(game)&&<CozyButton label="Afslut" onPress={()=>setGame(autoFinish(game))}/>}
-        <CozyButton label="Nyt spil" onPress={()=>{setGame(newGame(Date.now()));setChosen(null);}}/>
+        <CozyButton label="Fortryd" secondary disabled={autoRunning} onPress={()=>{stopVisualCue();setGame(undo(game));setChosen(null);}}/>
+        <CozyButton label="Tip" secondary disabled={autoRunning} onPress={showHint}/>
+        <CozyButton label="Auto-tøm" disabled={!canAutoFinish(game)||autoRunning} onPress={()=>{void playFinish();}}/>
+        <CozyButton label="Nyt spil" disabled={autoRunning} onPress={()=>{stopVisualCue();setGame(newGame(Date.now()));setChosen(null);}}/>
       </View>
-      {isWon(game)&&<Text style={styles.boardTitle}>Tillykke! Du har vundet ✨</Text>}
-    </ScrollView></View> : screen==='mini' ? <ImageBackground source={gardenIllustrations[actualSeason]} resizeMode="cover" style={{flex:1}}>
+      {isWon(game)&&<View style={styles.victory}><Text style={styles.victoryText}>✨ Tillykke! ✨</Text><Text style={styles.victorySubtitle}>En vidunderlig kabale er fuldført</Text></View>}
+    </ScrollView>{autoRunning&&<View pointerEvents="auto" style={StyleSheet.absoluteFill}/>}</View> : screen==='mini' ? <ImageBackground source={gardenIllustrations[actualSeason]} resizeMode="cover" style={{flex:1}}>
       <ScrollView style={styles.board} contentContainerStyle={{padding:14,paddingTop:35}}>
         <View style={styles.illustratedPanel}><MemoryBoard game={memory} onFlip={flipMemory}
           onNew={()=>setMemory(newMemoryGame(Math.max(Date.now(),memory.round+1)))}/></View>
       </ScrollView></ImageBackground> :
       screen==='settings'?<ImageBackground source={gardenIllustrations[actualSeason]} resizeMode="cover" style={{flex:1}}><ScrollView style={styles.board} contentContainerStyle={styles.questList}>
         <View style={[styles.illustratedPanel,styles.settingsPanel]}>
+        <Image source={cozyAppLogo} accessibilityLabel="Cozy Solitaire logo" style={styles.brandIcon}/>
+        <Text style={styles.brandTitle}>Cozy Solitaire</Text>
         <Text style={styles.title}>Indstillinger</Text><Text style={styles.panelCaption}>Vælg havens årstid 🌷</Text>
         {(['auto','spring','summer','autumn','winter'] as Season[]).map(value=><CozyButton
           key={value} wide secondary={value!==season} label={`${value===season?'✓ ':''}${{auto:'Automatisk',spring:'Forår',summer:'Sommer',autumn:'Efterår',winter:'Vinter'}[value]}`}
@@ -340,17 +426,36 @@ export default function App() {
             {q.complete&&!q.claimed&&<CozyButton label="Hent belønning" wide onPress={()=>claimQuest(q.id,q.reward)}/>}</View>
         </View>)}
       </ScrollView></ImageBackground>}
+    <View ref={view=>{effectSurface.current=view;}} pointerEvents="none" style={StyleSheet.absoluteFill}>
+      {flight&&<>
+        {flight.mode==='hint'&&<Animated.View style={[styles.hintRing,{left:flight.from.x-4,top:flight.from.y-4,width:cardWidth+8,height:cardHeight+8,
+          opacity:ringPulse.interpolate({inputRange:[0,1],outputRange:[0.45,1]}),
+          transform:[{scale:ringPulse.interpolate({inputRange:[0,1],outputRange:[1,1.07]})}]}]}/>}
+        <Animated.View style={{position:'absolute',left:flight.from.x,top:flight.from.y,width:cardWidth,height:cardHeight,
+          opacity:flightProgress.interpolate({inputRange:[0,0.12,0.8,1],outputRange:[0,flight.mode==='hint'?0.65:0.97,flight.mode==='hint'?0.57:0.97,0]}),
+          transform:[{translateX:flightProgress.interpolate({inputRange:[0,1],outputRange:[0,flight.dx]})},
+            {translateY:flightProgress.interpolate({inputRange:[0,1],outputRange:[0,flight.dy]})},
+            {scale:flightProgress.interpolate({inputRange:[0,0.5,1],outputRange:[1,1.11,0.95]})}]}}>
+          {flight.faceUp?<CardFace card={flight.card} width={cardWidth} height={cardHeight}/>:<Image source={premiumCardBack} style={{width:cardWidth,height:cardHeight}}/>}
+        </Animated.View>
+      </>}
+    </View>
     {message&&screen!=='cards'&&<Pressable accessibilityRole="button" accessibilityLabel="Luk besked" onPress={()=>setMessage('')} style={styles.notice}>
       <Text style={styles.info}>{message} · Luk ×</Text>
     </Pressable>}
-    <View style={styles.nav}>{tabs.map(tab=><Pressable key={tab.id} accessibilityRole="tab"
-      accessibilityState={{selected:screen===tab.id}} onPress={()=>{setScreen(tab.id);setChosen(null);setMessage('');}}
+    <View style={styles.nav}>{tabs.map(tab=><Pressable key={tab.id} accessibilityRole="tab" disabled={autoRunning}
+      accessibilityState={{selected:screen===tab.id,disabled:autoRunning}} onPress={()=>{stopVisualCue();setScreen(tab.id);setChosen(null);setMessage('');}}
       style={styles.tab}><View style={screen===tab.id?styles.activeIcon:styles.inactiveIcon}><Image source={tab.icon} resizeMode="contain" style={styles.tabIcon}/></View>
       <Text style={[styles.tabText,screen===tab.id&&styles.activeLabel]}>{tab.label}</Text></Pressable>)}</View>
   </ImageBackground>;
 }
 
 const styles=StyleSheet.create({
+  brandIcon:{width:88,height:88,borderRadius:22,borderWidth:3,borderColor:'#f7d987'},
+  brandTitle:{fontSize:20,fontWeight:'900',color:'#285563'},
+  hintRing:{position:'absolute',borderRadius:13,borderWidth:4,borderColor:'#ffde66',backgroundColor:'#fff3a028',shadowColor:'#fff7b1',shadowOpacity:0.95,shadowRadius:14,elevation:12},
+  victory:{alignItems:'center',backgroundColor:'#fff3dff0',borderWidth:4,borderColor:'#eabf5f',borderRadius:24,padding:16,margin:15,shadowColor:'#ffd36c',shadowOpacity:0.7,shadowRadius:18},
+  victoryText:{fontSize:28,fontWeight:'900',color:'#8c6220'},victorySubtitle:{fontSize:15,fontWeight:'700',color:'#35695c'},
   root:{flex:1,paddingTop:28,backgroundColor:'#f5ecd8'},garden:{flex:1,overflow:'hidden'},
   hud:{position:'absolute',top:14,left:16,right:16,height:92,backgroundColor:'#fff1cfef',borderRadius:23,borderWidth:4,borderColor:'#e5af55',shadowColor:'#4a2b17',shadowOpacity:0.3,shadowRadius:8,elevation:7},hudText:{position:'absolute',top:11,left:18,right:18},
   title:{fontSize:23,fontWeight:'900',color:'#1c5663',textShadowColor:'#fffaf0',textShadowRadius:2},gardenTools:{position:'absolute',bottom:8,alignSelf:'center',backgroundColor:'#fff4d9f5',padding:7,borderRadius:20,borderWidth:3,borderColor:'#e8b95f',gap:6,shadowColor:'#382b18',shadowRadius:8,shadowOpacity:0.28,elevation:6},decorButton:{minWidth:82,alignItems:'center',padding:4,backgroundColor:'#ffe6b0',borderRadius:13,borderWidth:2,borderColor:'#d9af64'},

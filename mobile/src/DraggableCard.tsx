@@ -7,7 +7,7 @@ const suit:Record<string,string>={C:'♣',D:'♦',H:'♥',S:'♠'};
 const premiumBack=require('../assets/illustrations/card-back-premium.webp');
 const premiumFace=require('../assets/illustrations/card-face-premium.webp');
 
-function CardFace({card,width,height}:{card:Card;width:number;height:number}){
+export function CardFace({card,width,height}:{card:Card;width:number;height:number}){
   const red=card.suit==='D'||card.suit==='H';
   const color=red?'#c6384b':'#194557';
   const cornerSize=Math.min(13,Math.max(10,width*0.19));

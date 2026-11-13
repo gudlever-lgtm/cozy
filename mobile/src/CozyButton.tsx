@@ -3,12 +3,12 @@ import {Image, Pressable, StyleSheet, Text, View} from 'react-native';
 
 const premiumButton=require('../assets/illustrations/button-premium.webp');
 
-export function CozyButton({label,onPress,wide=false,secondary=false,compact=false}:{
-  label:string;onPress:()=>void;wide?:boolean;secondary?:boolean;compact?:boolean;
+export function CozyButton({label,onPress,wide=false,secondary=false,compact=false,disabled=false}:{
+  label:string;onPress:()=>void;wide?:boolean;secondary?:boolean;compact?:boolean;disabled?:boolean;
 }){
   const w=wide?212:compact?90:104;
-  return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress}
-    style={({pressed})=>[styles.button,{width:w,transform:[{scale:pressed?0.96:1}]}]}>
+  return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{disabled}} disabled={disabled} onPress={onPress}
+    style={({pressed})=>[styles.button,{width:w,opacity:disabled?0.42:1,transform:[{scale:pressed&&!disabled?0.96:1}]}]}>
     {secondary?<View style={styles.secondary}><View style={styles.secondaryInset}/></View>
       :<Image source={premiumButton} resizeMode="stretch" style={styles.background}/>}
     <Text numberOfLines={1} adjustsFontSizeToFit style={[styles.label,secondary?styles.secondaryLabel:styles.primaryLabel]}>{label}</Text>
