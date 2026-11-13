@@ -27,7 +27,7 @@
 - [ ] Udvid tests med draw-3-genbesøg, reel gennemspilning til sejr og savehistorik; fastlæg scoring og versioneret saveformat.
 - [x] Definér V1-saveformat med valideret Klondike-status og idempotent Lysglimt-transaktionslog (17 beståede Node-tests i alt).
 - [x] Første native atomisk skriveadapter (`mobile/src/nativeSave.ts`) med Expo FileSystem og v1-saveformat. **Afventer test på fysisk Android/iOS-enhed og crash recovery-validering**; v2-lagringer migreres ikke automatisk.
-- [ ] Definér kilder/lofter for Lysglimt-belønninger, konkrete priser og quest-progressionsregler.
+- [x] Første afgrænsede økonomi: kabalesejr +25, vendespil +5 pr. unik runde, tre engangsquests +10 hver, dekoration -5. **Balanceringsgodkendelse og grænser mod gentagen farming mangler.**
 - [x] Vælg native stack: Expo SDK 58 + React Native og delt TypeScript-domænekode. Appskallen er oprettet i `mobile/`; endelig navigation med Expo Router mangler.
 - [ ] Definér interfaces for kabale, minispil, have, ressourcer og gemt status.
 - [ ] Design lokal/offline lagring og evt. migrering fra v2.
@@ -36,7 +36,7 @@
 **Gate T1:** Arkitektur og testplan er godkendt.
 
 ## Fase 3 – Implementering i afgrænsede leverancer
-**Aktuel status:** Expo-appskal med SVG-have, kortgrafik, navigation, Klondike med tap og første drag/drop, lokal save/load, zoom/pan, placerbare og flytbare dekorationer og idempotent sejrsløn er påbegyndt. Android JS-bundling, TypeScript og 20 domænetests er grønt. **Drag/drop og grafik er ikke verificeret på en fysisk enhed**, og ingen APK er bygget. Se `mobile/README.md` for mangler.
+**Aktuel status:** Expo-appskal med SVG-have, kortgrafik, navigation, Klondike med tap og første drag/drop, lokal save/load, zoom/pan, dekorationer, vendespil, quests, Lysglimt-økonomi og sæsonvalg. Android/iOS JS-bundling og TypeScript er grønt. **Drag/drop, grafik, minispil, quests og betalinger er ikke verificeret på en fysisk enhed**, og ingen APK er bygget. Se `mobile/README.md` for mangler.
 
 1. App shell / navigation og onboarding.
 2. Haveforside med zoom/pan og figurer.
