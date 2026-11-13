@@ -25,6 +25,9 @@
 - [x] Første isolerede Klondike-engine tilføjet (`src/domain/solitaire/klondike.ts`). **12 beståede Node-tests**, herunder farve-/rangregler, foundation-ejerskab, skjulte kort, Undo og sejrstilstand. Dette er stadig **ikke** afsluttet Gate T1.
 - [x] Beskyt autofinish mod tidlig aktivering: kræver tom stock/waste og alle resterende tableau-kort synlige.
 - [ ] Udvid tests med draw-3-genbesøg, reel gennemspilning til sejr og savehistorik; fastlæg scoring og versioneret saveformat.
+- [x] Definér V1-saveformat med valideret Klondike-status og idempotent Lysglimt-transaktionslog (17 beståede Node-tests i alt).
+- [ ] Implementér native atomic-storage adapter, crash recovery og evt. v2-migrationsværktøj. V2-lagringer migreres ikke automatisk.
+- [ ] Definér kilder/lofter for Lysglimt-belønninger, konkrete priser og quest-progressionsregler.
 - [ ] Vælg native stack og appstruktur (fælles kodebase, Android/iOS).
 - [ ] Definér interfaces for kabale, minispil, have, ressourcer og gemt status.
 - [ ] Design lokal/offline lagring og evt. migrering fra v2.
