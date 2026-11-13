@@ -57,7 +57,9 @@ export function CozyPanel({ wide = false, scroll = false, style, children }: Coz
 
 const styles = StyleSheet.create({
   wrapper: { borderRadius: 18 },
-  content: { flex: 1 },
+  // These frames are content-sized; flex:1 inside a parent with no explicit
+  // height can collapse the measured panel and hide its illustrated background.
+  content: {},
   // Extra top/left clearance: the panel art's corner flower ornament sits in that corner.
   contentPadding: { paddingHorizontal: 24, paddingTop: 44, paddingBottom: 24 },
 });
