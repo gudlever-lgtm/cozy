@@ -1,5 +1,5 @@
 import React from "react";
-import { View, type ViewStyle } from "react-native";
+import { Image, Platform, View, type ImageSourcePropType, type ViewStyle } from "react-native";
 import type { SvgProps } from "react-native-svg";
 import { useUniqueSvgIdsRef } from "./useUniqueSvgIds";
 import { nineSliceScale } from "../theme/nineSliceGeometry";
@@ -45,6 +45,7 @@ export function NineSliceFrame({
   // each other — only a DIFFERENT NineSliceFrame instance (another panel, the tab bar)
   // must not collide with this one. See useUniqueSvgIds.ts for the underlying bug.
   const uidRef = useUniqueSvgIdsRef();
+  const rasterSource = (Source as React.FC<SvgProps> & { rasterSource?: ImageSourcePropType }).rasterSource;
 
   // Uniform scale derived from width keeps corner ornaments proportioned exactly as
   // they'd look if the whole asset were scaled by width — never squashed or enlarged
@@ -77,7 +78,21 @@ export function NineSliceFrame({
     if (outW <= 0 || outH <= 0 || srcW <= 0 || srcH <= 0) return null;
     return (
       <View key={key} ref={uidRef} style={{ position: "absolute", left: x, top: y, width: outW, height: outH, overflow: "hidden" }}>
-        <Source width={outW} height={outH} viewBox={`${srcX} ${srcY} ${srcW} ${srcH}`} preserveAspectRatio={stretch ? "none" : "xMidYMid meet"} />
+        {Platform.OS !== "web" && rasterSource ? (
+          <Image
+            source={rasterSource}
+            resizeMode="stretch"
+            style={{
+              position: "absolute",
+              width: W * outW / srcW,
+              height: H * outH / srcH,
+              left: -srcX * outW / srcW,
+              top: -srcY * outH / srcH,
+            }}
+          />
+        ) : (
+          <Source width={outW} height={outH} viewBox={`${srcX} ${srcY} ${srcW} ${srcH}`} preserveAspectRatio={stretch ? "none" : "xMidYMid meet"} />
+        )}
       </View>
     );
   };

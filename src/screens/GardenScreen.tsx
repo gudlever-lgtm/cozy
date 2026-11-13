@@ -122,10 +122,12 @@ export function GardenScreen() {
   const cameraRef = useRef<CameraState | null>(null);
   cameraRef.current = garden?.camera ?? null;
   const gestureStartCamera = useRef<CameraState | null>(null);
+  const pinchStartCamera = useRef<CameraState | null>(null);
 
   const panGesture = useMemo(
     () =>
       Gesture.Pan()
+        .maxPointers(1)
         .runOnJS(true)
         .onBegin(() => {
           gestureStartCamera.current = cameraRef.current;
@@ -143,11 +145,11 @@ export function GardenScreen() {
       Gesture.Pinch()
         .runOnJS(true)
         .onBegin(() => {
-          gestureStartCamera.current = cameraRef.current;
+          pinchStartCamera.current = cameraRef.current;
         })
         .onUpdate((e) => {
-          if (!gestureStartCamera.current) return;
-          const next = pinchZoom(gestureStartCamera.current, { x: e.focalX, y: e.focalY }, e.scale, bounds);
+          if (!pinchStartCamera.current) return;
+          const next = pinchZoom(pinchStartCamera.current, { x: e.focalX, y: e.focalY }, e.scale, bounds);
           setGarden((g) => (g ? { ...g, camera: next } : g));
         }),
     [bounds],
@@ -206,6 +208,13 @@ export function GardenScreen() {
   );
 
   const composedGesture = Gesture.Race(tapGesture, Gesture.Simultaneous(panGesture, pinchGesture));
+
+  const changeZoom = (factor: number) => {
+    setGarden((current) => current ? {
+      ...current,
+      camera: pinchZoom(current.camera, { x: width / 2, y: height / 2 }, factor, bounds),
+    } : current);
+  };
 
   if (!garden) return <View style={styles.container} />;
 
@@ -325,6 +334,15 @@ export function GardenScreen() {
         </View>
       </SafeAreaView>
 
+      <View style={[styles.zoomControls, { top: 96 + insets.top }]}>
+        <Pressable style={styles.zoomButton} onPress={() => changeZoom(1.3)} accessibilityRole="button" accessibilityLabel={locale === "da" ? "Zoom ind i haven" : "Zoom in garden"}>
+          <Text style={styles.zoomLabel}>＋</Text>
+        </Pressable>
+        <Pressable style={styles.zoomButton} onPress={() => changeZoom(1 / 1.3)} accessibilityRole="button" accessibilityLabel={locale === "da" ? "Zoom ud af haven" : "Zoom out garden"}>
+          <Text style={styles.zoomLabel}>−</Text>
+        </Pressable>
+      </View>
+
       {buildMode ? (
         <View
           style={[
@@ -371,6 +389,9 @@ const styles = StyleSheet.create({
   // Settings lives in MainScreen's own top-right header overlay — keep this row on the
   // left so the two HUD overlays never collide.
   hudRow: { flexDirection: "row", justifyContent: "flex-start", alignItems: "center", padding: 12, gap: 10 },
+  zoomControls: { position: "absolute", right: 14, zIndex: 7, gap: 8 },
+  zoomButton: { width: 48, height: 48, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: "#fff3d7", borderWidth: 2, borderColor: "#b78342", elevation: 4 },
+  zoomLabel: { fontSize: 29, color: "#4a3824", fontWeight: "700", lineHeight: 35 },
   // A soft glow instead of a hard black rectangle — gold tone sampled from the
   // approved UI frames' own border color (#d2a44d), not an invented brand color.
   decorationSelected: {

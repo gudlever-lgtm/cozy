@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Animated, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Animated, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -145,10 +145,8 @@ export function SolitaireScreen() {
   }
 
   function makeDragGesture(source: DragSource, cards: Card[]) {
-    const tap = Gesture.Tap()
-      .runOnJS(true)
-      .onEnd(() => attemptTapMove(source));
-    const pan = Gesture.Pan()
+    return Gesture.Pan()
+      .minDistance(8)
       .runOnJS(true)
       .onBegin(() => setDrag({ source, cards, dx: 0, dy: 0 }))
       .onUpdate((e) => setDrag({ source, cards, dx: e.translationX, dy: e.translationY }))
@@ -164,9 +162,6 @@ export function SolitaireScreen() {
         setDrag(null);
       })
       .onFinalize(() => setDrag(null));
-    // A Pan recognizer does not activate for a stationary tap on Android.
-    // Give taps their own recognizer so both simple moves and dragging work.
-    return Gesture.Race(tap, pan);
   }
 
   const draggingIds = new Set(drag?.cards.map((c) => c.id) ?? []);
@@ -205,22 +200,25 @@ export function SolitaireScreen() {
       </View>
       <SafeAreaView style={[styles.safe, isLandscape ? styles.safeLandscape : null]} edges={["top", "bottom"]}>
         <View style={[styles.topRow, { marginHorizontal: MARGIN, marginTop: boardTopInset, width: boardWidth - 2 * MARGIN, height: cardHeight }]}>
-          <GestureDetector gesture={canDraw || canRecycle ? Gesture.Tap().runOnJS(true).onEnd(() => setGame(applyMove(game, canDraw ? { type: "draw" } : { type: "recycle" }))) : Gesture.Tap()}>
-            <View style={{ width: cardWidth, height: cardHeight }}>
+          <Pressable
+            onPress={() => { if (canDraw || canRecycle) setGame(applyMove(game, canDraw ? { type: "draw" } : { type: "recycle" })); }}
+            accessibilityRole="button"
+            accessibilityLabel={canDraw ? "Draw card" : "Recycle stock"}
+            style={{ width: cardWidth, height: cardHeight }}
+          >
               {canDraw ? (
                 <PlayingCard card={{ id: "stock", suit: "clubs", rank: 1, faceUp: false }} width={cardWidth} faceStyle={preferences.faceStyle} backStyle={preferences.backStyle} />
               ) : (
                 <CardSlot width="100%" height="100%" />
               )}
-            </View>
-          </GestureDetector>
+          </Pressable>
 
           <View style={{ width: cardWidth, height: cardHeight, marginLeft: GAP }}>
             {wasteTop ? (
               <GestureDetector gesture={makeDragGesture({ type: "waste" }, [wasteTop])}>
-                <View style={draggingIds.has(wasteTop.id) ? styles.hidden : undefined}>
+                <Pressable onPress={() => attemptTapMove({ type: "waste" })} accessibilityRole="button" style={draggingIds.has(wasteTop.id) ? styles.hidden : undefined}>
                   <PlayingCard card={wasteTop} width={cardWidth} faceStyle={preferences.faceStyle} backStyle={preferences.backStyle} highlighted={isHinted({ type: "waste" })} />
-                </View>
+                </Pressable>
               </GestureDetector>
             ) : (
               <CardSlot width="100%" height="100%" />
@@ -236,9 +234,9 @@ export function SolitaireScreen() {
               <View key={suit} style={{ width: cardWidth, height: cardHeight, marginLeft: GAP }}>
                 {top ? (
                   <GestureDetector gesture={makeDragGesture({ type: "foundation", suit }, [top])}>
-                    <View style={draggingIds.has(top.id) ? styles.hidden : undefined}>
+                    <Pressable onPress={() => attemptTapMove({ type: "foundation", suit })} accessibilityRole="button" style={draggingIds.has(top.id) ? styles.hidden : undefined}>
                       <PlayingCard card={top} width={cardWidth} faceStyle={preferences.faceStyle} backStyle={preferences.backStyle} highlighted={isHinted({ type: "foundation", suit })} />
-                    </View>
+                    </Pressable>
                   </GestureDetector>
                 ) : <CardSlot width="100%" height="100%" />}
               </View>
@@ -274,7 +272,9 @@ export function SolitaireScreen() {
                   );
                   return (
                     <View key={card.id} style={[styles.stacked, { top, zIndex: cardIndex }, draggingIds.has(card.id) ? styles.hidden : null]}>
-                      {card.faceUp ? <GestureDetector gesture={makeDragGesture(source, column.slice(cardIndex))}>{content}</GestureDetector> : content}
+                      {card.faceUp ? <GestureDetector gesture={makeDragGesture(source, column.slice(cardIndex))}>
+                        <Pressable onPress={() => attemptTapMove(source)} accessibilityRole="button">{content}</Pressable>
+                      </GestureDetector> : content}
                     </View>
                   );
                 })
