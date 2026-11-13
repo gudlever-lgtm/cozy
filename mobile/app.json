@@ -1,0 +1,13 @@
+{
+  "expo": {
+    "name": "Cozy Solitaire",
+    "slug": "cozy-solitaire",
+    "version": "3.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {"package": "eu.cozy.solitaire", "predictiveBackGestureEnabled": false}
+  }
+}

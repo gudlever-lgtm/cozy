@@ -28,7 +28,7 @@
 - [x] Definér V1-saveformat med valideret Klondike-status og idempotent Lysglimt-transaktionslog (17 beståede Node-tests i alt).
 - [ ] Implementér native atomic-storage adapter, crash recovery og evt. v2-migrationsværktøj. V2-lagringer migreres ikke automatisk.
 - [ ] Definér kilder/lofter for Lysglimt-belønninger, konkrete priser og quest-progressionsregler.
-- [ ] Vælg native stack og appstruktur (fælles kodebase, Android/iOS).
+- [x] Vælg native stack: Expo SDK 58 + React Native og delt TypeScript-domænekode. Appskallen er oprettet i `mobile/`; endelig navigation med Expo Router mangler.
 - [ ] Definér interfaces for kabale, minispil, have, ressourcer og gemt status.
 - [ ] Design lokal/offline lagring og evt. migrering fra v2.
 - [ ] Sæt CI op til typecheck, tests, grafik-audit og screenshottest.
@@ -36,6 +36,8 @@
 **Gate T1:** Arkitektur og testplan er godkendt.
 
 ## Fase 3 – Implementering i afgrænsede leverancer
+**Aktuel status:** Første Expo-appskal med godkendt SVG-have, kortgrafik, navigation og tap-baseret Klondike er påbegyndt. Android JS-bundling, TypeScript og Expo Doctor er grønt. Ingen enhedstest af den native UI, og ingen APK er bygget. Se `mobile/README.md` for mangler.
+
 1. App shell / navigation og onboarding.
 2. Haveforside med zoom/pan og figurer.
 3. Kabale med fuldt fungerende drag/drop, scoring, hints og undo.
