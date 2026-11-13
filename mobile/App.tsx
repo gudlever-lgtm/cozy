@@ -379,14 +379,24 @@ export default function App() {
       </View>
     </View> : screen === 'cards' ? <View style={{flex:1}}><ImageBackground source={solitaireTable} resizeMode="cover" style={StyleSheet.absoluteFill}/><ScrollView style={styles.board} contentContainerStyle={styles.boardContent}>
       <Text style={styles.boardTitle}>Kabale · Klondike</Text><Text style={styles.boardMeta}>Flytninger: {game.moves} · Lysglimt ✨ {balance(ledger)}</Text>
-      <View style={styles.piles}>
+      <View style={styles.topPiles}>
+        <View style={styles.drawZone} accessibilityLabel="Trækbunke og vendte kort">
+          <View style={styles.zoneLabels}><Text style={styles.zoneLabel}>TRÆK</Text><Text style={styles.zoneLabel}>VENDT</Text></View>
+          <View style={styles.zoneCards}>
         <Pressable ref={view=>{stockView.current=view;}} onPress={draw} disabled={autoRunning} accessibilityLabel="Træk fra bunken" style={[styles.slot,{width:cardWidth,height:cardHeight}]}>
           {game.stock.length ? <Image source={premiumCardBack} resizeMode="stretch" style={{width:cardWidth,height:cardHeight}}/> : <><View style={[styles.emptySlot,{width:cardWidth,height:cardHeight}]}/><Text style={styles.emptyMark}>↻</Text></>}</Pressable>
         <View ref={view=>{wasteView.current=view;}} style={{width:cardWidth,height:cardHeight}}>{game.waste.length ? card(game.waste.at(-1)!,()=>setChosen({kind:'waste',from:0,at:0}),{kind:'waste',from:0,at:0}) :
           <View style={[styles.slot,{width:cardWidth,height:cardHeight}]}><View style={[styles.emptySlot,{width:cardWidth,height:cardHeight}]}/></View>}</View>
+          </View>
+        </View>
+        <View style={styles.foundationZone} accessibilityLabel="Pladser til esserne">
+          <Text style={styles.zoneLabel}>ESSER · GRUNDBUNKER</Text>
+          <View style={styles.zoneCards}>
         {game.foundations.map((pile,index)=><Pressable ref={view=>{foundationTargets.current[index]=view;}} key={index} onPress={()=>chosen?move('foundation',index):pile.length?setChosen({kind:'foundation',from:index,at:pile.length-1}):undefined}
           accessibilityLabel={`Grundbunke ${index+1}`} style={[styles.slot,{width:cardWidth,height:cardHeight}]}>
           {pile.length ? card(pile.at(-1)!,()=>chosen?move('foundation',index):setChosen({kind:'foundation',from:index,at:pile.length-1}),{kind:'foundation',from:index,at:pile.length-1}) : <><View style={[styles.emptySlot,{width:cardWidth,height:cardHeight}]}/><Text style={styles.emptyMark}>A</Text></>}</Pressable>)}
+          </View>
+        </View>
       </View>
       <View style={styles.piles}>{game.tableau.map((pile,index)=><Pressable ref={view=>{tableauTargets.current[index]=view;}} key={index} onPress={()=>move('tableau',index)}
         accessibilityLabel={`Kolonne ${index+1}`} style={{width:cardWidth,minHeight:cardHeight+150,zIndex:draggingCard&&pile.some(c=>c.id===draggingCard)?100:0}}>
@@ -468,6 +478,12 @@ const styles=StyleSheet.create({
   activeIcon:{transform:[{scale:1.1}]},inactiveIcon:{opacity:0.86},tabIcon:{width:38,height:40},activeLabel:{color:'#123f71',fontWeight:'900'},
   tabText:{fontSize:11,color:'#604d30',fontWeight:'700'},
   board:{flex:1},boardContent:{paddingHorizontal:6,paddingTop:12,paddingBottom:30},piles:{flexDirection:'row',justifyContent:'space-between',marginTop:15},
+  topPiles:{flexDirection:'row',justifyContent:'space-between',alignItems:'flex-start',marginTop:13,gap:5},
+  drawZone:{backgroundColor:'#71532ca3',borderWidth:1.5,borderColor:'#f0ce89',borderRadius:13,padding:3,shadowColor:'#e7bb70',shadowOpacity:0.25,shadowRadius:4},
+  foundationZone:{backgroundColor:'#20554eaf',borderWidth:1.5,borderColor:'#a6dbbf',borderRadius:13,padding:3,shadowColor:'#9dd6bb',shadowOpacity:0.25,shadowRadius:4},
+  zoneLabels:{flexDirection:'row',gap:5,justifyContent:'space-around'},
+  zoneCards:{flexDirection:'row',gap:5,justifyContent:'center'},
+  zoneLabel:{fontSize:9,fontWeight:'900',color:'#fff3c9',textAlign:'center',letterSpacing:0.5,marginBottom:4,textShadowColor:'#132c25',textShadowRadius:4},
   slot:{borderRadius:8,alignItems:'center',justifyContent:'center'},emptySlot:{borderRadius:9,backgroundColor:'#194b47a8',borderWidth:2,borderColor:'#d7b775',shadowColor:'#091b1e',shadowOpacity:0.2,shadowRadius:3},emptyMark:{position:'absolute',fontSize:20,color:'#fff5d4',fontWeight:'900'},
   rank:{position:'absolute',top:5,left:4,fontWeight:'800',fontSize:12},info:{marginVertical:15,textAlign:'center',color:'#65573d'},
   actions:{flexDirection:'row',gap:7,justifyContent:'center',flexWrap:'wrap'},button:{padding:12,minHeight:44,backgroundColor:'#e9d6aa',borderRadius:9},
