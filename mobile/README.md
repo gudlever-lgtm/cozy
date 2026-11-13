@@ -20,8 +20,10 @@ Kort vælges aktuelt med tryk på kilden efterfulgt af destinationen.
 
 - Navigation er endnu en simpel app-shell, ikke endelig Expo Router-struktur.
 - Korttræk mangler drag/drop, animationer, scoring og fuldt mobiltestet interaktion.
-- Haven mangler zoom/pan, placerbare dekorationer og progression.
+- Haven har indledende zoom/pan og placering af godkendte dekorations-SVG'er; placeringer gemmes lokalt, men flytning/køb/progression mangler.
 - Minispil og quests er endnu ikke implementeret.
-- Lysglimt, offline save/load, undo-belønninger og sæsoner er endnu ikke forbundet med UI.
+- Offline save/load af kabalestatus og Lysglimt-ledger er integreret, men endnu ikke afprøvet på fysisk enhed; yderligere belønningskilder og sæsoner mangler.
+- En vundet kabale udløser 25 Lysglimt én gang pr. spilseed. Andre belønninger er endnu ikke implementeret.
 - Indstillinger, lokalisering, onboarding og fuld design-/tilgængelighedsgennemgang mangler.
-- Ingen native Android/iOS-installationsbuild eller hardwaretest er udført.
+- Android- og iOS-JavaScript-bundling er verificeret, men ingen native installationsbuild eller hardwaretest er udført.
+- ESLint-konfiguration mangler: `npx expo lint` kunne ikke hente opsætningen på grund af proxy-timeout.
