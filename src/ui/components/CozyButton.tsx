@@ -7,6 +7,7 @@ import ButtonSpecial from "../../../assets/v3/ui/button-special.svg";
 import ButtonDisabled from "../../../assets/v3/ui/button-disabled.svg";
 import { buttonTokens } from "../theme/layoutTokens";
 import { textColors } from "../theme/colors";
+import { buttonLabelBounds } from "../theme/buttonGeometry";
 import { useUniqueSvgIdsRef } from "./useUniqueSvgIds";
 
 export type CozyButtonVariant = "primary" | "secondary" | "wood" | "special";
@@ -43,8 +44,7 @@ export function CozyButton({ label, onPress, variant = "primary", disabled = fal
   const w = Math.min(Math.max(width ?? token.minWidth, token.minWidth), token.maxWidth);
   const h = token.minHeight;
   const Art = disabled ? ButtonDisabled : ART[variant];
-  const safeLeft = token.safeLabelFraction.left * w;
-  const safeRight = token.safeLabelFraction.right * w;
+  const labelBounds = buttonLabelBounds(w, h, token.safeLabelFraction);
 
   return (
     <Pressable
@@ -62,7 +62,7 @@ export function CozyButton({ label, onPress, variant = "primary", disabled = fal
       <View
         style={[
           styles.labelZone,
-          { left: safeLeft, right: w - safeRight, height: h },
+          { left: labelBounds.left, right: w - labelBounds.right, height: h },
         ]}
       >
         <Text

@@ -23,6 +23,7 @@ import UndoIcon from "../../assets/v3/icons/undo.svg";
 import PlayIcon from "../../assets/v3/icons/play.svg";
 import StarIcon from "../../assets/v3/icons/star.svg";
 import { textColors } from "../ui/theme/colors";
+import { useLocale } from "../i18n/LocaleContext";
 import FeltPortrait from "../../assets/v3-premium/tabletop/solitaire-felt-portrait.svg";
 import FeltLandscape from "../../assets/v3-premium/tabletop/solitaire-felt-landscape.svg";
 
@@ -40,6 +41,7 @@ type DragSource = { type: "waste" } | { type: "tableau"; column: number; cardInd
  * unchanged for an illegal move).
  */
 export function SolitaireScreen() {
+  const { t } = useLocale();
   const { width, height } = useWindowDimensions();
   const isLandscape = width > height;
   const boardWidth = isLandscape ? Math.min(470, width * 0.58) : width;
@@ -222,7 +224,7 @@ export function SolitaireScreen() {
         >
           <View style={[styles.tableauRow, { width: boardWidth - 2 * MARGIN, height: tableauContentHeight }]}>
           {game.tableau.map((column, colIndex) => (
-            <View key={colIndex} style={{ width: cardWidth }}>
+            <View key={colIndex} style={{ width: cardWidth, marginRight: colIndex < COLUMNS - 1 ? GAP : 0 }}>
               {column.length === 0 ? (
                 <CardSlot width={cardWidth} height={cardHeight} />
               ) : (
@@ -251,13 +253,13 @@ export function SolitaireScreen() {
         </ScrollView>
 
         <View style={[styles.toolbar, isLandscape ? [styles.toolbarLandscape, { left: boardWidth + 8, right: 12 }] : styles.toolbarPortrait]}>
-          <CozyIconButton icon={UndoIcon} accessibilityLabel="Fortryd" longPressHint="Fortryd sidste træk" onPress={() => setGame(domainUndo(game))} />
-          <CozyIconButton icon={HintIcon} accessibilityLabel="Tip" longPressHint="Vis et lovligt træk" onPress={runHint} />
-          <CozyIconButton icon={StarIcon} accessibilityLabel="Auto-finish" longPressHint="Flyt sikre kort til fundamentet" onPress={() => setGame(autoPlaySafe(game))} />
+          <CozyIconButton icon={UndoIcon} accessibilityLabel={t("undo")} longPressHint={t("undoHint")} onPress={() => setGame(domainUndo(game))} />
+          <CozyIconButton icon={HintIcon} accessibilityLabel={t("hint")} longPressHint={t("hintHint")} onPress={runHint} />
+          <CozyIconButton icon={StarIcon} accessibilityLabel={t("autoFinish")} longPressHint={t("autoFinishHint")} onPress={() => setGame(autoPlaySafe(game))} />
           <CozyIconButton
             icon={PlayIcon}
-            accessibilityLabel="Nyt spil"
-            longPressHint="Start et nyt spil"
+            accessibilityLabel={t("newGame")}
+            longPressHint={t("newGameHint")}
             onPress={() => setGame(deal(Date.now(), preferences.drawMode))}
           />
         </View>
@@ -290,8 +292,12 @@ export function SolitaireScreen() {
       {won ? (
         <View style={styles.victoryOverlay} pointerEvents="box-none">
           <Animated.View style={[styles.victoryCard, { opacity: victoryAnim, transform: [{ scale: victoryAnim }] }]}>
-            <Text style={styles.victoryTitle}>Sejr! 🎉</Text>
-            <CozyButton label="Nyt spil" variant="primary" onPress={() => setGame(deal(Date.now(), preferences.drawMode))} />
+            <View style={styles.victoryHeading}>
+              <StarIcon width={28} height={28} />
+              <Text style={styles.victoryTitle}>{t("youWon")}</Text>
+              <StarIcon width={28} height={28} />
+            </View>
+            <CozyButton label={t("newGame")} variant="primary" onPress={() => setGame(deal(Date.now(), preferences.drawMode))} />
           </Animated.View>
         </View>
       ) : null}
@@ -322,4 +328,5 @@ const styles = StyleSheet.create({
   victoryOverlay: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(0,0,0,0.35)" },
   victoryCard: { backgroundColor: "#fff9e7", borderRadius: 20, padding: 28, alignItems: "center", gap: 16 },
   victoryTitle: { fontSize: 28, fontWeight: "800", color: textColors.onLightPanel },
+  victoryHeading: { flexDirection: "row", alignItems: "center", gap: 8 },
 });
