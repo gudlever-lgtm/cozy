@@ -24,6 +24,8 @@ import PlayIcon from "../../assets/v3/icons/play.svg";
 import StarIcon from "../../assets/v3/icons/star.svg";
 import { textColors } from "../ui/theme/colors";
 import { useLocale } from "../i18n/LocaleContext";
+import { useRewardLedger } from "../ui/providers/RewardLedgerContext";
+import { tableauColumnAt } from "../ui/theme/solitaireDropGeometry";
 import FeltPortrait from "../../assets/v3-premium/tabletop/solitaire-felt-portrait.svg";
 import FeltLandscape from "../../assets/v3-premium/tabletop/solitaire-felt-landscape.svg";
 
@@ -31,7 +33,8 @@ const MARGIN = 10;
 const GAP = 6;
 const COLUMNS = 7;
 
-type DragSource = { type: "waste" } | { type: "tableau"; column: number; cardIndex: number };
+type FoundationSuit = "clubs" | "diamonds" | "hearts" | "spades";
+type DragSource = { type: "waste" } | { type: "foundation"; suit: FoundationSuit } | { type: "tableau"; column: number; cardIndex: number };
 
 /**
  * Full Klondike screen wired to the deterministic Stage 1 engine
@@ -42,6 +45,7 @@ type DragSource = { type: "waste" } | { type: "tableau"; column: number; cardInd
  */
 export function SolitaireScreen() {
   const { t } = useLocale();
+  const ledger = useRewardLedger();
   const { width, height } = useWindowDimensions();
   const isLandscape = width > height;
   const boardWidth = isLandscape ? Math.min(470, width * 0.58) : width;
@@ -75,6 +79,14 @@ export function SolitaireScreen() {
     else victoryAnim.setValue(0);
   }, [won, victoryAnim]);
 
+  useEffect(() => {
+    if (!won || !game) return;
+    // The event id survives screen remounts and app restarts. The ledger refuses
+    // repeated grants, so the victory animation can never mint more currency.
+    ledger.grant({ id: `solitaire:${game.seed}:win`, reason: "Won Solitaire", grants: { lysglimt: 60 } });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [won, game?.seed]);
+
   // Landscape is HEIGHT-constrained; a width-only card size made 844×390 unplayable.
   // Board and action controls have independent rectangles. No game rules change.
   const cardWidth = Math.min((boardWidth - 2 * MARGIN - GAP * (COLUMNS - 1)) / COLUMNS, isLandscape ? 56 : 70);
@@ -89,7 +101,7 @@ export function SolitaireScreen() {
   function attemptTableauDrop(source: DragSource, finalX: number, finalY: number) {
     if (!game) return;
     const isFoundationDrop = finalY < tableauTop - cardHeight * 0.5;
-    if (isFoundationDrop) {
+    if (isFoundationDrop && source.type !== "foundation") {
       if (source.type === "waste") {
         setGame(applyMove(game, { type: "wasteToFoundation" }));
       } else if (source.cardIndex === game.tableau[source.column].length - 1) {
@@ -97,9 +109,13 @@ export function SolitaireScreen() {
       }
       return;
     }
-    const toColumn = Math.max(0, Math.min(COLUMNS - 1, Math.round((finalX - MARGIN) / (cardWidth + GAP))));
+    if (finalY < tableauTop - cardHeight * 0.5) return;
+    const toColumn = tableauColumnAt(finalX, MARGIN, cardWidth, GAP, COLUMNS);
+    if (toColumn === null) return;
     if (source.type === "waste") {
       setGame(applyMove(game, { type: "wasteToTableau", toColumn }));
+    } else if (source.type === "foundation") {
+      setGame(applyMove(game, { type: "foundationToTableau", suit: source.suit, toColumn }));
     } else {
       setGame(applyMove(game, { type: "tableauToTableau", fromColumn: source.column, cardIndex: source.cardIndex, toColumn }));
     }
@@ -108,6 +124,11 @@ export function SolitaireScreen() {
   function attemptTapMove(source: DragSource) {
     if (!game) return;
     const moves = legalMoves(game);
+    if (source.type === "foundation") {
+      const move = moves.find((m) => m.type === "foundationToTableau" && m.suit === source.suit);
+      if (move) setGame(applyMove(game, move));
+      return;
+    }
     const foundationMove = moves.find((m) =>
       source.type === "waste" ? m.type === "wasteToFoundation" : m.type === "tableauToFoundation" && m.fromColumn === source.column,
     );
@@ -132,9 +153,11 @@ export function SolitaireScreen() {
       .onBegin(() => setDrag({ source, cards, dx: 0, dy: 0 }))
       .onUpdate((e) => setDrag({ source, cards, dx: e.translationX, dy: e.translationY }))
       .onEnd((e) => {
-        const originX = source.type === "waste" ? MARGIN + cardWidth + GAP : columnX(source.column);
+        const originX = source.type === "waste" ? MARGIN + cardWidth + GAP
+          : source.type === "foundation" ? boardWidth - MARGIN - (4 - foundationOrder.indexOf(source.suit)) * (cardWidth + GAP) + GAP
+          : columnX(source.column);
         const originY =
-          source.type === "waste"
+          source.type !== "tableau"
             ? boardTopInset + MARGIN
             : tableauTop + stackedOffset(game!.tableau[source.column], source.cardIndex, faceDownStep, faceUpStep) - tableauScrollY.current;
         attemptTableauDrop(source, originX + e.translationX, originY + e.translationY);
@@ -167,6 +190,7 @@ export function SolitaireScreen() {
 
   const isHinted = (source: DragSource) => {
     if (!hintMove) return false;
+    if (source.type === "foundation") return hintMove.type === "foundationToTableau" && hintMove.suit === source.suit;
     if (source.type === "waste") return hintMove.type === "wasteToFoundation" || hintMove.type === "wasteToTableau";
     return (
       (hintMove.type === "tableauToFoundation" && hintMove.fromColumn === source.column) ||
@@ -210,7 +234,13 @@ export function SolitaireScreen() {
             const top = pile[pile.length - 1];
             return (
               <View key={suit} style={{ width: cardWidth, height: cardHeight, marginLeft: GAP }}>
-                {top ? <PlayingCard card={top} width={cardWidth} faceStyle={preferences.faceStyle} backStyle={preferences.backStyle} /> : <CardSlot width="100%" height="100%" />}
+                {top ? (
+                  <GestureDetector gesture={makeDragGesture({ type: "foundation", suit }, [top])}>
+                    <View style={draggingIds.has(top.id) ? styles.hidden : undefined}>
+                      <PlayingCard card={top} width={cardWidth} faceStyle={preferences.faceStyle} backStyle={preferences.backStyle} highlighted={isHinted({ type: "foundation", suit })} />
+                    </View>
+                  </GestureDetector>
+                ) : <CardSlot width="100%" height="100%" />}
               </View>
             );
           })}
@@ -278,7 +308,9 @@ export function SolitaireScreen() {
             const origin =
               drag.source.type === "waste"
                 ? { x: MARGIN + cardWidth + GAP, y: boardTopInset + MARGIN }
-                : { x: columnX(drag.source.column), y: tableauTop + stackedOffset(game.tableau[drag.source.column], drag.source.cardIndex, faceDownStep, faceUpStep) + i * faceUpStep - tableauScrollY.current };
+                : drag.source.type === "foundation"
+                  ? { x: boardWidth - MARGIN - (4 - foundationOrder.indexOf(drag.source.suit)) * (cardWidth + GAP) + GAP, y: boardTopInset + MARGIN }
+                  : { x: columnX(drag.source.column), y: tableauTop + stackedOffset(game.tableau[drag.source.column], drag.source.cardIndex, faceDownStep, faceUpStep) + i * faceUpStep - tableauScrollY.current };
             return (
               <View
                 key={card.id}
