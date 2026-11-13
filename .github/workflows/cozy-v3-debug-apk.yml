@@ -24,9 +24,9 @@ jobs:
     env:
       CI: '1'
       EXPO_NO_TELEMETRY: '1'
-      TAG: cozy-v3-visual-fix-20261113-test1
-      APK_NAME: cozy-v3-visual-fix-20261113-test1.apk
-      QR_NAME: cozy-v3-visual-fix-20261113-test1-qr.png
+      TAG: cozy-v3-stabilized-20261113-test2
+      APK_NAME: cozy-v3-stabilized-20261113-test2.apk
+      QR_NAME: cozy-v3-stabilized-20261113-test2-qr.png
     steps:
       - name: Checkout triggering branch commit
         uses: actions/checkout@v4
@@ -104,8 +104,8 @@ jobs:
           else
             gh release create "$TAG" "$APK_NAME" "$QR_NAME" "$APK_NAME.sha256" \
               --target "$GITHUB_SHA" \
-              --title "Cozy Solitaire V3 – visual fix test APK (2026-11-13)" \
-              --notes "Standalone offline Android APK from fix/cozy-button-safe-label with embedded JavaScript (Metro NOT required). Includes button label geometry fix, solitaire layout/localization, and react-native-worklets. Test-signed with debug keystore. Native visual and touch acceptance still pending." \
+              --title "Cozy Solitaire V3 – stabilized test APK (2026-11-13)" \
+              --notes "Standalone Android APK with bundled JavaScript. Includes panel layout fixes, solitaire tap/drag and foundation moves, garden Lysglimt economy, and improved Memory cards. Signed for test installation. Native visual and touch acceptance still pending." \
               --prerelease
           fi
 
