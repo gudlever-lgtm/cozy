@@ -6,16 +6,16 @@ import {CozyButton} from './CozyButton';
 
 const avatars=[require('../assets/illustrations/memory-animal-0.webp'),require('../assets/illustrations/memory-animal-1.webp'),require('../assets/illustrations/memory-animal-2.webp'),require('../assets/illustrations/memory-animal-3.webp')];
 const cardBack=require('../assets/illustrations/card-back-premium.webp');
-export function MemoryBoard({game,onFlip,onNew}:{game:MemoryGame;onFlip:(i:number)=>void;onNew:()=>void}){
-  return <View style={styles.wrap}>
+export function MemoryBoard({game,onFlip,onNew,landscape=false}:{game:MemoryGame;onFlip:(i:number)=>void;onNew:()=>void;landscape?:boolean}){
+  return <View style={[styles.wrap,landscape&&styles.landscapeWrap]}>
     <Text style={styles.title}>Skovens vendespil</Text>
     <Text style={styles.caption}>Find de fire par af skovens venner · {game.turns} forsøg</Text>
-    <View style={styles.grid}>{game.tiles.map((kind,index)=>{
+    <View style={[styles.grid,landscape&&styles.landscapeGrid]}>{game.tiles.map((kind,index)=>{
       const visible=game.revealed.includes(index)||game.matched.includes(index);
       return <Pressable key={index} accessibilityRole="button" accessibilityLabel={visible?`Figur ${kind+1}`:'Vend kort'}
         onPress={()=>onFlip(index)} disabled={game.matched.includes(index)}
-        style={[styles.tile,game.matched.includes(index)&&styles.matched]}>
-        {visible?<Image source={avatars[kind]} resizeMode="contain" style={styles.animal}/>:<Image source={cardBack} resizeMode="stretch" style={styles.back}/>}
+        style={[styles.tile,landscape&&styles.landscapeTile,game.matched.includes(index)&&styles.matched]}>
+        {visible?<Image source={avatars[kind]} resizeMode="contain" style={[styles.animal,landscape&&styles.landscapeAnimal]}/>:<Image source={cardBack} resizeMode="stretch" style={[styles.back,landscape&&styles.landscapeBack]}/>}
       </Pressable>;
     })}</View>
     {memoryWon(game)?<Text style={styles.title}>Alle par fundet! ✨ +5 Lysglimt</Text>:<Text style={styles.caption}>Vend to kort ad gangen</Text>}
@@ -23,6 +23,8 @@ export function MemoryBoard({game,onFlip,onNew}:{game:MemoryGame;onFlip:(i:numbe
   </View>;
 }
 const styles=StyleSheet.create({
+  landscapeWrap:{paddingVertical:6,gap:7},landscapeGrid:{width:310},
+  landscapeTile:{width:73,height:78},landscapeBack:{width:68,height:74},landscapeAnimal:{width:66,height:70},
   wrap:{alignItems:'center',paddingVertical:22,paddingHorizontal:12,gap:15},
   title:{fontSize:23,fontWeight:'900',color:'#19465b',textAlign:'center'},
   caption:{fontSize:14,fontWeight:'700',color:'#6b5135',textAlign:'center'},

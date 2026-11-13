@@ -11,6 +11,7 @@ import {readGarden,writeGarden} from './src/nativeGarden';
 import type {DecorationPlacement} from '../src/domain/garden/layout';
 import {clampGardenOffset} from '../src/domain/garden/viewport';
 import {moveGardenDecoration} from '../src/domain/garden/drag';
+import {cozyLayout} from '../src/domain/ui/responsive';
 import {readSettings,writeSettings} from './src/nativeSettings';
 import type {Season} from './src/nativeSettings';
 import {CardFace,DraggableCard} from './src/DraggableCard';
@@ -118,20 +119,16 @@ export default function App() {
   const offsetRef = useRef(offset);
   offsetRef.current=offset;
   const {width,height} = useWindowDimensions();
-  // Fill the available width while preserving a small gap between seven columns.
-  const cardWidth = Math.min(66,(width-12)/7-0.7);
-  const cardHeight = cardWidth*270/190;
-  // Reserve room for long tableau runs before the action buttons begin.
-  const tableauHeight = Math.max(cardHeight+265,height*0.44);
+  const {landscape,gardenWidth,cardWidth,cardHeight,tableauHeight}=cozyLayout(width,height);
   const gardenHeight=measuredGardenHeight || Math.max(200,height-124);
-  gardenViewportRef.current={width,height:gardenHeight,zoom};
-  useEffect(()=>setOffset(current=>clampGardenOffset(current,zoom,width,gardenHeight)),[zoom,width,gardenHeight]);
+  gardenViewportRef.current={width:gardenWidth,height:gardenHeight,zoom};
+  useEffect(()=>setOffset(current=>clampGardenOffset(current,zoom,gardenWidth,gardenHeight)),[zoom,gardenWidth,gardenHeight]);
   const month=new Date().getMonth();
   const actualSeason=season==='auto'?(month===11||month<2?'winter':month<5?'spring':month<8?'summer':'autumn'):season;
 
   function placeInGarden(x:number,y:number){
     // SVG art and touch surface share the same scaled coordinate system.
-    const nx=Math.max(0.04,Math.min(0.94,x/width));
+    const nx=Math.max(0.04,Math.min(0.94,x/gardenWidth));
     const ny=Math.max(0.08,Math.min(0.91,y/gardenHeight));
     if(movingDecoration){
       setPlaced(items=>items.map(item=>item.id===movingDecoration?{...item,x:nx,y:ny}:item));
@@ -151,7 +148,7 @@ export default function App() {
   }
   function dragGardenDecoration(id:string,dx:number,dy:number){
     if(Math.abs(dx)<6&&Math.abs(dy)<6)return;
-    setPlaced(items=>items.map(item=>item.id===id?moveGardenDecoration(item,dx,dy,zoom,width,gardenHeight):item));
+    setPlaced(items=>items.map(item=>item.id===id?moveGardenDecoration(item,dx,dy,zoom,gardenWidth,gardenHeight):item));
     setMovingDecoration(null);setGardenTool(null);
     setMessage('Dekoration flyttet og gemt');
   }
@@ -359,7 +356,7 @@ export default function App() {
       run={run}
       onDrop={source&&value.up?(x,y)=>dropCard(source,x,y):undefined}/></View>;
   }
-  return <ImageBackground source={gardenIllustrations[actualSeason]} resizeMode="cover" style={styles.root}>
+  return <ImageBackground source={gardenIllustrations[actualSeason]} resizeMode="cover" style={[styles.root,landscape&&styles.landscapeRoot]}>
     <StatusBar style="dark"/>
     {screen === 'garden' ? <View style={styles.garden} onLayout={event=>{
       const nextHeight=event.nativeEvent.layout.height;
@@ -367,10 +364,10 @@ export default function App() {
     }}>
       <View style={{flex:1,overflow:'hidden'}} {...pan.panHandlers}>
         <Pressable onPress={event=>placeInGarden(event.nativeEvent.locationX,event.nativeEvent.locationY)}
-          style={{width,height:gardenHeight,transform:[{translateX:offset.x},{translateY:offset.y},{scale:zoom}]}}>
-          <Image source={gardenIllustrations[actualSeason]} resizeMode="cover" style={{width,height:gardenHeight}}/>
+          style={{width:gardenWidth,height:gardenHeight,transform:[{translateX:offset.x},{translateY:offset.y},{scale:zoom}]}}>
+          <Image source={gardenIllustrations[actualSeason]} resizeMode="cover" style={{width:gardenWidth,height:gardenHeight}}/>
           {placed.map(item=>{const art=decorations[item.kind].image;return <View key={item.id}
-            style={{position:'absolute',left:width*item.x-42,top:gardenHeight*item.y-42}}>
+            style={{position:'absolute',left:gardenWidth*item.x-42,top:gardenHeight*item.y-42}}>
             <DraggableDecoration image={art} name={decorations[item.kind].name} zoom={zoom}
               selected={movingDecoration===item.id}
               onTap={()=>{setGardenTool(null);setMovingDecoration(item.id);setMessage('Træk dekorationen med fingeren, eller tryk et nyt sted i haven');}}
@@ -378,13 +375,13 @@ export default function App() {
           </View>;})}
         </Pressable>
       </View>
-      <View style={styles.hud}>
+      <View style={[styles.hud,landscape&&styles.landscapeHud]}>
         <View style={styles.hudText}><Text style={styles.title}>Min have</Text><Text>Lysglimt ✨ {balance(ledger)}</Text><Text style={styles.tabText}>Dekorationer: 5 ✨</Text></View>
       </View>
-      <View style={styles.gardenTools}>
+      <View style={[styles.gardenTools,landscape&&styles.landscapeGardenTools]}>
         {placed.length>0&&<View style={styles.placedPicker}>
           <Text style={styles.placedPickerLabel}>Flyt en placeret dekoration:</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{maxWidth:width-40}}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{maxWidth:gardenWidth-40}}
             contentContainerStyle={{gap:6,paddingHorizontal:3,paddingVertical:3}}>
             {placed.map((item,index)=><Pressable key={item.id} accessibilityRole="button"
               accessibilityLabel={`Vælg ${decorations[item.kind].name} nummer ${index+1} til flytning`}
@@ -436,17 +433,17 @@ export default function App() {
       </Pressable>)}</View>
       {isWon(game)&&<View style={styles.victory}><Text style={styles.victoryText}>✨ Tillykke! ✨</Text><Text style={styles.victorySubtitle}>En vidunderlig kabale er fuldført</Text></View>}
     </ScrollView>
-    <View style={styles.solitaireDock}>
-      <Text style={styles.boardInfo}>{message || (chosen ? 'Vælg en bunke' : 'Træk kort · Dobbelttryk for automatisk flytning')}</Text>
-      <View style={styles.actions}>
+    <View style={[styles.solitaireDock,landscape&&styles.landscapeDock]}>
+      <Text style={[styles.boardInfo,landscape&&styles.landscapeInfo]}>{message || (chosen ? 'Vælg en bunke' : 'Træk kort · Dobbelttryk for automatisk flytning')}</Text>
+      <View style={[styles.actions,landscape&&styles.landscapeActions]}>
         <CozyButton label="Fortryd" secondary disabled={autoRunning} onPress={()=>{stopVisualCue();setGame(undo(game));setChosen(null);}}/>
         <CozyButton label="Tip" secondary disabled={autoRunning} onPress={showHint}/>
         <CozyButton label="Auto-tøm" disabled={!canAutoFinish(game)||autoRunning} onPress={()=>{void playFinish();}}/>
         <CozyButton label="Nyt spil" disabled={autoRunning} onPress={()=>{stopVisualCue();setGame(newGame(Date.now()));setChosen(null);}}/>
       </View>
     </View>{autoRunning&&<View pointerEvents="auto" style={StyleSheet.absoluteFill}/>}</View> : screen==='mini' ? <ImageBackground source={gardenIllustrations[actualSeason]} resizeMode="cover" style={{flex:1}}>
-      <ScrollView style={styles.board} contentContainerStyle={{padding:14,paddingTop:35}}>
-        <View style={styles.illustratedPanel}><MemoryBoard game={memory} onFlip={flipMemory}
+      <ScrollView style={styles.board} contentContainerStyle={{padding:landscape?8:14,paddingTop:landscape?8:35,alignItems:'center'}}>
+        <View style={[styles.illustratedPanel,landscape&&{maxWidth:540,width:'100%'}]}><MemoryBoard game={memory} onFlip={flipMemory} landscape={landscape}
           onNew={()=>setMemory(newMemoryGame(Math.max(Date.now(),memory.round+1)))}/></View>
       </ScrollView></ImageBackground> :
       screen==='settings'?<ImageBackground source={gardenIllustrations[actualSeason]} resizeMode="cover" style={{flex:1}}><ScrollView style={styles.board} contentContainerStyle={styles.questList}>
@@ -493,14 +490,22 @@ export default function App() {
     {message&&screen!=='cards'&&<Pressable accessibilityRole="button" accessibilityLabel="Luk besked" onPress={()=>setMessage('')} style={styles.notice}>
       <Text style={styles.info}>{message} · Luk ×</Text>
     </Pressable>}
-    <View style={styles.nav}>{tabs.map(tab=><Pressable key={tab.id} accessibilityRole="tab" disabled={autoRunning}
+    <View style={[styles.nav,landscape&&styles.landscapeNav]}>{tabs.map(tab=><Pressable key={tab.id} accessibilityRole="tab" disabled={autoRunning}
       accessibilityState={{selected:screen===tab.id,disabled:autoRunning}} onPress={()=>{stopVisualCue();setScreen(tab.id);setChosen(null);setMessage('');}}
-      style={styles.tab}><View style={screen===tab.id?styles.activeIcon:styles.inactiveIcon}><Image source={tab.icon} resizeMode="contain" style={styles.tabIcon}/></View>
+      style={[styles.tab,landscape&&styles.landscapeTab]}><View style={screen===tab.id?styles.activeIcon:styles.inactiveIcon}><Image source={tab.icon} resizeMode="contain" style={styles.tabIcon}/></View>
       <Text style={[styles.tabText,screen===tab.id&&styles.activeLabel]}>{tab.label}</Text></Pressable>)}</View>
   </ImageBackground>;
 }
 
 const styles=StyleSheet.create({
+  landscapeRoot:{flexDirection:'row'},
+  landscapeHud:{right:undefined,width:258,height:86},
+  landscapeGardenTools:{maxWidth:'90%',padding:5,gap:3},
+  landscapeDock:{width:136,paddingHorizontal:5,paddingVertical:6,justifyContent:'center',borderTopWidth:0,borderLeftWidth:2,borderLeftColor:'#e4c586'},
+  landscapeInfo:{fontSize:11,marginVertical:6},
+  landscapeActions:{flexDirection:'column',flexWrap:'nowrap',gap:4,alignItems:'center'},
+  landscapeNav:{width:92,height:'100%',flexDirection:'column',paddingBottom:0,paddingHorizontal:3,borderTopWidth:0,borderLeftWidth:4,borderLeftColor:'#d5a14c'},
+  landscapeTab:{width:'100%',flex:1,paddingTop:0,gap:0},
   brandIcon:{width:88,height:88,borderRadius:22,borderWidth:3,borderColor:'#f7d987'},
   brandTitle:{fontSize:20,fontWeight:'900',color:'#285563'},
   hintRing:{position:'absolute',borderRadius:13,borderWidth:4,borderColor:'#ffde66',backgroundColor:'#fff3a028',shadowColor:'#fff7b1',shadowOpacity:0.95,shadowRadius:14,elevation:12},
