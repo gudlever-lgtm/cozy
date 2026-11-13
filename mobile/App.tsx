@@ -103,6 +103,7 @@ export default function App() {
     if(movingDecoration){
       setPlaced(items=>items.map(item=>item.id===movingDecoration?{...item,x:nx,y:ny}:item));
       setMovingDecoration(null);
+      setMessage('Dekoration flyttet og gemt');
     }else if(gardenTool!==null){
       if(placed.length>=64){setMessage('Haven er fuld');return;}
       const id=`decor-${Date.now()}-${placed.length}`;
@@ -259,9 +260,9 @@ export default function App() {
           <Image source={gardenIllustrations[actualSeason]} resizeMode="cover" style={{width,height:gardenHeight}}/>
           {placed.map(item=>{const art=decorations[item.kind].image;return <Pressable key={item.id}
             accessibilityLabel={`Flyt ${decorations[item.kind].name}`}
-            onPress={()=>{setGardenTool(null);setMovingDecoration(item.id);}}
+            onPress={event=>{event.stopPropagation();setGardenTool(null);setMovingDecoration(item.id);setMessage('Tryk på et nyt sted i haven');}}
             style={{position:'absolute',left:width*item.x-42,top:gardenHeight*item.y-42,
-              borderWidth:movingDecoration===item.id?2:0,borderColor:'#e0b75b',borderRadius:12}}>
+              borderWidth:movingDecoration===item.id?3:0,borderColor:'#ffe778',borderRadius:12}}>
             <Image source={art} resizeMode="contain" style={{width:84,height:84}}/></Pressable>;})}
         </Pressable>
       </View>
@@ -269,6 +270,18 @@ export default function App() {
         <View style={styles.hudText}><Text style={styles.title}>Min have</Text><Text>Lysglimt ✨ {balance(ledger)}</Text><Text style={styles.tabText}>Dekorationer: 5 ✨</Text></View>
       </View>
       <View style={styles.gardenTools}>
+        {placed.length>0&&<View style={styles.placedPicker}>
+          <Text style={styles.placedPickerLabel}>Flyt en placeret dekoration:</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{maxWidth:width-40}}
+            contentContainerStyle={{gap:6,paddingHorizontal:3,paddingVertical:3}}>
+            {placed.map((item,index)=><Pressable key={item.id} accessibilityRole="button"
+              accessibilityLabel={`Vælg ${decorations[item.kind].name} nummer ${index+1} til flytning`}
+              onPress={()=>{setMovingDecoration(item.id);setGardenTool(null);setMessage('Tryk på et nyt sted i haven');}}
+              style={[styles.placedChip,movingDecoration===item.id&&styles.placedChipActive]}>
+              <Text style={styles.placedChipText}>{decorations[item.kind].name} {index+1}</Text>
+            </Pressable>)}
+          </ScrollView>
+        </View>}
         {(gardenTool!==null||movingDecoration!==null)&&<Text style={styles.info}>Tryk på stedet i haven {movingDecoration?'for at flytte':'for at placere'} · <Text onPress={()=>{setGardenTool(null);setMovingDecoration(null);}}>Annullér</Text></Text>}
         {movingDecoration&&<CozyButton wide label="Fjern dekoration" onPress={()=>{setPlaced(p=>p.filter(d=>d.id!==movingDecoration));setMovingDecoration(null);}}/>}
         <View style={styles.actions}>
@@ -341,6 +354,7 @@ const styles=StyleSheet.create({
   root:{flex:1,paddingTop:28,backgroundColor:'#f5ecd8'},garden:{flex:1,overflow:'hidden'},
   hud:{position:'absolute',top:14,left:16,right:16,height:92,backgroundColor:'#fff1cfef',borderRadius:23,borderWidth:4,borderColor:'#e5af55',shadowColor:'#4a2b17',shadowOpacity:0.3,shadowRadius:8,elevation:7},hudText:{position:'absolute',top:11,left:18,right:18},
   title:{fontSize:23,fontWeight:'900',color:'#1c5663',textShadowColor:'#fffaf0',textShadowRadius:2},gardenTools:{position:'absolute',bottom:8,alignSelf:'center',backgroundColor:'#fff4d9f5',padding:7,borderRadius:20,borderWidth:3,borderColor:'#e8b95f',gap:6,shadowColor:'#382b18',shadowRadius:8,shadowOpacity:0.28,elevation:6},decorButton:{minWidth:82,alignItems:'center',padding:4,backgroundColor:'#ffe6b0',borderRadius:13,borderWidth:2,borderColor:'#d9af64'},
+  placedPicker:{alignItems:'center',gap:2},placedPickerLabel:{fontSize:12,fontWeight:'800',color:'#285563'},placedChip:{minHeight:34,paddingHorizontal:10,justifyContent:'center',borderRadius:12,backgroundColor:'#fff6dd',borderWidth:2,borderColor:'#cfa15e'},placedChipActive:{backgroundColor:'#bfe9ad',borderColor:'#38885d'},placedChipText:{fontSize:12,fontWeight:'800',color:'#35524d'},
   boardTitle:{fontSize:23,fontWeight:'800',textAlign:'center',color:'#fbeccf',textShadowColor:'#172a18',textShadowRadius:5,textShadowOffset:{width:0,height:2}},
   boardMeta:{color:'#fff1d5',textAlign:'center',fontWeight:'700',marginTop:5},boardInfo:{marginVertical:15,textAlign:'center',color:'#f8e8c5',fontWeight:'700'},
   illustratedPanel:{backgroundColor:'#fff1cfef',borderRadius:24,borderWidth:4,borderColor:'#dfad55',shadowColor:'#49351f',shadowRadius:15,shadowOpacity:0.32,elevation:7,padding:5},settingsPanel:{alignItems:'center',width:'100%',maxWidth:380,padding:18,gap:10},sectionHeader:{alignItems:'center',width:'100%',maxWidth:420,padding:14,borderRadius:20,backgroundColor:'#fff1cfef',borderWidth:3,borderColor:'#dfad55'},panelCaption:{color:'#285563',fontSize:14,fontWeight:'800',textAlign:'center'},
