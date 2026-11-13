@@ -16,7 +16,7 @@ import type {Season} from './src/nativeSettings';
 import {CardFace,DraggableCard} from './src/DraggableCard';
 import {DraggableDecoration} from './src/DraggableDecoration';
 import {autoPlace} from '../src/domain/solitaire/autoPlace';
-import {cardForVisualMove,tableauLandingOffset} from '../src/domain/solitaire/visualMoves';
+import {cardForVisualMove,tableauLandingOffset,visibleTableauIndexes} from '../src/domain/solitaire/visualMoves';
 import {CozyButton} from './src/CozyButton';
 import {MemoryBoard} from './src/MemoryBoard';
 import {newMemoryGame,revealMemory,hideMismatch,memoryWon} from '../src/domain/minigames/memory';
@@ -29,6 +29,7 @@ type Source = {kind:'waste' | 'tableau' | 'foundation'; from:number; at:number};
 type MeasuredElement={measureInWindow:(callback:(x:number,y:number,width:number,height:number)=>void)=>void};
 type Rect={x:number;y:number;width:number;height:number};
 type CardFlight={card:Card;faceUp:boolean;mode:'hint'|'finish';from:Rect;dx:number;dy:number};
+type DragVisual={id:string;card:Card;run:Card[];x:number;y:number};
 function measure(element:MeasuredElement|null|undefined):Promise<Rect|null>{
   return new Promise(resolve=>element?element.measureInWindow((x,y,width,height)=>
     resolve(width>0&&height>0?{x,y,width,height}:null)):resolve(null));
@@ -75,6 +76,10 @@ export default function App() {
   const [settingsSaveBlocked,setSettingsSaveBlocked] = useState(false);
   const [chosen,setChosen] = useState<Source | null>(null);
   const [draggingCard,setDraggingCard] = useState<string|null>(null);
+  const [dragVisual,setDragVisual]=useState<DragVisual|null>(null);
+  const dragXY=useRef(new Animated.ValueXY()).current;
+  const dragDelta=useRef({x:0,y:0});
+  const dragToken=useRef(0);
   const tableauTargets=useRef<Array<MeasuredElement|null>>([]);
   const foundationTargets=useRef<Array<MeasuredElement|null>>([]);
   const cardViews=useRef<Record<string,MeasuredElement|null>>({});
@@ -338,7 +343,19 @@ export default function App() {
   function card(value:import('../src/domain/solitaire/klondike').Card,onPress:()=>void,source?:Source,run?:import('../src/domain/solitaire/klondike').Card[]) {
     return <View ref={view=>{cardViews.current[value.id]=view;}} style={{width:cardWidth,height:cardHeight}}><DraggableCard card={value} width={cardWidth} height={cardHeight} onTap={onPress}
       onDoubleTap={source&&value.up?()=>autoMove(source):undefined}
-      onDragChange={source?active=>setDraggingCard(active?value.id:null):undefined}
+      floating={dragVisual?.id===value.id}
+      onDragChange={source?active=>{
+        setDraggingCard(active?value.id:null);
+        const token=++dragToken.current;
+        if(!active){setDragVisual(null);return;}
+        dragDelta.current={x:0,y:0};dragXY.setValue({x:0,y:0});
+        void Promise.all([measure(cardViews.current[value.id]),measure(effectSurface.current)]).then(([start,base])=>{
+          if(token!==dragToken.current||!start||!base)return;
+          dragXY.setValue(dragDelta.current);
+          setDragVisual({id:value.id,card:value,run:run??[value],x:start.x-base.x,y:start.y-base.y});
+        });
+      }:undefined}
+      onDragMove={source?(dx,dy)=>{dragDelta.current={x:dx,y:dy};dragXY.setValue({x:dx,y:dy});}:undefined}
       run={run}
       onDrop={source&&value.up?(x,y)=>dropCard(source,x,y):undefined}/></View>;
   }
@@ -411,8 +428,10 @@ export default function App() {
       </View>
       <View style={[styles.piles,{minHeight:tableauHeight,flexGrow:1}]}>{game.tableau.map((pile,index)=><Pressable ref={view=>{tableauTargets.current[index]=view;}} key={index} onPress={()=>move('tableau',index)}
         accessibilityLabel={`Kolonne ${index+1}`} style={{width:cardWidth,minHeight:tableauHeight,zIndex:draggingCard&&pile.some(c=>c.id===draggingCard)?100:0}}>
-        {pile.map((value,at)=><View key={value.id} style={{marginTop:at?-cardHeight+27:0,zIndex:draggingCard===value.id?999:at,elevation:draggingCard===value.id?15:0}}>
-          {card(value,()=>chosen?move('tableau',index):value.up&&setChosen({kind:'tableau',from:index,at}),{kind:'tableau',from:index,at},pile.slice(at))}</View>)}
+        {visibleTableauIndexes(pile.length).map((at,visibleIndex)=>{const value=pile[at];return <View key={value.id} style={{marginTop:visibleIndex?-cardHeight+27:0,zIndex:draggingCard===value.id?999:visibleIndex,elevation:draggingCard===value.id?15:0}}>
+          {card(value,()=>chosen?move('tableau',index):value.up&&setChosen({kind:'tableau',from:index,at}),{kind:'tableau',from:index,at},pile.slice(at))}
+          {pile.length>5&&visibleIndex===0&&<View pointerEvents="none" style={styles.columnCount}><Text style={styles.columnCountText}>{pile.length}</Text></View>}
+        </View>;})}
         {!pile.length&&<View style={[styles.slot,{height:cardHeight}]}><View style={[styles.emptySlot,{width:cardWidth,height:cardHeight}]}/></View>}
       </Pressable>)}</View>
       {isWon(game)&&<View style={styles.victory}><Text style={styles.victoryText}>✨ Tillykke! ✨</Text><Text style={styles.victorySubtitle}>En vidunderlig kabale er fuldført</Text></View>}
@@ -462,6 +481,14 @@ export default function App() {
           {flight.faceUp?<CardFace card={flight.card} width={cardWidth} height={cardHeight}/>:<Image source={premiumCardBack} style={{width:cardWidth,height:cardHeight}}/>}
         </Animated.View>
       </>}
+      {dragVisual&&<Animated.View style={{position:'absolute',left:dragVisual.x,top:dragVisual.y,
+        width:cardWidth,height:cardHeight,zIndex:10000,elevation:100,
+        transform:dragXY.getTranslateTransform()}}>
+        <CardFace card={dragVisual.card} width={cardWidth} height={cardHeight}/>
+        {dragVisual.run.slice(1).map((next,index)=><View key={next.id} style={{position:'absolute',top:(index+1)*27,left:0}}>
+          <CardFace card={next} width={cardWidth} height={cardHeight}/>
+        </View>)}
+      </Animated.View>}
     </View>
     {message&&screen!=='cards'&&<Pressable accessibilityRole="button" accessibilityLabel="Luk besked" onPress={()=>setMessage('')} style={styles.notice}>
       <Text style={styles.info}>{message} · Luk ×</Text>
@@ -498,6 +525,8 @@ const styles=StyleSheet.create({
   zoneLabels:{flexDirection:'row',gap:5,justifyContent:'space-around'},
   zoneCards:{flexDirection:'row',gap:5,justifyContent:'center'},
   zoneLabel:{fontSize:9,fontWeight:'900',color:'#fff3c9',textAlign:'center',letterSpacing:0.5,marginBottom:4,textShadowColor:'#132c25',textShadowRadius:4},
+  columnCount:{position:'absolute',top:3,right:3,minWidth:24,height:24,paddingHorizontal:4,borderRadius:12,alignItems:'center',justifyContent:'center',backgroundColor:'#174f5b',borderWidth:2,borderColor:'#ffe3a3',elevation:4},
+  columnCountText:{color:'#fff8db',fontSize:12,fontWeight:'900'},
   slot:{borderRadius:8,alignItems:'center',justifyContent:'center'},emptySlot:{borderRadius:9,backgroundColor:'#194b47a8',borderWidth:2,borderColor:'#d7b775',shadowColor:'#091b1e',shadowOpacity:0.2,shadowRadius:3},emptyMark:{position:'absolute',fontSize:20,color:'#fff5d4',fontWeight:'900'},
   rank:{position:'absolute',top:5,left:4,fontWeight:'800',fontSize:12},info:{marginVertical:15,textAlign:'center',color:'#65573d'},
   actions:{flexDirection:'row',gap:7,justifyContent:'center',flexWrap:'wrap'},button:{padding:12,minHeight:44,backgroundColor:'#e9d6aa',borderRadius:9},
