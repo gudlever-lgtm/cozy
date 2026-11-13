@@ -8,7 +8,7 @@ import CloseIcon from "../../assets/v3/icons/close.svg";
 import UndoIcon from "../../assets/v3/icons/undo.svg";
 import StarIcon from "../../assets/v3/icons/star.svg";
 import FlowerIcon from "../../assets/v3/icons/flower.svg";
-import { pan as panCamera, pinchZoom } from "../domain/garden/camera";
+import { minCoverZoom, pan as panCamera, pinchZoom } from "../domain/garden/camera";
 import {
   createGarden,
   currentSeason,
@@ -28,6 +28,7 @@ import { gardenTokens } from "../ui/theme/layoutTokens";
 import { useLocale } from "../i18n/LocaleContext";
 import { useRewardLedger } from "../ui/providers/RewardLedgerContext";
 import { usePreferences } from "../ui/providers/PreferencesContext";
+import { DECORATION_COST } from "../ui/theme/gardenEconomy";
 
 // Candidate "Premium Art V1" raster backgrounds (assets/v3-premium/, see
 // docs/PREMIUM_ART_IMPORT.md) replace the geometric SVG season scenes here. World
@@ -53,6 +54,13 @@ function createCenteredGarden(bounds: CameraBounds): GardenState {
   return { ...fresh, camera: panCamera(fresh.camera, { x: 0, y: deltaY }, bounds) };
 }
 
+function adaptCameraToViewport(garden: GardenState, bounds: CameraBounds): GardenState {
+  const zoom = Math.max(bounds.minZoom, Math.min(bounds.maxZoom, garden.camera.zoom));
+  const camera = panCamera({ ...garden.camera, zoom }, { x: 0, y: 0 }, bounds);
+  return camera.zoom === garden.camera.zoom && camera.offsetX === garden.camera.offsetX && camera.offsetY === garden.camera.offsetY
+    ? garden : { ...garden, camera };
+}
+
 /**
  * Fullscreen garden world. Pan/pinch-zoom and decoration placement are driven by the
  * pure functions in src/domain/garden (camera.ts, garden.ts) — this component only
@@ -67,8 +75,8 @@ function createCenteredGarden(bounds: CameraBounds): GardenState {
  * report.
  */
 export function GardenScreen() {
-  const { t } = useLocale();
-  const { balance } = useRewardLedger();
+  const { t, locale } = useLocale();
+  const { balance, spend } = useRewardLedger();
   const { preferences } = usePreferences();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -77,8 +85,8 @@ export function GardenScreen() {
     () => ({
       viewport: { width, height },
       scene: SCENE,
-      minZoom: gardenTokens.zoomMin,
-      maxZoom: gardenTokens.zoomMaxProposed,
+      minZoom: Math.max(gardenTokens.zoomMin, minCoverZoom({ viewport: { width, height }, scene: SCENE })),
+      maxZoom: Math.max(gardenTokens.zoomMaxProposed, minCoverZoom({ viewport: { width, height }, scene: SCENE })),
     }),
     [width, height],
   );
@@ -87,12 +95,13 @@ export function GardenScreen() {
   const [buildMode, setBuildMode] = useState(false);
   const [selectedKind, setSelectedKind] = useState<DecorationKind | null>(null);
   const [selectedDecorationId, setSelectedDecorationId] = useState<string | null>(null);
+  const [buildMessage, setBuildMessage] = useState("");
 
   useEffect(() => {
     let cancelled = false;
     loadSavedGarden().then((saved) => {
       if (cancelled) return;
-      setGarden(saved ?? createCenteredGarden(bounds));
+      setGarden(saved ? adaptCameraToViewport(saved, bounds) : createCenteredGarden(bounds));
     });
     return () => {
       cancelled = true;
@@ -103,6 +112,12 @@ export function GardenScreen() {
   useEffect(() => {
     if (garden) saveGarden(garden);
   }, [garden]);
+
+  // Saved camera coordinates belong to a particular viewport. Clamp them again
+  // when rotating or resizing so the scene never exposes empty outside space.
+  useEffect(() => {
+    setGarden((current) => current ? adaptCameraToViewport(current, bounds) : current);
+  }, [bounds]);
 
   const cameraRef = useRef<CameraState | null>(null);
   cameraRef.current = garden?.camera ?? null;
@@ -149,9 +164,19 @@ export function GardenScreen() {
     const normY = sceneY / SCENE.height;
 
     if (buildMode && selectedKind) {
-      const id = `${selectedKind}-${Date.now()}`;
+      const id = `${selectedKind}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       const result = placeDecoration(garden, { id, kind: selectedKind, x: normX, y: normY, rotation: 0 }, size);
-      if (result.ok) setGarden(result.state);
+      if (!result.ok) return;
+      const cost = DECORATION_COST[selectedKind];
+      if (balance("lysglimt") < cost) {
+        setBuildMessage(locale === "da" ? `Du mangler ${cost - balance("lysglimt")} Lysglimt. Spil kabale eller Memory.` : `Need ${cost - balance("lysglimt")} more Lysglimt. Play Solitaire or Memory.`);
+        return;
+      }
+      const paid = spend({ id: `garden:place:${id}`, reason: `Garden decoration: ${selectedKind}`, costs: { lysglimt: cost } });
+      if (paid.ok) {
+        setGarden(result.state);
+        setBuildMessage("");
+      }
       return;
     }
 
@@ -293,6 +318,7 @@ export function GardenScreen() {
             onPress={() => {
               setBuildMode((v) => !v);
               setSelectedKind(null);
+              setBuildMessage("");
               setSelectedDecorationId(null);
             }}
           />
@@ -325,11 +351,13 @@ export function GardenScreen() {
                 accessibilityState={{ selected: active }}
                 style={[styles.paletteItem, active ? styles.paletteItemActive : null]}
               >
-                <Art width={36} height={36} />
+                <Art width={30} height={30} />
+                <Text style={styles.paletteCost}>{DECORATION_COST[kind]} ✨</Text>
               </Pressable>
             );
           })}
           </View>
+          {buildMessage ? <Text style={styles.buildMessage}>{buildMessage}</Text> : null}
         </View>
       ) : null}
     </View>
@@ -378,8 +406,10 @@ const styles = StyleSheet.create({
   paletteTitle: { color: "#4a3824", fontWeight: "700", fontSize: 13 },
   paletteGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8, alignItems: "center", justifyContent: "center" },
   paletteItem: {
-    width: 48, height: 48, alignItems: "center", justifyContent: "center",
+    width: 58, height: 58, alignItems: "center", justifyContent: "center",
     backgroundColor: "rgba(255,255,255,0.36)", borderRadius: 12,
   },
   paletteItemActive: { backgroundColor: "#e6c889", borderColor: "#ad7837", borderWidth: 2 },
+  paletteCost: { color: "#4a3824", fontSize: 10, fontWeight: "700" },
+  buildMessage: { color: "#803a2d", fontSize: 12, fontWeight: "600", textAlign: "center", marginTop: 4 },
 });
