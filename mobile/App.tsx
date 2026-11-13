@@ -93,7 +93,8 @@ export default function App() {
   const offsetRef = useRef(offset);
   offsetRef.current=offset;
   const {width,height} = useWindowDimensions();
-  const cardWidth = Math.min(56,(width-34)/7-3);
+  // Seven columns should fill most of the phone without touching each other.
+  const cardWidth = Math.min(64,(width-24)/7-1);
   const cardHeight = cardWidth*270/190;
   const gardenHeight=height-110;
   gardenViewportRef.current={width,height:gardenHeight,zoom};
@@ -349,7 +350,7 @@ const styles=StyleSheet.create({
   tab:{flex:1,justifyContent:'center',alignItems:'center',gap:0,paddingTop:3},selected:{backgroundColor:'#fce3a6'},
   activeIcon:{transform:[{scale:1.16}]},inactiveIcon:{opacity:0.75},activeLabel:{color:'#123f71',fontWeight:'900'},
   tabText:{fontSize:11,color:'#604d30',fontWeight:'700'},
-  board:{flex:1},boardContent:{padding:10,paddingBottom:30},piles:{flexDirection:'row',justifyContent:'space-between',marginTop:22},
+  board:{flex:1},boardContent:{paddingHorizontal:6,paddingTop:12,paddingBottom:30},piles:{flexDirection:'row',justifyContent:'space-between',marginTop:15},
   slot:{borderRadius:6,alignItems:'center',justifyContent:'center'},emptyMark:{position:'absolute',fontSize:20,color:'#8a7049',fontWeight:'700'},
   rank:{position:'absolute',top:5,left:4,fontWeight:'800',fontSize:12},info:{marginVertical:15,textAlign:'center',color:'#65573d'},
   actions:{flexDirection:'row',gap:7,justifyContent:'center',flexWrap:'wrap'},button:{padding:12,minHeight:44,backgroundColor:'#e9d6aa',borderRadius:9},
