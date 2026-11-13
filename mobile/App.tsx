@@ -10,8 +10,8 @@ import {nativeSaveStore} from './src/nativeSave';
 import {readGarden,writeGarden} from './src/nativeGarden';
 import type {DecorationPlacement} from '../src/domain/garden/layout';
 import SpringGarden from '../assets/v3/backgrounds/garden-spring.svg';
-import Face from '../assets/v3/cards/face-blank.svg';
 import Back from '../assets/v3/cards/back-botanical.svg';
+import {DraggableCard} from './src/DraggableCard';
 import IconGarden from '../assets/v3/icons/garden.svg';
 import IconCards from '../assets/v3/icons/cards.svg';
 import IconMini from '../assets/v3/icons/mini.svg';
@@ -22,12 +22,11 @@ import FlowerPot from '../assets/v3/decorations/flower-pot.svg';
 
 type Screen = 'garden' | 'cards' | 'mini' | 'quests';
 type Source = {kind:'waste' | 'tableau' | 'foundation'; from:number; at:number};
+type MeasuredElement={measureInWindow:(callback:(x:number,y:number,width:number,height:number)=>void)=>void};
 const tabs = [
   {id:'garden', label:'Have', icon:IconGarden}, {id:'cards',label:'Kabale',icon:IconCards},
   {id:'mini',label:'Minispil',icon:IconMini}, {id:'quests',label:'Opgaver',icon:IconQuests},
 ] as const;
-const faceRank = (n:number) => ({1:'A',11:'J',12:'Q',13:'K'} as Record<number,string>)[n] ?? String(n);
-const suitSign = (s:string) => ({C:'♣',D:'♦',H:'♥',S:'♠'} as Record<string,string>)[s];
 const decorations = [{name:'Bænk',art:Bench},{name:'Springvand',art:Fountain},{name:'Blomster',art:FlowerPot}] as const;
 
 export default function App() {
@@ -38,6 +37,8 @@ export default function App() {
   const [saveBlocked,setSaveBlocked] = useState(false);
   const [gardenLoaded,setGardenLoaded] = useState(false);
   const [chosen,setChosen] = useState<Source | null>(null);
+  const tableauTargets=useRef<Array<MeasuredElement|null>>([]);
+  const foundationTargets=useRef<Array<MeasuredElement|null>>([]);
   const [message,setMessage] = useState('');
   const [zoom,setZoom] = useState(1);
   const [offset,setOffset] = useState({x:0,y:0});
@@ -103,15 +104,33 @@ export default function App() {
   },[game,loaded]);
 
   function move(to:'tableau' | 'foundation',index:number) {
-    if (!chosen) return;
-    if(chosen.kind==='foundation'&&to==='foundation'){setChosen(null);return;}
-    const action:Move = chosen.kind === 'waste' ? {kind:'waste',to,index} :
-      chosen.kind === 'foundation' ? {kind:'foundation',from:chosen.from,to:index} :
-        {kind:'tableau',from:chosen.from,at:chosen.at,to,index};
+    if(chosen)executeMove(chosen,to,index);
+  }
+  function executeMove(source:Source,to:'tableau'|'foundation',index:number){
+    if(source.kind==='foundation'&&to==='foundation'){setChosen(null);return;}
+    const action:Move = source.kind === 'waste' ? {kind:'waste',to,index} :
+      source.kind === 'foundation' ? {kind:'foundation',from:source.from,to:index} :
+        {kind:'tableau',from:source.from,at:source.at,to,index};
     if (legalMoves(game).some(m => JSON.stringify(m) === JSON.stringify(action))) {
       setGame(applyMove(game,action));setMessage('');
     } else setMessage('Ulovligt træk');
     setChosen(null);
+  }
+  function dropCard(source:Source,x:number,y:number){
+    const targets=[...foundationTargets.current.map((view,index)=>({view,index,to:'foundation' as const})),
+      ...tableauTargets.current.map((view,index)=>({view,index,to:'tableau' as const}))].filter(t=>t.view);
+    let pending=targets.length;
+    let winner:({index:number;to:'foundation'|'tableau'})|null=null;
+    if(!pending)return;
+    targets.forEach(target=>target.view!.measureInWindow((left,top,w,h)=>{
+      if(x>=left&&x<=left+w&&y>=top&&y<=top+h&&!winner)winner={index:target.index,to:target.to};
+      pending--;
+      if(pending===0){
+        const chosenTarget=winner as {index:number;to:'foundation'|'tableau'}|null;
+        if(chosenTarget)executeMove(source,chosenTarget.to,chosenTarget.index);
+        else setMessage('Slip kortet på en bunke');
+      }
+    }));
   }
   function draw() {
     const kind = game.stock.length ? 'draw' : 'recycle';
@@ -132,14 +151,9 @@ export default function App() {
     else setChosen({kind:'tableau',from:candidate.from,at:candidate.at});
     setMessage(`Flyt til ${candidate.to==='foundation'?'grundbunke':'kolonne'} ${candidate.index+1}`);
   }
-  function card(value:{rank:number;suit:string;up:boolean},onPress?:()=>void) {
-    return <Pressable onPress={onPress} accessibilityRole="button"
-      accessibilityLabel={value.up ? `${faceRank(value.rank)} ${suitSign(value.suit)}` : 'Skjult kort'}
-      style={{width:cardWidth,height:cardHeight}}>
-      {value.up ? <Face width={cardWidth} height={cardHeight}/> : <Back width={cardWidth} height={cardHeight}/>}
-      {value.up && <Text style={[styles.rank,{color:'DH'.includes(value.suit)?'#a03546':'#283b3b'}]}>
-        {faceRank(value.rank)}{suitSign(value.suit)}</Text>}
-    </Pressable>;
+  function card(value:import('../src/domain/solitaire/klondike').Card,onPress:()=>void,source?:Source) {
+    return <DraggableCard card={value} width={cardWidth} height={cardHeight} onTap={onPress}
+      onDrop={source&&value.up?(x,y)=>dropCard(source,x,y):undefined}/>;
   }
   return <View style={styles.root}>
     <StatusBar style="dark"/>
@@ -174,16 +188,16 @@ export default function App() {
       <View style={styles.piles}>
         <Pressable onPress={draw} accessibilityLabel="Træk fra bunken" style={[styles.slot,{width:cardWidth,height:cardHeight}]}>
           {game.stock.length ? <Back width={cardWidth} height={cardHeight}/> : <Text>↻</Text>}</Pressable>
-        {game.waste.length ? card(game.waste.at(-1)!,()=>setChosen({kind:'waste',from:0,at:0})) :
+        {game.waste.length ? card(game.waste.at(-1)!,()=>setChosen({kind:'waste',from:0,at:0}),{kind:'waste',from:0,at:0}) :
           <View style={[styles.slot,{width:cardWidth,height:cardHeight}]}/>}
-        {game.foundations.map((pile,index)=><Pressable key={index} onPress={()=>chosen?move('foundation',index):pile.length?setChosen({kind:'foundation',from:index,at:pile.length-1}):undefined}
+        {game.foundations.map((pile,index)=><Pressable ref={view=>{foundationTargets.current[index]=view;}} key={index} onPress={()=>chosen?move('foundation',index):pile.length?setChosen({kind:'foundation',from:index,at:pile.length-1}):undefined}
           accessibilityLabel={`Grundbunke ${index+1}`} style={[styles.slot,{width:cardWidth,height:cardHeight}]}>
-          {pile.length ? card(pile.at(-1)!) : <Text>A</Text>}</Pressable>)}
+          {pile.length ? card(pile.at(-1)!,()=>chosen?move('foundation',index):setChosen({kind:'foundation',from:index,at:pile.length-1}),{kind:'foundation',from:index,at:pile.length-1}) : <Text>A</Text>}</Pressable>)}
       </View>
-      <View style={styles.piles}>{game.tableau.map((pile,index)=><Pressable key={index} onPress={()=>move('tableau',index)}
+      <View style={styles.piles}>{game.tableau.map((pile,index)=><Pressable ref={view=>{tableauTargets.current[index]=view;}} key={index} onPress={()=>move('tableau',index)}
         accessibilityLabel={`Kolonne ${index+1}`} style={{width:cardWidth,minHeight:cardHeight+150}}>
         {pile.map((value,at)=><View key={value.id} style={{marginTop:at?-cardHeight+27:0}}>
-          {card(value,()=>chosen?move('tableau',index):value.up&&setChosen({kind:'tableau',from:index,at}))}</View>)}
+          {card(value,()=>chosen?move('tableau',index):value.up&&setChosen({kind:'tableau',from:index,at}),{kind:'tableau',from:index,at})}</View>)}
         {!pile.length&&<View style={[styles.slot,{height:cardHeight}]}/>}
       </Pressable>)}</View>
       <Text style={styles.info}>{message || (chosen ? 'Vælg en bunke' : 'Vælg kort og destination')}</Text>

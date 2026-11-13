@@ -36,7 +36,7 @@
 **Gate T1:** Arkitektur og testplan er godkendt.
 
 ## Fase 3 – Implementering i afgrænsede leverancer
-**Aktuel status:** Expo-appskal med SVG-have, kortgrafik, navigation, tap-baseret Klondike, lokal save/load, første zoom/pan, dekorationsplacering og idempotent sejrsløn er påbegyndt. Android JS-bundling og TypeScript er grønt. Ingen enhedstest af den native UI, og ingen APK er bygget. Se `mobile/README.md` for mangler.
+**Aktuel status:** Expo-appskal med SVG-have, kortgrafik, navigation, Klondike med tap og første drag/drop, lokal save/load, zoom/pan, placerbare og flytbare dekorationer og idempotent sejrsløn er påbegyndt. Android JS-bundling, TypeScript og 20 domænetests er grønt. **Drag/drop og grafik er ikke verificeret på en fysisk enhed**, og ingen APK er bygget. Se `mobile/README.md` for mangler.
 
 1. App shell / navigation og onboarding.
 2. Haveforside med zoom/pan og figurer.
