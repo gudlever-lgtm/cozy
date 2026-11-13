@@ -9,7 +9,7 @@ Status: 13. november 2026. Inventaret beskriver filerne i repoet og deres faktis
 | `garden-spring.webp`, `garden-summer.webp`, `garden-autumn.webp`, `garden-winter.webp` | Sæsonbaggrunde i haven, minispillet og opgaver | I brug |
 | `solitaire-table.webp` | Spillebordet i syvkabalen | I brug |
 | `bench.webp`, `fountain.webp`, `flower-pots.webp` | Genstande i haven og i haveværktøjet | I brug |
-| `nav-premium.webp` | Nederste navigationsbjælke | I brug |
+| `nav-premium.webp` | Tidligere bred bundmenuillustration | Arkiveret – den blev forvrænget på smalle skærme |
 | `nav-icon-0.webp` til `nav-icon-4.webp` | Fem illustrerede 3D-ikoner til navigationen | I brug |
 | `card-back-premium.webp` | Kortbagsider i kabale og vendespil | I brug |
 | `card-face-premium.webp` | Illustreret creme-/guldramme til kortforsider i kabalen | I brug |
@@ -33,7 +33,7 @@ Disse 21 WebP-filer er de nyere billedillustrationer. Ældre SVG-udgaver ligger 
 
 ## Faktisk brug i mobilappen
 
-- Bundnavigation: fem `nav-icon-*.webp` over `nav-premium.webp`.
+- Bundnavigation: fem `nav-icon-*.webp` på en responsiv creme-/guldmenu med fast højde. Den gamle brede menuillustration er fravalgt, fordi opskalering gav proportioneringsfejl på telefoner.
 - Kabale: `card-face-premium.webp` med læsbare dynamiske rang- og kulørsymboler, `card-back-premium.webp`, indlagte tomme felter og `solitaire-table.webp`.
 - Vendespil: fire `memory-animal-*.webp` og den nye kortbagside.
 - Knapper: `button-premium.webp` og indrammede sekundære knapper.

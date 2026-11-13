@@ -43,7 +43,6 @@ const gardenIllustrations={
   winter:require('./assets/illustrations/garden-winter.webp'),
 };
 const solitaireTable=require('./assets/illustrations/solitaire-table.webp');
-const premiumNav=require('./assets/illustrations/nav-premium.webp');
 const premiumCardBack=require('./assets/illustrations/card-back-premium.webp');
 
 export default function App() {
@@ -70,6 +69,7 @@ export default function App() {
   const foundationTargets=useRef<Array<MeasuredElement|null>>([]);
   const [message,setMessage] = useState('');
   const [zoom,setZoom] = useState(1);
+  const [measuredGardenHeight,setMeasuredGardenHeight] = useState(0);
   const [offset,setOffset] = useState({x:0,y:0});
   const [placed,setPlaced] = useState<DecorationPlacement[]>([]);
   const [gardenTool,setGardenTool] = useState<0|1|2|null>(null);
@@ -90,7 +90,7 @@ export default function App() {
   // Seven columns should fill most of the phone without touching each other.
   const cardWidth = Math.min(64,(width-24)/7-1);
   const cardHeight = cardWidth*270/190;
-  const gardenHeight=height-110;
+  const gardenHeight=measuredGardenHeight || Math.max(200,height-124);
   gardenViewportRef.current={width,height:gardenHeight,zoom};
   useEffect(()=>setOffset(current=>clampGardenOffset(current,zoom,width,gardenHeight)),[zoom,width,gardenHeight]);
   const month=new Date().getMonth();
@@ -247,9 +247,12 @@ export default function App() {
       run={run}
       onDrop={source&&value.up?(x,y)=>dropCard(source,x,y):undefined}/>;
   }
-  return <View style={styles.root}>
+  return <ImageBackground source={gardenIllustrations[actualSeason]} resizeMode="cover" style={styles.root}>
     <StatusBar style="dark"/>
-    {screen === 'garden' ? <View style={styles.garden}>
+    {screen === 'garden' ? <View style={styles.garden} onLayout={event=>{
+      const nextHeight=event.nativeEvent.layout.height;
+      setMeasuredGardenHeight(current=>Math.abs(current-nextHeight)>1?nextHeight:current);
+    }}>
       <View style={{flex:1,overflow:'hidden'}} {...pan.panHandlers}>
         <Pressable onPress={event=>placeInGarden(event.nativeEvent.locationX,event.nativeEvent.locationY)}
           style={{width,height:gardenHeight,transform:[{translateX:offset.x},{translateY:offset.y},{scale:zoom}]}}>
@@ -327,11 +330,11 @@ export default function App() {
     {message&&screen!=='cards'&&<Pressable accessibilityRole="button" accessibilityLabel="Luk besked" onPress={()=>setMessage('')} style={styles.notice}>
       <Text style={styles.info}>{message} · Luk ×</Text>
     </Pressable>}
-    <View style={styles.nav}><Image source={premiumNav} resizeMode="stretch" style={StyleSheet.absoluteFill}/>{tabs.map(tab=><Pressable key={tab.id} accessibilityRole="tab"
+    <View style={styles.nav}>{tabs.map(tab=><Pressable key={tab.id} accessibilityRole="tab"
       accessibilityState={{selected:screen===tab.id}} onPress={()=>{setScreen(tab.id);setChosen(null);}}
       style={styles.tab}><View style={screen===tab.id?styles.activeIcon:styles.inactiveIcon}><Image source={tab.icon} resizeMode="contain" style={styles.tabIcon}/></View>
       <Text style={[styles.tabText,screen===tab.id&&styles.activeLabel]}>{tab.label}</Text></Pressable>)}</View>
-  </View>;
+  </ImageBackground>;
 }
 
 const styles=StyleSheet.create({
@@ -341,9 +344,9 @@ const styles=StyleSheet.create({
   boardTitle:{fontSize:23,fontWeight:'800',textAlign:'center',color:'#fbeccf',textShadowColor:'#172a18',textShadowRadius:5,textShadowOffset:{width:0,height:2}},
   boardMeta:{color:'#fff1d5',textAlign:'center',fontWeight:'700',marginTop:5},boardInfo:{marginVertical:15,textAlign:'center',color:'#f8e8c5',fontWeight:'700'},
   illustratedPanel:{backgroundColor:'#fff1cfef',borderRadius:24,borderWidth:4,borderColor:'#dfad55',shadowColor:'#49351f',shadowRadius:15,shadowOpacity:0.32,elevation:7,padding:5},settingsPanel:{alignItems:'center',width:'100%',maxWidth:380,padding:18,gap:10},sectionHeader:{alignItems:'center',width:'100%',maxWidth:420,padding:14,borderRadius:20,backgroundColor:'#fff1cfef',borderWidth:3,borderColor:'#dfad55'},panelCaption:{color:'#285563',fontSize:14,fontWeight:'800',textAlign:'center'},
-  nav:{height:88,flexDirection:'row',backgroundColor:'#fff4df',alignItems:'center',paddingHorizontal:6},
-  tab:{flex:1,justifyContent:'center',alignItems:'center',gap:0,paddingTop:3},selected:{backgroundColor:'#fce3a6'},
-  activeIcon:{transform:[{scale:1.12}]},inactiveIcon:{opacity:0.86},tabIcon:{width:46,height:49},activeLabel:{color:'#123f71',fontWeight:'900'},
+  nav:{height:96,flexDirection:'row',backgroundColor:'#fff1d6',alignItems:'center',paddingHorizontal:6,paddingBottom:18,borderTopWidth:4,borderTopColor:'#d5a14c',shadowColor:'#49341f',shadowOpacity:0.22,shadowRadius:5,elevation:9},
+  tab:{flex:1,justifyContent:'center',alignItems:'center',gap:1,paddingTop:3},selected:{backgroundColor:'#fce3a6'},
+  activeIcon:{transform:[{scale:1.1}]},inactiveIcon:{opacity:0.86},tabIcon:{width:38,height:40},activeLabel:{color:'#123f71',fontWeight:'900'},
   tabText:{fontSize:11,color:'#604d30',fontWeight:'700'},
   board:{flex:1},boardContent:{paddingHorizontal:6,paddingTop:12,paddingBottom:30},piles:{flexDirection:'row',justifyContent:'space-between',marginTop:15},
   slot:{borderRadius:8,alignItems:'center',justifyContent:'center'},emptySlot:{borderRadius:9,backgroundColor:'#194b47a8',borderWidth:2,borderColor:'#d7b775',shadowColor:'#091b1e',shadowOpacity:0.2,shadowRadius:3},emptyMark:{position:'absolute',fontSize:20,color:'#fff5d4',fontWeight:'900'},
