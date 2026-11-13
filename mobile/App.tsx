@@ -1,5 +1,5 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {PanResponder, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View} from 'react-native';
+import {Image, ImageBackground, PanResponder, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View} from 'react-native';
 import {StatusBar} from 'expo-status-bar';
 import {applyMove, autoFinish, canAutoFinish, hint, isWon, legalMoves, newGame, undo} from '../src/domain/solitaire/klondike';
 import type {Move} from '../src/domain/solitaire/klondike';
@@ -9,10 +9,6 @@ import {loadGame, saveGame} from '../src/persistence/save';
 import {nativeSaveStore} from './src/nativeSave';
 import {readGarden,writeGarden} from './src/nativeGarden';
 import type {DecorationPlacement} from '../src/domain/garden/layout';
-import SpringGarden from '../assets/v3/backgrounds/garden-spring.svg';
-import SummerGarden from '../assets/v3/backgrounds/garden-summer.svg';
-import AutumnGarden from '../assets/v3/backgrounds/garden-autumn.svg';
-import WinterGarden from '../assets/v3/backgrounds/garden-winter.svg';
 import {readSettings,writeSettings} from './src/nativeSettings';
 import type {Season} from './src/nativeSettings';
 import Back from '../assets/v3/cards/back-botanical.svg';
@@ -28,9 +24,6 @@ import IconCards from '../assets/v3/icons/cards.svg';
 import IconMini from '../assets/v3/icons/mini.svg';
 import IconQuests from '../assets/v3/icons/quests.svg';
 import IconSettings from '../assets/v3/icons/settings.svg';
-import Bench from '../assets/v3/decorations/bench.svg';
-import Fountain from '../assets/v3/decorations/fountain.svg';
-import FlowerPot from '../assets/v3/decorations/flower-pot.svg';
 import HeaderBanner from '../assets/v3/ui/header-banner.svg';
 import TabBackground from '../assets/v3/ui/tab-background.svg';
 import PanelWide from '../assets/v3/ui/panel-wide.svg';
@@ -44,7 +37,18 @@ const tabs = [
   {id:'mini',label:'Minispil',icon:IconMini}, {id:'quests',label:'Opgaver',icon:IconQuests},
   {id:'settings',label:'Indstil',icon:IconSettings},
 ] as const;
-const decorations = [{name:'Bænk',art:Bench},{name:'Springvand',art:Fountain},{name:'Blomster',art:FlowerPot}] as const;
+const decorations = [
+  {name:'Bænk',image:require('./assets/illustrations/bench.webp')},
+  {name:'Springvand',image:require('./assets/illustrations/fountain.webp')},
+  {name:'Blomster',image:require('./assets/illustrations/flower-pots.webp')},
+] as const;
+const gardenIllustrations={
+  spring:require('./assets/illustrations/garden-spring.webp'),
+  summer:require('./assets/illustrations/garden-summer.webp'),
+  autumn:require('./assets/illustrations/garden-autumn.webp'),
+  winter:require('./assets/illustrations/garden-winter.webp'),
+};
+const solitaireTable=require('./assets/illustrations/solitaire-table.webp');
 
 export default function App() {
   const [screen,setScreen] = useState<Screen>('garden');
@@ -84,7 +88,6 @@ export default function App() {
   const gardenHeight=height-110;
   const month=new Date().getMonth();
   const actualSeason=season==='auto'?(month===11||month<2?'winter':month<5?'spring':month<8?'summer':'autumn'):season;
-  const GardenArt={spring:SpringGarden,summer:SummerGarden,autumn:AutumnGarden,winter:WinterGarden}[actualSeason];
 
   function placeInGarden(x:number,y:number){
     // SVG art and touch surface share the same scaled coordinate system.
@@ -243,13 +246,13 @@ export default function App() {
       <View style={{flex:1,overflow:'hidden'}} {...pan.panHandlers}>
         <Pressable onPress={event=>placeInGarden(event.nativeEvent.locationX,event.nativeEvent.locationY)}
           style={{width,height:gardenHeight,transform:[{translateX:offset.x},{translateY:offset.y},{scale:zoom}]}}>
-          <GardenArt width={width} height={gardenHeight} preserveAspectRatio="xMidYMid slice"/>
-          {placed.map(item=>{const Art=decorations[item.kind].art;return <Pressable key={item.id}
+          <Image source={gardenIllustrations[actualSeason]} resizeMode="cover" style={{width,height:gardenHeight}}/>
+          {placed.map(item=>{const art=decorations[item.kind].image;return <Pressable key={item.id}
             accessibilityLabel={`Flyt ${decorations[item.kind].name}`}
             onPress={()=>{setGardenTool(null);setMovingDecoration(item.id);}}
             style={{position:'absolute',left:width*item.x-42,top:gardenHeight*item.y-42,
               borderWidth:movingDecoration===item.id?2:0,borderColor:'#e0b75b',borderRadius:12}}>
-            <Art width={84} height={84}/></Pressable>;})}
+            <Image source={art} resizeMode="contain" style={{width:84,height:84}}/></Pressable>;})}
         </Pressable>
       </View>
       <View style={styles.hud}><HeaderBanner width="100%" height={92} preserveAspectRatio="none"/>
@@ -265,10 +268,10 @@ export default function App() {
         </View>
         <View style={styles.actions}>{decorations.map((d,i)=><Pressable key={d.name}
           style={[styles.decorButton,gardenTool===i&&styles.selected]} onPress={()=>{setGardenTool(i as 0|1|2);setMovingDecoration(null);}}
-          accessibilityLabel={`Vælg ${d.name}`}><d.art width={44} height={44}/><Text style={styles.tabText}>{d.name}</Text></Pressable>)}</View>
+          accessibilityLabel={`Vælg ${d.name}`}><Image source={d.image} resizeMode="contain" style={{width:52,height:52}}/><Text style={styles.tabText}>{d.name}</Text></Pressable>)}</View>
       </View>
-    </View> : screen === 'cards' ? <ScrollView style={styles.board} contentContainerStyle={styles.boardContent}>
-      <Text style={styles.title}>Kabale · Klondike</Text><Text>Flytninger: {game.moves} · Lysglimt ✨ {balance(ledger)}</Text>
+    </View> : screen === 'cards' ? <View style={{flex:1}}><ImageBackground source={solitaireTable} resizeMode="cover" style={StyleSheet.absoluteFill}/><ScrollView style={styles.board} contentContainerStyle={styles.boardContent}>
+      <Text style={styles.boardTitle}>Kabale · Klondike</Text><Text style={styles.boardMeta}>Flytninger: {game.moves} · Lysglimt ✨ {balance(ledger)}</Text>
       <View style={styles.piles}>
         <Pressable onPress={draw} accessibilityLabel="Træk fra bunken" style={[styles.slot,{width:cardWidth,height:cardHeight}]}>
           {game.stock.length ? <Back width={cardWidth} height={cardHeight}/> : <><CardSlot width={cardWidth} height={cardHeight}/><Text style={styles.emptyMark}>↻</Text></>}</Pressable>
@@ -284,23 +287,26 @@ export default function App() {
           {card(value,()=>chosen?move('tableau',index):value.up&&setChosen({kind:'tableau',from:index,at}),{kind:'tableau',from:index,at},pile.slice(at))}</View>)}
         {!pile.length&&<View style={[styles.slot,{height:cardHeight}]}><CardSlot width={cardWidth} height={cardHeight}/></View>}
       </Pressable>)}</View>
-      <Text style={styles.info}>{message || (chosen ? 'Vælg en bunke' : 'Træk kort, dobbelttryk for automatisk flytning eller vælg kort og bunke')}</Text>
+      <Text style={styles.boardInfo}>{message || (chosen ? 'Vælg en bunke' : 'Træk kort · Dobbelttryk for automatisk flytning')}</Text>
       <View style={styles.actions}>
         <CozyButton label="Fortryd" secondary onPress={()=>{setGame(undo(game));setChosen(null);}}/>
         <CozyButton label="Tip" secondary onPress={showHint}/>
         {canAutoFinish(game)&&<CozyButton label="Afslut" onPress={()=>setGame(autoFinish(game))}/>}
         <CozyButton label="Nyt spil" onPress={()=>{setGame(newGame(Date.now()));setChosen(null);}}/>
       </View>
-      {isWon(game)&&<Text style={styles.title}>Tillykke! Du har vundet ✨</Text>}
-    </ScrollView> : screen==='mini' ? <ScrollView style={styles.board}><MemoryBoard game={memory} onFlip={flipMemory}
-      onNew={()=>setMemory(newMemoryGame(Math.max(Date.now(),memory.round+1)))}/></ScrollView> :
+      {isWon(game)&&<Text style={styles.boardTitle}>Tillykke! Du har vundet ✨</Text>}
+    </ScrollView></View> : screen==='mini' ? <ImageBackground source={gardenIllustrations[actualSeason]} resizeMode="cover" style={{flex:1}}>
+      <ScrollView style={styles.board} contentContainerStyle={{padding:14,paddingTop:35}}>
+        <View style={styles.illustratedPanel}><MemoryBoard game={memory} onFlip={flipMemory}
+          onNew={()=>setMemory(newMemoryGame(Math.max(Date.now(),memory.round+1)))}/></View>
+      </ScrollView></ImageBackground> :
       screen==='settings'?<ScrollView style={styles.board} contentContainerStyle={styles.questList}>
         <Text style={styles.title}>Indstillinger</Text><Text style={styles.info}>Vælg havens sæson</Text>
         {(['auto','spring','summer','autumn','winter'] as Season[]).map(value=><CozyButton
           key={value} wide secondary={value!==season} label={`${value===season?'✓ ':''}${{auto:'Automatisk',spring:'Forår',summer:'Sommer',autumn:'Efterår',winter:'Vinter'}[value]}`}
           onPress={()=>setSeason(value)}/>)}
         <Text style={styles.info}>Spillet er gratis, uden reklamer eller køb for rigtige penge.</Text>
-      </ScrollView>:<ScrollView style={styles.board} contentContainerStyle={styles.questList}>
+      </ScrollView>:<ImageBackground source={gardenIllustrations[actualSeason]} resizeMode="cover" style={{flex:1}}><ScrollView style={styles.board} contentContainerStyle={styles.questList}>
         <Text style={styles.title}>Mine opgaver</Text><Text style={styles.info}>Små mål med Lysglimt som belønning ✨</Text>
         {quests(ledger,placed.length).map(q=><View key={q.id} style={styles.quest}>
           <PanelWide width="100%" height="100%" preserveAspectRatio="none" style={StyleSheet.absoluteFill}/>
@@ -308,7 +314,7 @@ export default function App() {
             <Text style={styles.info}>{q.claimed?'Fuldført og indløst':q.complete?'Klar til at indløse':'I gang'} · +{q.reward} ✨</Text>
             {q.complete&&!q.claimed&&<CozyButton label="Hent belønning" wide onPress={()=>claimQuest(q.id,q.reward)}/>}</View>
         </View>)}
-      </ScrollView>}
+      </ScrollView></ImageBackground>}
     {message&&screen!=='cards'&&<Pressable accessibilityRole="button" accessibilityLabel="Luk besked" onPress={()=>setMessage('')} style={styles.notice}>
       <Text style={styles.info}>{message} · Luk ×</Text>
     </Pressable>}
@@ -323,6 +329,9 @@ const styles=StyleSheet.create({
   root:{flex:1,paddingTop:28,backgroundColor:'#f5ecd8'},garden:{flex:1,overflow:'hidden'},
   hud:{position:'absolute',top:14,left:16,right:16,height:92},hudText:{position:'absolute',top:14,left:22,right:18},
   title:{fontSize:22,fontWeight:'700',color:'#4e543b'},gardenTools:{position:'absolute',bottom:8,alignSelf:'center',backgroundColor:'#fff7e8e8',padding:7,borderRadius:12,gap:7},decorButton:{minWidth:82,alignItems:'center',padding:4,backgroundColor:'#e9d6aa',borderRadius:9},
+  boardTitle:{fontSize:23,fontWeight:'800',textAlign:'center',color:'#fbeccf',textShadowColor:'#172a18',textShadowRadius:5,textShadowOffset:{width:0,height:2}},
+  boardMeta:{color:'#fff1d5',textAlign:'center',fontWeight:'700',marginTop:5},boardInfo:{marginVertical:15,textAlign:'center',color:'#f8e8c5',fontWeight:'700'},
+  illustratedPanel:{backgroundColor:'#fff5e9ed',borderRadius:24,borderWidth:2,borderColor:'#d3ad76',shadowColor:'#49351f',shadowRadius:15,shadowOpacity:0.25,elevation:7},
   nav:{height:72,flexDirection:'row',backgroundColor:'#fff4df'},
   tab:{flex:1,justifyContent:'center',alignItems:'center',gap:3},selected:{backgroundColor:'#ebdebd'},tabText:{fontSize:12,color:'#504631'},
   board:{flex:1},boardContent:{padding:10,paddingBottom:30},piles:{flexDirection:'row',justifyContent:'space-between',marginTop:22},
