@@ -2,6 +2,7 @@ import React from "react";
 import { View, type ViewStyle } from "react-native";
 import type { SvgProps } from "react-native-svg";
 import { useUniqueSvgIdsRef } from "./useUniqueSvgIds";
+import { nineSliceScale } from "../theme/nineSliceGeometry";
 
 export interface NineSliceFrameProps {
   readonly Source: React.FC<SvgProps>;
@@ -48,7 +49,9 @@ export function NineSliceFrame({
   // Uniform scale derived from width keeps corner ornaments proportioned exactly as
   // they'd look if the whole asset were scaled by width — never squashed or enlarged
   // relative to the rest of the frame.
-  const scale = width / W;
+  // Content-sized panels may be shorter than both ornaments combined. Without
+  // this cap, their top and bottom rows overlap and the painted center vanishes.
+  const scale = nineSliceScale(width, W, height, T, B);
   const sL = L * scale;
   const sR = R * scale;
   const sT = T * scale;
