@@ -9,6 +9,7 @@ param(
     [switch]$SkipInstall,
     [switch]$FreshInstall,
     [switch]$ForcePrebuild,
+    [switch]$Diagnose,
     [string]$OutputPath = ''
 )
 
@@ -26,6 +27,7 @@ if ($SkipPull) { $buildArgs += '--skip-pull' }
 if ($SkipInstall) { $buildArgs += '--skip-install' }
 if ($FreshInstall) { $buildArgs += '--fresh-install' }
 if ($ForcePrebuild) { $buildArgs += '--force-prebuild' }
+if ($Diagnose) { $buildArgs += '--diagnose' }
 if ($OutputPath) { $buildArgs += @('--output', $OutputPath) }
 
 & node @buildArgs
