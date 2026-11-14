@@ -12,9 +12,16 @@ Fra roden af det klonede Git-repository (`E:\cozy`):
 .\build-apk.ps1 -Platform apk   # Lokal APK -> Downloads\cozy.apk
 .\build-apk.ps1 -Platform aab   # Lokal AAB -> Downloads\cozy.aab
 .\build-apk.ps1 -Platform ios   # iOS-build i Expo EAS, ikke lokalt på Windows
+node scripts/build-apk.mjs --platform apk  # Samme Node-baserede byggemetode som 3isacrowd
 ```
 
-APK/AAB kræver Node.js, JDK og Android SDK. iOS kræver Expo/EAS-login og en Apple-signering. Scriptet henter som standard seneste `main`, kontrollerer TypeScript og stopper ved lokale Git-ændringer. Brug `-SkipPull` til bevidst at bygge lokalt ændret kode. Android-formater bygges af lokal Gradle, ikke i Expo-cloud. Der er endnu ikke udført fuld enhedstest. For en første installation se også [mobile/README.md](mobile/README.md).
+APK/AAB kræver Node.js, JDK og Android SDK. iOS kræver Expo/EAS-login og en Apple-signering. PowerShell-scriptet bruger nu `scripts/build-apk.mjs`, ligesom 3isacrowd bruger et Node-script til lokal Android-build. **Cozy er stadig React Native/Expo**, så første Android-build kræver Expo prebuild, mens 3isacrowd bruger Capacitor.
+
+Efter første build genbruger Cozy installerede npm-pakker (så længe låsefilen er uændret), det genererede Android-projekt (så længe native konfiguration er uændret), og Gradles daemon/build-cache. Det kan spare betydelig tid på gentagne builds, men den faktiske forbedring afhænger af maskinen og hvilke native moduler der skal kompileres. Scriptet henter som standard seneste `main`, kontrollerer TypeScript og stopper ved lokale Git-ændringer. Brug `-SkipPull` til bevidst at bygge lokal kode. Android-formatet er stadig en **release**-build, så APK'en kan fungere uden Metro-server. Android bygges lokalt; iOS bygges i Expo EAS.
+
+Ekstra muligheder: `-FreshInstall` tvinger `npm ci`; `-ForcePrebuild` opdaterer Android-projektet; `-SkipInstall` springer npm-kontrollen over, når `node_modules` allerede findes. Undlad at slette `mobile/android` eller `mobile/node_modules` mellem normale builds, da de bruges som cache. Ved problemer kan man tvinge et enkelt trin uden at slette hele byggemiljøet.
+
+Der er endnu ikke udført fuld enhedstest. For en første installation se også [mobile/README.md](mobile/README.md).
 
 ## Produktvision
 Et hyggeligt, visuelt gennemført mobilspil, der kombinerer kabale, minispil og en levende have, hvor spillerens fremskridt giver adgang til dekorationer og historier.
