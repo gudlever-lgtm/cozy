@@ -34,7 +34,7 @@ type Screen = 'garden' | 'cards' | 'mini' | 'quests' | 'settings';
 type Source = {kind:'waste' | 'tableau' | 'foundation'; from:number; at:number};
 type MeasuredElement={measureInWindow:(callback:(x:number,y:number,width:number,height:number)=>void)=>void};
 type Rect={x:number;y:number;width:number;height:number};
-type CardFlight={card:Card;faceUp:boolean;mode:'hint'|'finish';from:Rect;dx:number;dy:number};
+type CardFlight={card:Card;faceUp:boolean;mode:'hint'|'finish'|'move';from:Rect;dx:number;dy:number};
 type DragVisual={id:string;card:Card;run:Card[];x:number;y:number};
 function measure(element:MeasuredElement|null|undefined):Promise<Rect|null>{
   return new Promise(resolve=>element?element.measureInWindow((x,y,width,height)=>
@@ -321,7 +321,7 @@ export default function App() {
     hintPulseAnimation.current?.stop();hintGhostAnimation.current?.stop();
     flightProgress.stopAnimation();ringPulse.stopAnimation();setFlight(null);
   }
-  async function locateFlight(state:State,action:Move,mode:'hint'|'finish'):Promise<boolean>{
+  async function locateFlight(state:State,action:Move,mode:'hint'|'finish'|'move'):Promise<boolean>{
     const visual=cardForVisualMove(state,action);
     if(!visual)return false;
     const source=action.kind==='draw'?stockView.current:action.kind==='recycle'||action.kind==='waste'?wasteView.current:cardViews.current[visual.id];
@@ -357,10 +357,28 @@ export default function App() {
       setMessage(isWon(current)?'✨ Fantastisk! Kabalen er fuldført! ✨':'Automatisk tømning er afsluttet');
     }finally{setAutoRunning(false);setFlight(null);}
   }
+  async function animateLegalMove(action:Move){
+    if(autoRunning)return;
+    stopVisualCue();setChosen(null);setAutoRunning(true);
+    try{
+      // A multi-card run stays together; animate only independent card moves.
+      const singleCard=action.kind!=='tableau'||game.tableau[action.from].length-action.at===1;
+      if(singleCard){
+        const located=await locateFlight(game,action,'move');
+        if(located){
+          flightProgress.setValue(0);
+          await new Promise<void>(resolve=>setTimeout(resolve,20));
+          await new Promise<void>(resolve=>Animated.timing(flightProgress,{toValue:1,duration:Math.round(340*animationFactor),easing:Easing.inOut(Easing.cubic),useNativeDriver:true}).start(()=>resolve()));
+        }
+      }
+      trackQuest('move',`move-${game.seed}-${game.moves+1}`);
+      setGame(current=>applyMove(current,action));setMessage('');
+    }finally{setFlight(null);setAutoRunning(false);}
+  }
   function autoMove(source:Source){
     if(autoRunning)return;stopVisualCue();
     const action=autoPlace(game,source);
-    if(action){trackQuest('move',`move-${game.seed}-${game.moves+1}`);setGame(current=>applyMove(current,action));setChosen(null);setMessage('');}
+    if(action){void animateLegalMove(action);}
     else rejectMove('Ingen lovlig plads til dette kort');
   }
   function executeMove(source:Source,to:'tableau'|'foundation',index:number){
@@ -370,8 +388,7 @@ export default function App() {
       source.kind === 'foundation' ? {kind:'foundation',from:source.from,to:index} :
         {kind:'tableau',from:source.from,at:source.at,to,index};
     if (legalMoves(game).some(m => JSON.stringify(m) === JSON.stringify(action))) {
-      trackQuest('move',`move-${game.seed}-${game.moves+1}`);
-      setGame(applyMove(game,action));setMessage('');
+      void animateLegalMove(action);
     } else rejectMove('Ulovligt træk');
     setChosen(null);
   }
