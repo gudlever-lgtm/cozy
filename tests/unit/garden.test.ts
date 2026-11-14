@@ -15,7 +15,7 @@ test('legacy decoration kinds migrate to positioned schema',()=>{
 });
 
 test('invalid or duplicate garden placements fail closed',()=>{
-  assert.throws(()=>decodeGarden('{"version":2,"decorations":[{"id":"x","kind":3,"x":0.1,"y":0.5}]}'));
+  assert.throws(()=>decodeGarden('{"version":2,"decorations":[{"id":"x","kind":5,"x":0.1,"y":0.5}]}'));
   assert.throws(()=>encodeGarden([{id:'x',kind:0,x:0.4,y:0.3},{id:'x',kind:1,x:0.5,y:0.7}]));
   assert.throws(()=>decodeGarden('{"version":1,"decorations":[900]}'));
 });
