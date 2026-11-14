@@ -1,5 +1,5 @@
 import React, {useMemo, useRef, useState} from 'react';
-import {Image, PanResponder, StyleSheet, Text, View} from 'react-native';
+import {Animated, Easing, Image, PanResponder, StyleSheet, Text, View} from 'react-native';
 import type {Card} from '../../src/domain/solitaire/klondike';
 import type {CardBackStyle,CardStyle} from './nativeSettings';
 
@@ -36,6 +36,21 @@ export function DraggableCard({card,width,height,cardStyle='illustrated',back='f
   const tapTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
   const dragging=useRef(false);
   const enabled=card.up;
+  const previousUp=useRef(card.up);
+  const revealScale=useRef(new Animated.Value(1)).current;
+  const revealGlow=useRef(new Animated.Value(0)).current;
+  React.useEffect(()=>{
+    const newlyRevealed=!previousUp.current&&card.up;
+    previousUp.current=card.up;
+    if(!newlyRevealed)return;
+    revealScale.setValue(0.2);revealGlow.setValue(1);
+    const animation=Animated.parallel([
+      Animated.timing(revealScale,{toValue:1,duration:360,easing:Easing.out(Easing.cubic),useNativeDriver:true}),
+      Animated.timing(revealGlow,{toValue:0,duration:650,easing:Easing.out(Easing.quad),useNativeDriver:true}),
+    ]);
+    animation.start();
+    return ()=>animation.stop();
+  },[card.up,revealScale,revealGlow]);
   React.useEffect(()=>()=>{if(tapTimer.current)clearTimeout(tapTimer.current);},[]);
   const gesture=useMemo(()=>PanResponder.create({
     onStartShouldSetPanResponder:()=>true,
@@ -65,7 +80,10 @@ export function DraggableCard({card,width,height,cardStyle='illustrated',back='f
   return <View {...gesture.panHandlers} accessible accessibilityRole="button"
     accessibilityLabel={enabled?`${ranks[card.rank]??card.rank} ${suit[card.suit]}`:'Skjult kort'}
     style={{width,height,opacity:floating?0:1,transform:[{translateX:floating?0:shift.x},{translateY:floating?0:shift.y}],zIndex:shift.x||shift.y?100:0,elevation:shift.x||shift.y?14:0}}>
-    {card.up?<CardFace card={card} width={width} height={height} cardStyle={cardStyle}/>:<CardBack width={width} height={height} cardStyle={cardStyle} back={back}/>}
+    <Animated.View style={{width,height,transform:[{scaleX:revealScale}]}}>
+      {card.up?<CardFace card={card} width={width} height={height} cardStyle={cardStyle}/>:<CardBack width={width} height={height} cardStyle={cardStyle} back={back}/>}
+      {card.up&&<Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill,{borderWidth:3,borderRadius:8,borderColor:'#ffe8a0',opacity:revealGlow}]}/>}
+    </Animated.View>
     {(shift.x!==0||shift.y!==0)&&run.slice(1).map((next,i)=><View key={next.id} pointerEvents="none" style={{position:'absolute',top:(i+1)*27,left:0,width,height}}>
       <CardFace card={next} width={width} height={height} cardStyle={cardStyle}/>
     </View>)}
