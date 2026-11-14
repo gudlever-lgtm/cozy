@@ -29,10 +29,13 @@ export function quests(ledger:Ledger,decorationCount:number,events:QuestEvent[]=
     (entry.id.startsWith('klondike-win-')||entry.id.startsWith('solitaire-win-'))).length;
   const ledgerMinis=ledger.entries.filter(entry=>entry.type==='earn'&&
     (entry.id.startsWith('memory-win-')||entry.id.startsWith('mini-glow-')||entry.id.startsWith('mini-season-'))).length;
+  const dailyIds=[`daily-${currentDay}-win`,`daily-${currentDay}-mini`,`daily-${currentDay}-moves`];
+  const claimedDaily=dailyIds.filter(id=>ledger.entries.some(entry=>entry.id===`quest-${id}`&&entry.type==='earn')).length;
   const definitions:{id:string;title:string;description:string;reward:number;progress:number;target:number;category:Quest['category']}[]=[
     {id:`daily-${currentDay}-win`,title:'En hyggelig sejr',description:'Vind én kabale i dag',reward:15,progress:count(today,'solitaire-win'),target:1,category:'daily'},
     {id:`daily-${currentDay}-mini`,title:'Små pauser',description:'Gennemfør to minispil i dag',reward:10,progress:count(today,'mini-win'),target:2,category:'daily'},
     {id:`daily-${currentDay}-moves`,title:'Kort på farten',description:'Udfør 20 lovlige korttræk i dag',reward:10,progress:count(today,'move'),target:20,category:'daily'},
+    {id:`daily-${currentDay}-bonus`,title:'Dagens gyldne stjerne',description:'Indløs alle tre daglige opgaver',reward:20,progress:claimedDaily,target:3,category:'daily'},
     {id:`weekly-${currentWeek}-wins`,title:'Ugens kabaler',description:'Vind ti kabaler i denne uge',reward:75,progress:count(week,'solitaire-win'),target:10,category:'weekly'},
     {id:`weekly-${currentWeek}-mini`,title:'Ugens minispil',description:'Gennemfør 15 minispil i denne uge',reward:50,progress:count(week,'mini-win'),target:15,category:'weekly'},
     {id:`weekly-${currentWeek}-three`,title:'Tre korts udfordring',description:'Vind tre kabaler med tre trukne kort',reward:40,progress:count(week,'three-win'),target:3,category:'weekly'},
