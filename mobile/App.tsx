@@ -142,6 +142,8 @@ export default function App() {
   offsetRef.current=offset;
   const {width,height} = useWindowDimensions();
   const {landscape,gardenWidth,cardWidth,cardHeight,tableauHeight}=cozyLayout(width,height,settings.cardSize);
+  // Six full-size bottom cards plus the action buttons fit side-by-side on wider phones.
+  const wideLandscapeDock=landscape&&width>=840;
   const animationFactor={calm:1.5,normal:1,fast:0.6}[settings.animationSpeed];
   const gardenHeight=measuredGardenHeight || Math.max(200,height-124);
   gardenViewportRef.current={width:gardenWidth,height:gardenHeight,zoom};
@@ -506,7 +508,8 @@ export default function App() {
       {isWon(game)&&<View style={styles.victory}><Text style={styles.victoryText}>✨ Tillykke! ✨</Text><Text style={styles.victorySubtitle}>En vidunderlig kabale er fuldført</Text></View>}
     </ScrollView>
     <View style={[styles.solitaireDock,landscape&&styles.landscapeDock]}>
-      <View style={styles.bottomPiles}>
+      <View style={[styles.bottomControls,wideLandscapeDock&&styles.wideBottomControls]}>
+      <View style={[styles.bottomPiles,wideLandscapeDock&&styles.wideBottomPiles]}>
         <View style={styles.drawZone} accessibilityLabel="Trækbunke og vendte kort">
           <View style={styles.zoneLabels}><Text style={styles.zoneLabel}>TRÆK</Text><Text style={styles.zoneLabel}>VENDT</Text></View>
           <View style={styles.zoneCards}>
@@ -525,7 +528,7 @@ export default function App() {
           </View>
         </View>
       </View>
-      <View style={styles.compactActions}>
+      <View style={[styles.compactActions,wideLandscapeDock&&styles.wideCompactActions]}>
         {[
           {icon:'↶',label:'Fortryd',disabled:autoRunning||game.history.length===0,onPress:()=>{stopVisualCue();setGame(undo(game));setChosen(null);}},
           {icon:'✧',label:'Tip',disabled:autoRunning,onPress:showHint},
@@ -533,6 +536,7 @@ export default function App() {
           {icon:'↻',label:'Nyt spil',disabled:autoRunning,onPress:()=>startSolitaire(activeModeIndex(game.drawCount,game.maxPasses),true)},
         ].map(action=><Pressable key={action.label} accessibilityRole="button" accessibilityLabel={action.label} accessibilityHint={action.label==='Fortryd'&&game.history.length===0?'Tilgængelig efter dit første træk':action.label==='Auto-tøm'&&!canAutoFinish(game)?'Tilgængelig når resten af kabalen kan afsluttes automatisk':undefined} accessibilityState={{disabled:action.disabled}} disabled={action.disabled} onPress={action.onPress}
           style={[styles.iconAction,action.disabled&&styles.iconActionDisabled]}><Text style={styles.iconActionGlyph}>{action.icon}</Text><Text style={styles.iconActionLabel}>{action.label}</Text></Pressable>)}
+      </View>
       </View>
       {!!message&&<Text numberOfLines={1} style={[styles.boardInfo,landscape&&styles.landscapeInfo]}>{message}</Text>}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.modePicker}>
@@ -688,9 +692,13 @@ const styles=StyleSheet.create({
   activeIcon:{transform:[{scale:1.1}]},inactiveIcon:{opacity:0.86},tabIcon:{width:38,height:40},activeLabel:{color:'#123f71',fontWeight:'900'},
   tabText:{fontSize:11,color:'#604d30',fontWeight:'700'},
   board:{flex:1},boardContent:{paddingHorizontal:6,paddingTop:12,paddingBottom:10},piles:{flexDirection:'row',justifyContent:'space-between',marginTop:15},
+  bottomControls:{width:'100%',alignItems:'center'},
+  wideBottomControls:{flexDirection:'row',justifyContent:'space-between',alignItems:'center',gap:6},
   bottomPiles:{flexDirection:'row',width:'100%',justifyContent:'space-around',alignItems:'center',gap:4},
+  wideBottomPiles:{width:'55%'},
   solitaireDock:{paddingHorizontal:5,paddingTop:5,paddingBottom:4,alignItems:'center',backgroundColor:'#183b34e3',borderTopWidth:2,borderTopColor:'#e4c586'},
   compactActions:{flexDirection:'row',width:'100%',justifyContent:'space-evenly',alignItems:'center',gap:4,marginTop:4},
+  wideCompactActions:{width:'44%',marginTop:0},
   iconAction:{flex:1,maxWidth:92,minHeight:45,alignItems:'center',justifyContent:'center',backgroundColor:'#ffe9b9',borderColor:'#d9a852',borderWidth:2,borderRadius:13,paddingVertical:2},
   iconActionDisabled:{opacity:0.38},
   iconActionGlyph:{fontSize:23,lineHeight:25,color:'#256471',fontWeight:'900'},
