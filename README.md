@@ -13,11 +13,14 @@ Fra roden af det klonede Git-repository (`E:\cozy`):
 .\build-apk.ps1 -Platform aab   # Lokal AAB -> Downloads\cozy.aab
 .\build-apk.ps1 -Platform ios   # iOS-build i Expo EAS, ikke lokalt på Windows
 node scripts/build-apk.mjs --platform apk  # Samme Node-baserede byggemetode som 3isacrowd
+.\build-apk.ps1 -Diagnose     # Vis npm-/native-cache og tidligere byggetider uden at bygge
 ```
 
 APK/AAB kræver Node.js, JDK og Android SDK. iOS kræver Expo/EAS-login og en Apple-signering. PowerShell-scriptet bruger nu `scripts/build-apk.mjs`, ligesom 3isacrowd bruger et Node-script til lokal Android-build. **Cozy er stadig React Native/Expo**, så første Android-build kræver Expo prebuild, mens 3isacrowd bruger Capacitor.
 
 Efter første build genbruger Cozy installerede npm-pakker (så længe låsefilen er uændret), det genererede Android-projekt (så længe native konfiguration er uændret), og Gradles daemon/build-cache. Det kan spare betydelig tid på gentagne builds, men den faktiske forbedring afhænger af maskinen og hvilke native moduler der skal kompileres. Scriptet henter som standard seneste `main`, kontrollerer TypeScript og stopper ved lokale Git-ændringer. Brug `-SkipPull` til bevidst at bygge lokal kode. Android-formatet er stadig en **release**-build, så APK'en kan fungere uden Metro-server. Android bygges lokalt; iOS bygges i Expo EAS.
+
+Under build vises trin og forløbet tid; lange trin giver status hvert 15. sekund. Første gang er resterende tid ukendt. Efter en fuldført build gemmes lokale trinmålinger i `mobile/.cozy-build-times.json`, så næste build kan vise estimater baseret på din egen maskine. Filerne er kun lokale og bliver ikke pushet. `-Diagnose` viser, om npm-installation og Expo prebuild kan springes over; React Natives native Gradle-kompilering er fortsat nødvendigt.
 
 Ekstra muligheder: `-FreshInstall` tvinger `npm ci`; `-ForcePrebuild` opdaterer Android-projektet; `-SkipInstall` springer npm-kontrollen over, når `node_modules` allerede findes. Undlad at slette `mobile/android` eller `mobile/node_modules` mellem normale builds, da de bruges som cache. Ved problemer kan man tvinge et enkelt trin uden at slette hele byggemiljøet.
 
