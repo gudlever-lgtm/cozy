@@ -13,6 +13,7 @@ test('explicit build options retain AAB and iOS support',()=>{
   assert.equal(options(['--platform','aab','--skip-pull']).platform,'aab');
   assert.equal(options(['--platform','ios']).platform,'ios');
   assert.equal(options(['--force-prebuild','--fresh-install']).freshInstall,true);
+  assert.equal(options(['--diagnose']).diagnose,true);
 });
 
 test('invalid combinations fail before touching files',()=>{
