@@ -39,6 +39,7 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+.cozy-build-times.json
 
 # Unused placeholder artwork from create-expo-app; approved assets live in ../assets/v3.
 /assets/
