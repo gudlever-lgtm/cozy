@@ -527,11 +527,11 @@ export default function App() {
       </View>
       <View style={styles.compactActions}>
         {[
-          {icon:'↶',label:'Fortryd',disabled:autoRunning,onPress:()=>{stopVisualCue();setGame(undo(game));setChosen(null);}},
+          {icon:'↶',label:'Fortryd',disabled:autoRunning||game.history.length===0,onPress:()=>{stopVisualCue();setGame(undo(game));setChosen(null);}},
           {icon:'✧',label:'Tip',disabled:autoRunning,onPress:showHint},
           {icon:'⇧',label:'Auto-tøm',disabled:!settings.autoMove||!canAutoFinish(game)||autoRunning,onPress:()=>{void playFinish();}},
           {icon:'↻',label:'Nyt spil',disabled:autoRunning,onPress:()=>startSolitaire(activeModeIndex(game.drawCount,game.maxPasses),true)},
-        ].map(action=><Pressable key={action.label} accessibilityRole="button" accessibilityLabel={action.label} accessibilityState={{disabled:action.disabled}} disabled={action.disabled} onPress={action.onPress}
+        ].map(action=><Pressable key={action.label} accessibilityRole="button" accessibilityLabel={action.label} accessibilityHint={action.label==='Fortryd'&&game.history.length===0?'Tilgængelig efter dit første træk':action.label==='Auto-tøm'&&!canAutoFinish(game)?'Tilgængelig når resten af kabalen kan afsluttes automatisk':undefined} accessibilityState={{disabled:action.disabled}} disabled={action.disabled} onPress={action.onPress}
           style={[styles.iconAction,action.disabled&&styles.iconActionDisabled]}><Text style={styles.iconActionGlyph}>{action.icon}</Text><Text style={styles.iconActionLabel}>{action.label}</Text></Pressable>)}
       </View>
       {!!message&&<Text numberOfLines={1} style={[styles.boardInfo,landscape&&styles.landscapeInfo]}>{message}</Text>}
@@ -681,7 +681,7 @@ const styles=StyleSheet.create({
   title:{fontSize:23,fontWeight:'900',color:'#1c5663',textShadowColor:'#fffaf0',textShadowRadius:2},gardenTools:{position:'absolute',bottom:8,alignSelf:'center',backgroundColor:'#fff4d9f5',padding:7,borderRadius:20,borderWidth:3,borderColor:'#e8b95f',gap:6,shadowColor:'#382b18',shadowRadius:8,shadowOpacity:0.28,elevation:6},decorButton:{minWidth:82,alignItems:'center',padding:4,backgroundColor:'#ffe6b0',borderRadius:13,borderWidth:2,borderColor:'#d9af64'},
   placedPicker:{alignItems:'center',gap:2},placedPickerLabel:{fontSize:12,fontWeight:'800',color:'#285563'},placedChip:{minHeight:34,paddingHorizontal:10,justifyContent:'center',borderRadius:12,backgroundColor:'#fff6dd',borderWidth:2,borderColor:'#cfa15e'},placedChipActive:{backgroundColor:'#bfe9ad',borderColor:'#38885d'},placedChipText:{fontSize:12,fontWeight:'800',color:'#35524d'},
   boardTitle:{fontSize:23,fontWeight:'800',textAlign:'center',color:'#fbeccf',textShadowColor:'#172a18',textShadowRadius:5,textShadowOffset:{width:0,height:2}},
-  boardMeta:{color:'#fff1d5',textAlign:'center',fontWeight:'700',marginTop:5},boardInfo:{marginVertical:15,textAlign:'center',color:'#f8e8c5',fontWeight:'700'},
+  boardMeta:{color:'#fff1d5',textAlign:'center',fontWeight:'700',marginTop:5},boardInfo:{marginVertical:3,textAlign:'center',color:'#f8e8c5',fontWeight:'700',fontSize:12},
   illustratedPanel:{backgroundColor:'#fff1cfef',borderRadius:24,borderWidth:4,borderColor:'#dfad55',shadowColor:'#49351f',shadowRadius:15,shadowOpacity:0.32,elevation:7,padding:5},settingsPanel:{alignItems:'center',width:'100%',maxWidth:380,padding:18,gap:10},sectionHeader:{alignItems:'center',width:'100%',maxWidth:420,padding:14,borderRadius:20,backgroundColor:'#fff1cfef',borderWidth:3,borderColor:'#dfad55'},panelCaption:{color:'#285563',fontSize:14,fontWeight:'800',textAlign:'center'},
   nav:{height:96,flexDirection:'row',backgroundColor:'#fff1d6',alignItems:'center',paddingHorizontal:6,paddingBottom:18,borderTopWidth:4,borderTopColor:'#d5a14c',shadowColor:'#49341f',shadowOpacity:0.22,shadowRadius:5,elevation:9},
   tab:{flex:1,justifyContent:'center',alignItems:'center',gap:1,paddingTop:3},selected:{backgroundColor:'#fce3a6'},
