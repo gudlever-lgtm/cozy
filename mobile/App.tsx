@@ -24,6 +24,8 @@ import {newMemoryGame,revealMemory,hideMismatch,memoryWon} from '../src/domain/m
 import {readMemory,writeMemory} from './src/nativeMemory';
 import {quests} from '../src/domain/quests/quests';
 import {checkForCozyUpdate} from './src/checkUpdate';
+import {activeModeIndex,modeUnlocked,solitaireModes,winsForMode} from '../src/domain/solitaire/progression';
+import {glowTargets} from '../src/domain/minigames/glow';
 
 type Screen = 'garden' | 'cards' | 'mini' | 'quests' | 'settings';
 type Source = {kind:'waste' | 'tableau' | 'foundation'; from:number; at:number};
@@ -63,6 +65,13 @@ export default function App() {
     return ()=>clearTimeout(timer);
   },[]);
   const [screen,setScreen] = useState<Screen>('garden');
+  const [miniMenuOpen,setMiniMenuOpen]=useState(false);
+  const [miniKind,setMiniKind]=useState<'memory'|'glow'|'season'>('memory');
+  const [glowRound,setGlowRound]=useState(0);
+  const [glowFound,setGlowFound]=useState<number[]>([]);
+  const [glowTried,setGlowTried]=useState<number[]>([]);
+  const [seasonRound,setSeasonRound]=useState(0);
+  const [seasonAnswer,setSeasonAnswer]=useState<number|null>(null);
   const [game,setGame] = useState(() => newGame(20261113));
   const [ledger,setLedger] = useState<Ledger>(()=>emptyLedger());
   const [loaded,setLoaded] = useState(false);
@@ -221,8 +230,26 @@ export default function App() {
 
   useEffect(()=>{
     if(!loaded || !isWon(game))return;
-    setLedger(previous=>record(previous,{id:`klondike-win-${game.seed}`,type:'earn',amount:25,reason:'Klondike gennemført'}));
+    const mode=solitaireModes[activeModeIndex(game.drawCount,game.maxPasses)];
+    setLedger(previous=>record(previous,{id:`solitaire-win-${mode.id}-${game.seed}`,type:'earn',amount:25,reason:`${mode.title} gennemført`}));
   },[game,loaded]);
+  function startSolitaire(index:number){
+    if(!modeUnlocked(ledger,index)){setMessage('Vind fem spil i den forrige kabaletype først');return;}
+    stopVisualCue();const mode=solitaireModes[index];
+    setGame(newGame(Date.now(),mode.drawCount,mode.maxPasses));setChosen(null);setMessage('');
+  }
+  function collectGlow(index:number){
+    if(glowTried.includes(index))return;
+    setGlowTried(previous=>[...previous,index]);
+    if(!glowTargets(glowRound).includes(index))return;
+    const found=[...glowFound,index];setGlowFound(found);
+    if(found.length===5)setLedger(previous=>record(previous,{id:`mini-glow-${glowRound}`,type:'earn',amount:5,reason:'Lysglimtjagt fuldført'}));
+  }
+  function answerSeason(index:number){
+    if(seasonAnswer!==null)return;
+    setSeasonAnswer(index);
+    if(index===seasonRound%4)setLedger(previous=>record(previous,{id:`mini-season-${seasonRound}`,type:'earn',amount:5,reason:'Årstidsquiz fuldført'}));
+  }
 
   function move(to:'tableau' | 'foundation',index:number) {
     if(chosen)executeMove(chosen,to,index);
@@ -378,6 +405,18 @@ export default function App() {
       <View style={[styles.hud,landscape&&styles.landscapeHud]}>
         <View style={styles.hudText}><Text style={styles.title}>Min have</Text><Text>Lysglimt ✨ {balance(ledger)}</Text><Text style={styles.tabText}>Dekorationer: 5 ✨</Text></View>
       </View>
+      <View style={[styles.miniLauncher,landscape&&styles.landscapeMiniLauncher]}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Vis minispil" onPress={()=>setMiniMenuOpen(open=>!open)} style={styles.miniLauncherButton}>
+          <Image source={tabs[2].icon} style={{width:38,height:38}} resizeMode="contain"/><Text style={styles.miniLauncherText}>Minispil {miniMenuOpen?'⌃':'⌄'}</Text>
+        </Pressable>
+        {miniMenuOpen&&<View style={styles.miniLauncherList}>{[
+          {kind:'memory',title:'🌸 Skovens vendespil'},
+          {kind:'glow',title:'✨ Lysglimtjagt'},
+          {kind:'season',title:'🍂 Årstidsquiz'},
+        ].map(item=><Pressable key={item.kind} style={styles.miniLauncherItem} onPress={()=>{setMiniKind(item.kind as typeof miniKind);setScreen('mini');setMiniMenuOpen(false);}}>
+          <Text style={styles.miniLauncherText}>{item.title}</Text>
+        </Pressable>)}</View>}
+      </View>
       <View style={[styles.gardenTools,landscape&&styles.landscapeGardenTools]}>
         {placed.length>0&&<View style={styles.placedPicker}>
           <Text style={styles.placedPickerLabel}>Flyt en placeret dekoration:</Text>
@@ -402,8 +441,8 @@ export default function App() {
           style={[styles.decorButton,gardenTool===i&&styles.selected]} onPress={()=>{setGardenTool(i as 0|1|2);setMovingDecoration(null);}}
           accessibilityLabel={`Vælg ${d.name}`}><Image source={d.image} resizeMode="contain" style={{width:52,height:52}}/><Text style={styles.tabText}>{d.name}</Text></Pressable>)}</View>
       </View>
-    </View> : screen === 'cards' ? <View style={{flex:1}}><ImageBackground source={solitaireTable} resizeMode="cover" style={StyleSheet.absoluteFill}/><ScrollView style={styles.board} contentContainerStyle={[styles.boardContent,{flexGrow:1}]}>
-      <Text style={styles.boardTitle}>Kabale · Klondike</Text><Text style={styles.boardMeta}>Flytninger: {game.moves} · Lysglimt ✨ {balance(ledger)}</Text>
+    </View> : screen === 'cards' ? <View style={{flex:1}}><ImageBackground source={solitaireTable} resizeMode="cover" style={StyleSheet.absoluteFill}/><ScrollView key={landscape?'cards-landscape':'cards-portrait'} style={styles.board} contentContainerStyle={[styles.boardContent,landscape&&styles.landscapeBoardContent]}>
+      <Text style={[styles.boardTitle,landscape&&styles.landscapeBoardTitle]}>{solitaireModes[activeModeIndex(game.drawCount,game.maxPasses)].title}</Text><Text style={styles.boardMeta}>Flytninger: {game.moves} · Lysglimt ✨ {balance(ledger)}</Text>
       <View style={styles.topPiles}>
         <View style={styles.drawZone} accessibilityLabel="Trækbunke og vendte kort">
           <View style={styles.zoneLabels}><Text style={styles.zoneLabel}>TRÆK</Text><Text style={styles.zoneLabel}>VENDT</Text></View>
@@ -423,7 +462,7 @@ export default function App() {
           </View>
         </View>
       </View>
-      <View style={[styles.piles,{minHeight:tableauHeight,flexGrow:1}]}>{game.tableau.map((pile,index)=><Pressable ref={view=>{tableauTargets.current[index]=view;}} key={index} onPress={()=>move('tableau',index)}
+      <View style={[styles.piles,{minHeight:tableauHeight,flexGrow:landscape?0:1},landscape&&styles.landscapePiles]}>{game.tableau.map((pile,index)=><Pressable ref={view=>{tableauTargets.current[index]=view;}} key={index} onPress={()=>move('tableau',index)}
         accessibilityLabel={`Kolonne ${index+1}`} style={{width:cardWidth,minHeight:tableauHeight,zIndex:draggingCard&&pile.some(c=>c.id===draggingCard)?100:0}}>
         {visibleTableauIndexes(pile.length).map((at,visibleIndex)=>{const value=pile[at];return <View key={value.id} style={{marginTop:visibleIndex?-cardHeight+27:0,zIndex:draggingCard===value.id?999:visibleIndex,elevation:draggingCard===value.id?15:0}}>
           {card(value,()=>chosen?move('tableau',index):value.up&&setChosen({kind:'tableau',from:index,at}),{kind:'tableau',from:index,at},pile.slice(at))}
@@ -439,12 +478,22 @@ export default function App() {
         <CozyButton label="Fortryd" secondary disabled={autoRunning} onPress={()=>{stopVisualCue();setGame(undo(game));setChosen(null);}}/>
         <CozyButton label="Tip" secondary disabled={autoRunning} onPress={showHint}/>
         <CozyButton label="Auto-tøm" disabled={!canAutoFinish(game)||autoRunning} onPress={()=>{void playFinish();}}/>
-        <CozyButton label="Nyt spil" disabled={autoRunning} onPress={()=>{stopVisualCue();setGame(newGame(Date.now()));setChosen(null);}}/>
+        <CozyButton label="Nyt spil" disabled={autoRunning} onPress={()=>startSolitaire(activeModeIndex(game.drawCount,game.maxPasses))}/>
       </View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.modePicker}>
+        {solitaireModes.map((mode,index)=>{const unlocked=modeUnlocked(ledger,index);const selected=index===activeModeIndex(game.drawCount,game.maxPasses);return <Pressable key={mode.id} accessibilityRole="button" accessibilityState={{disabled:!unlocked,selected}} disabled={!unlocked||autoRunning} style={[styles.modeButton,selected&&styles.modeButtonActive,!unlocked&&styles.modeButtonLocked]} onPress={()=>startSolitaire(index)}>
+          <Text style={styles.modeText}>{unlocked?mode.title:`🔒 ${mode.title}`}</Text>
+          <Text style={styles.modeSmall}>{unlocked?mode.description:`${winsForMode(ledger,solitaireModes[index-1].id)}/5 sejre`}</Text>
+        </Pressable>;})}
+      </ScrollView>
     </View>{autoRunning&&<View pointerEvents="auto" style={StyleSheet.absoluteFill}/>}</View> : screen==='mini' ? <ImageBackground source={gardenIllustrations[actualSeason]} resizeMode="cover" style={{flex:1}}>
       <ScrollView style={styles.board} contentContainerStyle={{padding:landscape?8:14,paddingTop:landscape?8:35,alignItems:'center'}}>
-        <View style={[styles.illustratedPanel,landscape&&{maxWidth:540,width:'100%'}]}><MemoryBoard game={memory} onFlip={flipMemory} landscape={landscape}
-          onNew={()=>setMemory(newMemoryGame(Math.max(Date.now(),memory.round+1)))}/></View>
+        <View style={[styles.illustratedPanel,landscape&&{maxWidth:540,width:'100%'}]}>
+          <View style={styles.miniTabs}>{[{id:'memory',label:'Vendespil'},{id:'glow',label:'Lysglimtjagt'},{id:'season',label:'Årstidsquiz'}].map(item=><Pressable key={item.id} onPress={()=>setMiniKind(item.id as typeof miniKind)} style={[styles.miniTab,miniKind===item.id&&styles.miniTabActive]}><Text style={styles.modeText}>{item.label}</Text></Pressable>)}</View>
+          {miniKind==='memory'?<MemoryBoard game={memory} onFlip={flipMemory} landscape={landscape} onNew={()=>setMemory(newMemoryGame(Math.max(Date.now(),memory.round+1)))}/>:
+          miniKind==='glow'?<View style={styles.miniGameContent}><Text style={styles.title}>✨ Lysglimtjagt</Text><Text style={styles.panelCaption}>Find alle fem skjulte Lysglimt</Text><View style={styles.glowGrid}>{Array.from({length:12},(_,index)=><Pressable key={index} accessibilityRole="button" onPress={()=>collectGlow(index)} style={styles.glowTile}><Text style={styles.glowSymbol}>{glowFound.includes(index)?'✨':glowTried.includes(index)?'🍃':'🌿'}</Text></Pressable>)}</View><Text style={styles.panelCaption}>{glowFound.length}/5 fundet {glowFound.length>=5?'· +5 Lysglimt!':''}</Text><CozyButton wide label="Ny jagt" onPress={()=>{setGlowRound(Math.max(Date.now(),glowRound+1));setGlowFound([]);setGlowTried([]);}}/></View>:
+          <View style={styles.miniGameContent}><Text style={styles.title}>🍂 Årstidsquiz</Text><Text style={styles.panelCaption}>{['Hvornår blomstrer tulipaner?','Hvornår er det varmest?','Hvornår falder bladene?','Hvornår kommer sneen?'][seasonRound%4]}</Text>{['Forår 🌷','Sommer ☀️','Efterår 🍁','Vinter ❄️'].map((option,index)=><CozyButton key={option} wide secondary={seasonAnswer!==index} disabled={seasonAnswer!==null} label={option} onPress={()=>answerSeason(index)}/>)}{seasonAnswer!==null&&<Text style={styles.panelCaption}>{seasonAnswer===seasonRound%4?'Rigtigt! +5 Lysglimt ✨':'Prøv næste spørgsmål 🌿'}</Text>}<CozyButton wide label="Næste spørgsmål" onPress={()=>{setSeasonRound(Math.max(seasonRound+1,Math.floor(Date.now()/1000)));setSeasonAnswer(null);}}/></View>}
+        </View>
       </ScrollView></ImageBackground> :
       screen==='settings'?<ImageBackground source={gardenIllustrations[actualSeason]} resizeMode="cover" style={{flex:1}}><ScrollView style={styles.board} contentContainerStyle={styles.questList}>
         <View style={[styles.illustratedPanel,styles.settingsPanel]}>
@@ -501,11 +550,33 @@ const styles=StyleSheet.create({
   landscapeRoot:{flexDirection:'row'},
   landscapeHud:{right:undefined,width:258,height:86},
   landscapeGardenTools:{maxWidth:'90%',padding:5,gap:3},
-  landscapeDock:{width:136,paddingHorizontal:5,paddingVertical:6,justifyContent:'center',borderTopWidth:0,borderLeftWidth:2,borderLeftColor:'#e4c586'},
-  landscapeInfo:{fontSize:11,marginVertical:6},
-  landscapeActions:{flexDirection:'column',flexWrap:'nowrap',gap:4,alignItems:'center'},
+  landscapeDock:{width:'100%',paddingHorizontal:8,paddingVertical:3,justifyContent:'center'},
+  landscapeInfo:{fontSize:11,marginVertical:2},
+  landscapeActions:{flexDirection:'row',flexWrap:'nowrap',gap:5,alignItems:'center'},
+  landscapePiles:{marginTop:7},
+  landscapeBoardContent:{paddingTop:2,paddingBottom:4},
+  landscapeBoardTitle:{fontSize:19},
   landscapeNav:{width:92,height:'100%',flexDirection:'column',paddingBottom:0,paddingHorizontal:3,borderTopWidth:0,borderLeftWidth:4,borderLeftColor:'#d5a14c'},
   landscapeTab:{width:'100%',flex:1,paddingTop:0,gap:0},
+  landscapeMiniLauncher:{top:12,right:110},
+  miniLauncher:{position:'absolute',top:118,right:16,zIndex:20,alignItems:'flex-end'},
+  miniLauncherButton:{flexDirection:'row',alignItems:'center',gap:5,backgroundColor:'#fff1cff5',borderColor:'#ddad57',borderWidth:3,borderRadius:18,padding:5,elevation:9},
+  miniLauncherText:{color:'#285563',fontSize:13,fontWeight:'900'},
+  miniLauncherList:{marginTop:5,backgroundColor:'#fff1cff9',borderColor:'#ddad57',borderWidth:3,borderRadius:16,padding:5,gap:4,elevation:10},
+  miniLauncherItem:{paddingVertical:8,paddingHorizontal:12,backgroundColor:'#ffebbe',borderRadius:12},
+  miniTabs:{flexDirection:'row',gap:5,justifyContent:'center',flexWrap:'wrap',padding:6},
+  miniTab:{backgroundColor:'#ffe8b6',borderColor:'#d7ab60',borderWidth:2,padding:7,borderRadius:14},
+  miniTabActive:{backgroundColor:'#bde6ce',borderColor:'#4d997f'},
+  miniGameContent:{alignItems:'center',gap:12,padding:12},
+  glowGrid:{flexDirection:'row',flexWrap:'wrap',width:252,justifyContent:'center',gap:6},
+  glowTile:{width:56,height:56,borderRadius:13,borderWidth:2,borderColor:'#d8ac63',backgroundColor:'#f9e5b8',alignItems:'center',justifyContent:'center'},
+  glowSymbol:{fontSize:30},
+  modePicker:{gap:6,paddingVertical:4,paddingHorizontal:5},
+  modeButton:{borderColor:'#d7ae68',borderWidth:1.5,borderRadius:10,backgroundColor:'#fff0cb',paddingHorizontal:8,paddingVertical:3,minWidth:113},
+  modeButtonActive:{borderColor:'#74bba3',backgroundColor:'#c5eacb'},
+  modeButtonLocked:{opacity:0.58},
+  modeText:{fontWeight:'900',fontSize:11,color:'#31525b',textAlign:'center'},
+  modeSmall:{fontWeight:'700',fontSize:9,color:'#6c5b42',textAlign:'center'},
   brandIcon:{width:88,height:88,borderRadius:22,borderWidth:3,borderColor:'#f7d987'},
   brandTitle:{fontSize:20,fontWeight:'900',color:'#285563'},
   hintRing:{position:'absolute',borderRadius:13,borderWidth:4,borderColor:'#ffde66',backgroundColor:'#fff3a028',shadowColor:'#fff7b1',shadowOpacity:0.95,shadowRadius:14,elevation:12},
