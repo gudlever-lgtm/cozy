@@ -495,7 +495,18 @@ export default function App() {
       </View>
     </View> : screen === 'cards' ? <View style={{flex:1}}><ImageBackground source={solitaireTable} resizeMode="cover" style={StyleSheet.absoluteFill}/><ScrollView key={landscape?'cards-landscape':'cards-portrait'} style={styles.board} contentContainerStyle={[styles.boardContent,landscape&&styles.landscapeBoardContent]}>
       <Text style={[styles.boardTitle,landscape&&styles.landscapeBoardTitle]}>{solitaireModes[activeModeIndex(game.drawCount,game.maxPasses)].title}</Text><Text style={styles.boardMeta}>Flytninger: {game.moves} · Lysglimt ✨ {balance(ledger)}</Text>
-      <View style={styles.topPiles}>
+      <View style={[styles.piles,{minHeight:tableauHeight,flexGrow:landscape?0:1},landscape&&styles.landscapePiles]}>{game.tableau.map((pile,index)=><Pressable ref={view=>{tableauTargets.current[index]=view;}} key={index} onPress={()=>move('tableau',index)}
+        accessibilityLabel={`Kolonne ${index+1}`} style={{width:cardWidth,minHeight:tableauHeight,zIndex:draggingCard&&pile.some(c=>c.id===draggingCard)?100:0}}>
+        {visibleTableauIndexes(pile.length).map((at,visibleIndex)=>{const value=pile[at];return <View key={value.id} style={{marginTop:visibleIndex?-cardHeight+27:0,zIndex:draggingCard===value.id?999:visibleIndex,elevation:draggingCard===value.id?15:0}}>
+          {card(value,()=>chosen?move('tableau',index):value.up&&setChosen({kind:'tableau',from:index,at}),{kind:'tableau',from:index,at},pile.slice(at))}
+          {pile.length>5&&visibleIndex===0&&<View pointerEvents="none" style={styles.columnCount}><Text style={styles.columnCountText}>{pile.length}</Text></View>}
+        </View>;})}
+        {!pile.length&&<View style={[styles.slot,{height:cardHeight}]}><View style={[styles.emptySlot,{width:cardWidth,height:cardHeight}]}/></View>}
+      </Pressable>)}</View>
+      {isWon(game)&&<View style={styles.victory}><Text style={styles.victoryText}>✨ Tillykke! ✨</Text><Text style={styles.victorySubtitle}>En vidunderlig kabale er fuldført</Text></View>}
+    </ScrollView>
+    <View style={[styles.solitaireDock,landscape&&styles.landscapeDock]}>
+      <View style={styles.bottomPiles}>
         <View style={styles.drawZone} accessibilityLabel="Trækbunke og vendte kort">
           <View style={styles.zoneLabels}><Text style={styles.zoneLabel}>TRÆK</Text><Text style={styles.zoneLabel}>VENDT</Text></View>
           <View style={styles.zoneCards}>
@@ -514,24 +525,16 @@ export default function App() {
           </View>
         </View>
       </View>
-      <View style={[styles.piles,{minHeight:tableauHeight,flexGrow:landscape?0:1},landscape&&styles.landscapePiles]}>{game.tableau.map((pile,index)=><Pressable ref={view=>{tableauTargets.current[index]=view;}} key={index} onPress={()=>move('tableau',index)}
-        accessibilityLabel={`Kolonne ${index+1}`} style={{width:cardWidth,minHeight:tableauHeight,zIndex:draggingCard&&pile.some(c=>c.id===draggingCard)?100:0}}>
-        {visibleTableauIndexes(pile.length).map((at,visibleIndex)=>{const value=pile[at];return <View key={value.id} style={{marginTop:visibleIndex?-cardHeight+27:0,zIndex:draggingCard===value.id?999:visibleIndex,elevation:draggingCard===value.id?15:0}}>
-          {card(value,()=>chosen?move('tableau',index):value.up&&setChosen({kind:'tableau',from:index,at}),{kind:'tableau',from:index,at},pile.slice(at))}
-          {pile.length>5&&visibleIndex===0&&<View pointerEvents="none" style={styles.columnCount}><Text style={styles.columnCountText}>{pile.length}</Text></View>}
-        </View>;})}
-        {!pile.length&&<View style={[styles.slot,{height:cardHeight}]}><View style={[styles.emptySlot,{width:cardWidth,height:cardHeight}]}/></View>}
-      </Pressable>)}</View>
-      {isWon(game)&&<View style={styles.victory}><Text style={styles.victoryText}>✨ Tillykke! ✨</Text><Text style={styles.victorySubtitle}>En vidunderlig kabale er fuldført</Text></View>}
-    </ScrollView>
-    <View style={[styles.solitaireDock,landscape&&styles.landscapeDock]}>
-      <Text style={[styles.boardInfo,landscape&&styles.landscapeInfo]}>{message || (chosen ? 'Vælg en bunke' : 'Træk kort · Dobbelttryk for automatisk flytning')}</Text>
-      <View style={[styles.actions,landscape&&styles.landscapeActions]}>
-        <CozyButton label="Fortryd" secondary disabled={autoRunning} onPress={()=>{stopVisualCue();setGame(undo(game));setChosen(null);}}/>
-        <CozyButton label="Tip" secondary disabled={autoRunning} onPress={showHint}/>
-        <CozyButton label="Auto-tøm" disabled={!settings.autoMove||!canAutoFinish(game)||autoRunning} onPress={()=>{void playFinish();}}/>
-        <CozyButton label="Nyt spil" disabled={autoRunning} onPress={()=>startSolitaire(activeModeIndex(game.drawCount,game.maxPasses),true)}/>
+      <View style={styles.compactActions}>
+        {[
+          {icon:'↶',label:'Fortryd',disabled:autoRunning,onPress:()=>{stopVisualCue();setGame(undo(game));setChosen(null);}},
+          {icon:'✧',label:'Tip',disabled:autoRunning,onPress:showHint},
+          {icon:'⇧',label:'Auto-tøm',disabled:!settings.autoMove||!canAutoFinish(game)||autoRunning,onPress:()=>{void playFinish();}},
+          {icon:'↻',label:'Nyt spil',disabled:autoRunning,onPress:()=>startSolitaire(activeModeIndex(game.drawCount,game.maxPasses),true)},
+        ].map(action=><Pressable key={action.label} accessibilityRole="button" accessibilityLabel={action.label} accessibilityState={{disabled:action.disabled}} disabled={action.disabled} onPress={action.onPress}
+          style={[styles.iconAction,action.disabled&&styles.iconActionDisabled]}><Text style={styles.iconActionGlyph}>{action.icon}</Text><Text style={styles.iconActionLabel}>{action.label}</Text></Pressable>)}
       </View>
+      {!!message&&<Text numberOfLines={1} style={[styles.boardInfo,landscape&&styles.landscapeInfo]}>{message}</Text>}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.modePicker}>
         {solitaireModes.map((mode,index)=>{const unlocked=modeUnlocked(ledger,index);const selected=index===activeModeIndex(game.drawCount,game.maxPasses);return <Pressable key={mode.id} accessibilityRole="button" accessibilityState={{disabled:!unlocked,selected}} disabled={!unlocked||autoRunning} style={[styles.modeButton,selected&&styles.modeButtonActive,!unlocked&&styles.modeButtonLocked]} onPress={()=>startSolitaire(index)}>
           <Text style={styles.modeText}>{unlocked?mode.title:`🔒 ${mode.title}`}</Text>
@@ -631,7 +634,7 @@ const styles=StyleSheet.create({
   landscapeRoot:{flexDirection:'row'},
   landscapeHud:{right:undefined,width:258,height:86},
   landscapeGardenTools:{maxWidth:'90%',padding:5,gap:3},
-  landscapeDock:{width:'100%',paddingHorizontal:8,paddingVertical:3,justifyContent:'center'},
+  landscapeDock:{width:'100%',paddingHorizontal:5,paddingVertical:2,justifyContent:'center'},
   landscapeInfo:{fontSize:11,marginVertical:2},
   landscapeActions:{flexDirection:'row',flexWrap:'nowrap',gap:5,alignItems:'center'},
   landscapePiles:{marginTop:7},
@@ -658,7 +661,7 @@ const styles=StyleSheet.create({
   glowGrid:{flexDirection:'row',flexWrap:'wrap',width:252,justifyContent:'center',gap:6},
   glowTile:{width:56,height:56,borderRadius:13,borderWidth:2,borderColor:'#d8ac63',backgroundColor:'#f9e5b8',alignItems:'center',justifyContent:'center'},
   glowSymbol:{fontSize:30},
-  modePicker:{gap:6,paddingVertical:4,paddingHorizontal:5},
+  modePicker:{gap:5,paddingVertical:2,paddingHorizontal:3},
   modeButton:{borderColor:'#d7ae68',borderWidth:1.5,borderRadius:10,backgroundColor:'#fff0cb',paddingHorizontal:8,paddingVertical:3,minWidth:113},
   modeButtonActive:{borderColor:'#74bba3',backgroundColor:'#c5eacb'},
   modeButtonLocked:{opacity:0.58},
@@ -684,14 +687,19 @@ const styles=StyleSheet.create({
   tab:{flex:1,justifyContent:'center',alignItems:'center',gap:1,paddingTop:3},selected:{backgroundColor:'#fce3a6'},
   activeIcon:{transform:[{scale:1.1}]},inactiveIcon:{opacity:0.86},tabIcon:{width:38,height:40},activeLabel:{color:'#123f71',fontWeight:'900'},
   tabText:{fontSize:11,color:'#604d30',fontWeight:'700'},
-  board:{flex:1},boardContent:{paddingHorizontal:6,paddingTop:12,paddingBottom:30},piles:{flexDirection:'row',justifyContent:'space-between',marginTop:15},
-  topPiles:{flexDirection:'row',justifyContent:'space-between',alignItems:'flex-start',marginTop:13,gap:5},
-  solitaireDock:{paddingHorizontal:8,paddingTop:8,paddingBottom:12,alignItems:'center',backgroundColor:'#183b34e3',borderTopWidth:2,borderTopColor:'#e4c586'},
+  board:{flex:1},boardContent:{paddingHorizontal:6,paddingTop:12,paddingBottom:10},piles:{flexDirection:'row',justifyContent:'space-between',marginTop:15},
+  bottomPiles:{flexDirection:'row',width:'100%',justifyContent:'space-around',alignItems:'center',gap:4},
+  solitaireDock:{paddingHorizontal:5,paddingTop:5,paddingBottom:4,alignItems:'center',backgroundColor:'#183b34e3',borderTopWidth:2,borderTopColor:'#e4c586'},
+  compactActions:{flexDirection:'row',width:'100%',justifyContent:'space-evenly',alignItems:'center',gap:4,marginTop:4},
+  iconAction:{flex:1,maxWidth:92,minHeight:45,alignItems:'center',justifyContent:'center',backgroundColor:'#ffe9b9',borderColor:'#d9a852',borderWidth:2,borderRadius:13,paddingVertical:2},
+  iconActionDisabled:{opacity:0.38},
+  iconActionGlyph:{fontSize:23,lineHeight:25,color:'#256471',fontWeight:'900'},
+  iconActionLabel:{fontSize:10,color:'#4b3f29',fontWeight:'900'},
   drawZone:{backgroundColor:'#71532ca3',borderWidth:1.5,borderColor:'#f0ce89',borderRadius:13,padding:3,shadowColor:'#e7bb70',shadowOpacity:0.25,shadowRadius:4},
   foundationZone:{backgroundColor:'#20554eaf',borderWidth:1.5,borderColor:'#a6dbbf',borderRadius:13,padding:3,shadowColor:'#9dd6bb',shadowOpacity:0.25,shadowRadius:4,alignSelf:'center'},
   zoneLabels:{flexDirection:'row',gap:5,justifyContent:'space-around'},
   zoneCards:{flexDirection:'row',gap:5,justifyContent:'center'},
-  zoneLabel:{fontSize:9,fontWeight:'900',color:'#fff3c9',textAlign:'center',letterSpacing:0.5,marginBottom:4,textShadowColor:'#132c25',textShadowRadius:4},
+  zoneLabel:{fontSize:9,fontWeight:'900',color:'#fff3c9',textAlign:'center',letterSpacing:0.5,marginBottom:1,textShadowColor:'#132c25',textShadowRadius:4},
   columnCount:{position:'absolute',top:3,right:3,minWidth:24,height:24,paddingHorizontal:4,borderRadius:12,alignItems:'center',justifyContent:'center',backgroundColor:'#174f5b',borderWidth:2,borderColor:'#ffe3a3',elevation:4},
   columnCountText:{color:'#fff8db',fontSize:12,fontWeight:'900'},
   slot:{borderRadius:8,alignItems:'center',justifyContent:'center'},emptySlot:{borderRadius:9,backgroundColor:'#194b47a8',borderWidth:2,borderColor:'#d7b775',shadowColor:'#091b1e',shadowOpacity:0.2,shadowRadius:3},emptyMark:{position:'absolute',fontSize:20,color:'#fff5d4',fontWeight:'900'},
