@@ -39,3 +39,14 @@ test('claimed quests have stable period-specific reward ids',()=>{
   assert.equal(quests(ledger,0,events,now).find(q=>q.id===quest.id)?.claimed,true);
   assert.equal(quests(ledger,0,events,new Date('2026-11-15T12:00:00Z')).find(q=>q.title==='En hyggelig sejr')?.claimed,false);
 });
+
+test('daily golden-star bonus unlocks only after claiming three tasks',()=>{
+  const now=new Date('2026-11-14T12:00:00Z');
+  let ledger=emptyLedger();
+  const bonus=()=>quests(ledger,0,[],now).find(q=>q.id==='daily-2026-11-14-bonus')!;
+  assert.equal(bonus().progress,0);
+  for(const id of ['daily-2026-11-14-win','daily-2026-11-14-mini','daily-2026-11-14-moves']){
+    ledger=record(ledger,{id:`quest-${id}`,type:'earn',amount:10,reason:'Opgave'});
+  }
+  assert.equal(bonus().progress,3);assert.equal(bonus().complete,true);assert.equal(bonus().reward,20);
+});
