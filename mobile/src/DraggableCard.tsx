@@ -1,12 +1,17 @@
 import React, {useMemo, useRef, useState} from 'react';
 import {Image, PanResponder, StyleSheet, Text, View} from 'react-native';
 import type {Card} from '../../src/domain/solitaire/klondike';
-import type {CardStyle} from './nativeSettings';
+import type {CardBackStyle,CardStyle} from './nativeSettings';
 
 const ranks:Record<number,string>={1:'A',11:'J',12:'Q',13:'K'};
 const suit:Record<string,string>={C:'♣',D:'♦',H:'♥',S:'♠'};
 const premiumBack=require('../assets/illustrations/card-back-premium.webp');
 const premiumFace=require('../assets/illustrations/card-face-premium.webp');
+const backs={floral:premiumBack,autumn:require('../assets/illustrations/garden-autumn.webp'),winter:require('../assets/illustrations/garden-winter.webp')};
+export function CardBack({width,height,cardStyle='illustrated',back='floral'}:{width:number;height:number;cardStyle?:CardStyle;back?:CardBackStyle}){
+  return cardStyle==='classic'?<View style={[styles.classicBack,{width,height}]}/>:
+    <View style={[styles.backFrame,{width,height}]}><Image source={backs[back]} resizeMode={back==='floral'?'stretch':'cover'} style={{width:'100%',height:'100%'}}/></View>;
+}
 
 export function CardFace({card,width,height,cardStyle='illustrated'}:{card:Card;width:number;height:number;cardStyle?:CardStyle}){
   const red=card.suit==='D'||card.suit==='H';
@@ -21,9 +26,9 @@ export function CardFace({card,width,height,cardStyle='illustrated'}:{card:Card;
   </View>;
 }
 
-type Props={card:Card;width:number;height:number;cardStyle?:CardStyle;onTap:()=>void;onDoubleTap?:()=>void;onDrop?:(x:number,y:number)=>void;onDragChange?:(active:boolean)=>void;onDragMove?:(dx:number,dy:number)=>void;floating?:boolean;run?:Card[]};
+type Props={card:Card;width:number;height:number;cardStyle?:CardStyle;back?:CardBackStyle;onTap:()=>void;onDoubleTap?:()=>void;onDrop?:(x:number,y:number)=>void;onDragChange?:(active:boolean)=>void;onDragMove?:(dx:number,dy:number)=>void;floating?:boolean;run?:Card[]};
 
-export function DraggableCard({card,width,height,cardStyle='illustrated',onTap,onDoubleTap,onDrop,onDragChange,onDragMove,floating=false,run=[]}:Props){
+export function DraggableCard({card,width,height,cardStyle='illustrated',back='floral',onTap,onDoubleTap,onDrop,onDragChange,onDragMove,floating=false,run=[]}:Props){
   const [shift,setShift]=useState({x:0,y:0});
   const callbacks=useRef({onTap,onDoubleTap,onDrop,onDragChange,onDragMove});
   callbacks.current={onTap,onDoubleTap,onDrop,onDragChange,onDragMove};
@@ -60,7 +65,7 @@ export function DraggableCard({card,width,height,cardStyle='illustrated',onTap,o
   return <View {...gesture.panHandlers} accessible accessibilityRole="button"
     accessibilityLabel={enabled?`${ranks[card.rank]??card.rank} ${suit[card.suit]}`:'Skjult kort'}
     style={{width,height,opacity:floating?0:1,transform:[{translateX:floating?0:shift.x},{translateY:floating?0:shift.y}],zIndex:shift.x||shift.y?100:0,elevation:shift.x||shift.y?14:0}}>
-    {card.up?<CardFace card={card} width={width} height={height} cardStyle={cardStyle}/>:cardStyle==='classic'?<View style={[styles.classicBack,{width,height}]}/>:<Image source={premiumBack} resizeMode="stretch" style={{width,height}}/>}
+    {card.up?<CardFace card={card} width={width} height={height} cardStyle={cardStyle}/>:<CardBack width={width} height={height} cardStyle={cardStyle} back={back}/>}
     {(shift.x!==0||shift.y!==0)&&run.slice(1).map((next,i)=><View key={next.id} pointerEvents="none" style={{position:'absolute',top:(i+1)*27,left:0,width,height}}>
       <CardFace card={next} width={width} height={height} cardStyle={cardStyle}/>
     </View>)}
@@ -71,6 +76,7 @@ const styles=StyleSheet.create({
   face:{borderRadius:7,backgroundColor:'#fff9ed',overflow:'hidden',shadowColor:'#182d30',shadowOpacity:0.22,shadowRadius:2,elevation:2},
   classicFace:{backgroundColor:'#fffdf5',borderWidth:1.5,borderColor:'#d6c3a5'},
   classicBack:{backgroundColor:'#31688b',borderRadius:7,borderWidth:4,borderColor:'#fffaf0'},
+  backFrame:{borderRadius:7,overflow:'hidden',borderWidth:2,borderColor:'#e5ba71',backgroundColor:'#285666'},
   corner:{position:'absolute',left:5,top:4,fontWeight:'900',includeFontPadding:false},
   centerSuit:{position:'absolute',alignSelf:'center',top:'40%',fontWeight:'800',includeFontPadding:false,textShadowColor:'#f3d29b',textShadowOffset:{width:0,height:1},textShadowRadius:1},
   bottomCorner:{position:'absolute',right:5,bottom:4,fontWeight:'900',includeFontPadding:false,transform:[{rotate:'180deg'}]},
