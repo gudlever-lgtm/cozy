@@ -112,6 +112,7 @@ export default function App() {
   const [autoRunning,setAutoRunning]=useState(false);
   const flightProgress=useRef(new Animated.Value(0)).current;
   const ringPulse=useRef(new Animated.Value(0)).current;
+  const victoryProgress=useRef(new Animated.Value(0)).current;
   const effectToken=useRef(0);
   const hintPulseAnimation=useRef<Animated.CompositeAnimation|null>(null);
   const hintGhostAnimation=useRef<Animated.CompositeAnimation|null>(null);
@@ -145,6 +146,13 @@ export default function App() {
   // Six full-size bottom cards plus the action buttons fit side-by-side on wider phones.
   const wideLandscapeDock=landscape&&width>=840;
   const animationFactor={calm:1.5,normal:1,fast:0.6}[settings.animationSpeed];
+  const won=isWon(game);
+  useEffect(()=>{
+    victoryProgress.stopAnimation();
+    if(!loaded||!won){victoryProgress.setValue(0);return;}
+    victoryProgress.setValue(0);
+    Animated.spring(victoryProgress,{toValue:1,friction:5,tension:32/animationFactor,useNativeDriver:true}).start();
+  },[loaded,won,game.seed,victoryProgress,animationFactor]);
   const gardenHeight=measuredGardenHeight || Math.max(200,height-124);
   gardenViewportRef.current={width:gardenWidth,height:gardenHeight,zoom};
   useEffect(()=>setOffset(current=>clampGardenOffset(current,zoom,gardenWidth,gardenHeight)),[zoom,gardenWidth,gardenHeight]);
@@ -331,7 +339,7 @@ export default function App() {
         if(located){
           flightProgress.setValue(0);
           await new Promise<void>(resolve=>setTimeout(resolve,35));
-          await new Promise<void>(resolve=>Animated.timing(flightProgress,{toValue:1,duration:Math.round(Math.max(250,510-step*7)*animationFactor),easing:Easing.inOut(Easing.cubic),useNativeDriver:true}).start(()=>resolve()));
+          await new Promise<void>(resolve=>Animated.timing(flightProgress,{toValue:1,duration:Math.round(Math.max(310,590-step*6)*animationFactor),easing:Easing.inOut(Easing.cubic),useNativeDriver:true}).start(()=>resolve()));
         }
         current=applyMove(current,action);
         trackQuest('move',`move-${current.seed}-${current.moves}`);
@@ -505,8 +513,8 @@ export default function App() {
         </View>;})}
         {!pile.length&&<View style={[styles.slot,{height:cardHeight}]}><View style={[styles.emptySlot,{width:cardWidth,height:cardHeight}]}/></View>}
       </Pressable>)}</View>
-      {isWon(game)&&<View style={styles.victory}><Text style={styles.victoryText}>✨ Tillykke! ✨</Text><Text style={styles.victorySubtitle}>En vidunderlig kabale er fuldført</Text></View>}
     </ScrollView>
+    {won&&<Animated.View pointerEvents="none" style={[styles.victory,{opacity:victoryProgress,transform:[{scale:victoryProgress.interpolate({inputRange:[0,1],outputRange:[0.75,1]})}]}]}><Text style={styles.victoryStars}>✦ ✨ ✦</Text><Text style={styles.victoryText}>Tillykke!</Text><Text style={styles.victorySubtitle}>En vidunderlig kabale er fuldført</Text><Text style={styles.victoryStars}>✨ +25 Lysglimt ✨</Text></Animated.View>}
     <View style={[styles.solitaireDock,landscape&&styles.landscapeDock]}>
       <View style={[styles.bottomControls,wideLandscapeDock&&styles.wideBottomControls]}>
       <View style={[styles.bottomPiles,wideLandscapeDock&&styles.wideBottomPiles]}>
@@ -610,9 +618,10 @@ export default function App() {
         <Animated.View style={{position:'absolute',left:flight.from.x,top:flight.from.y,width:cardWidth,height:cardHeight,
           opacity:flightProgress.interpolate({inputRange:[0,0.12,0.8,1],outputRange:[0,flight.mode==='hint'?0.65:0.97,flight.mode==='hint'?0.57:0.97,0]}),
           transform:[{translateX:flightProgress.interpolate({inputRange:[0,1],outputRange:[0,flight.dx]})},
-            {translateY:flightProgress.interpolate({inputRange:[0,1],outputRange:[0,flight.dy]})},
+            {translateY:flightProgress.interpolate({inputRange:[0,0.5,1],outputRange:[0,flight.dy*0.5-Math.min(34,Math.abs(flight.dy)*0.12+12),flight.dy]})},
             {scale:flightProgress.interpolate({inputRange:[0,0.5,1],outputRange:[1,1.11,0.95]})}]}}>
           {flight.faceUp?<CardFace card={flight.card} width={cardWidth} height={cardHeight} cardStyle={settings.cardStyle}/>:<CardBack width={cardWidth} height={cardHeight} cardStyle={settings.cardStyle} back={settings.cardBack}/>}
+          {flight.mode==='finish'&&<Animated.Text style={{position:'absolute',top:-14,right:-10,fontSize:25,color:'#fff1a5',textShadowColor:'#f4d866',textShadowRadius:10,opacity:flightProgress.interpolate({inputRange:[0,0.3,0.8,1],outputRange:[0,1,0.8,0]})}}>✦</Animated.Text>}
         </Animated.View>
       </>}
       {dragVisual&&<Animated.View style={{position:'absolute',left:dragVisual.x,top:dragVisual.y,
@@ -678,7 +687,8 @@ const styles=StyleSheet.create({
   brandIcon:{width:88,height:88,borderRadius:22,borderWidth:3,borderColor:'#f7d987'},
   brandTitle:{fontSize:20,fontWeight:'900',color:'#285563'},
   hintRing:{position:'absolute',borderRadius:13,borderWidth:4,borderColor:'#ffde66',backgroundColor:'#fff3a028',shadowColor:'#fff7b1',shadowOpacity:0.95,shadowRadius:14,elevation:12},
-  victory:{alignItems:'center',backgroundColor:'#fff3dff0',borderWidth:4,borderColor:'#eabf5f',borderRadius:24,padding:16,margin:15,shadowColor:'#ffd36c',shadowOpacity:0.7,shadowRadius:18},
+  victory:{position:'absolute',top:'27%',left:12,right:12,zIndex:30,alignItems:'center',backgroundColor:'#fff3dff0',borderWidth:4,borderColor:'#eabf5f',borderRadius:24,padding:16,shadowColor:'#ffd36c',shadowOpacity:0.7,shadowRadius:18},
+  victoryStars:{fontSize:18,fontWeight:'900',color:'#b68727',textAlign:'center',marginVertical:3},
   victoryText:{fontSize:28,fontWeight:'900',color:'#8c6220'},victorySubtitle:{fontSize:15,fontWeight:'700',color:'#35695c'},
   root:{flex:1,paddingTop:28,backgroundColor:'#f5ecd8'},garden:{flex:1,overflow:'hidden'},
   hud:{position:'absolute',top:14,left:16,right:16,height:92,backgroundColor:'#fff1cfef',borderRadius:23,borderWidth:4,borderColor:'#e5af55',shadowColor:'#4a2b17',shadowOpacity:0.3,shadowRadius:8,elevation:7},hudText:{position:'absolute',top:11,left:18,right:18},
