@@ -122,6 +122,14 @@ export default function App() {
     flightProgress.stopAnimation();ringPulse.stopAnimation();
   },[flightProgress,ringPulse]);
   const [message,setMessage] = useState('');
+  const [invalidFeedback,setInvalidFeedback]=useState(0);
+  const invalidMotion=useRef(new Animated.Value(0)).current;
+  useEffect(()=>{
+    if(!invalidFeedback)return;
+    invalidMotion.stopAnimation();invalidMotion.setValue(0);
+    Animated.timing(invalidMotion,{toValue:1,duration:420,useNativeDriver:true}).start();
+  },[invalidFeedback,invalidMotion]);
+  function rejectMove(reason:string){setMessage(reason);setInvalidFeedback(count=>count+1);}
   const [zoom,setZoom] = useState(1);
   const [measuredGardenHeight,setMeasuredGardenHeight] = useState(0);
   const [offset,setOffset] = useState({x:0,y:0});
@@ -353,7 +361,7 @@ export default function App() {
     if(autoRunning)return;stopVisualCue();
     const action=autoPlace(game,source);
     if(action){trackQuest('move',`move-${game.seed}-${game.moves+1}`);setGame(current=>applyMove(current,action));setChosen(null);setMessage('');}
-    else setMessage('Ingen lovlig plads til dette kort');
+    else rejectMove('Ingen lovlig plads til dette kort');
   }
   function executeMove(source:Source,to:'tableau'|'foundation',index:number){
     if(autoRunning)return;stopVisualCue();
@@ -364,7 +372,7 @@ export default function App() {
     if (legalMoves(game).some(m => JSON.stringify(m) === JSON.stringify(action))) {
       trackQuest('move',`move-${game.seed}-${game.moves+1}`);
       setGame(applyMove(game,action));setMessage('');
-    } else setMessage('Ulovligt træk');
+    } else rejectMove('Ulovligt træk');
     setChosen(null);
   }
   function dropCard(source:Source,x:number,y:number){
@@ -379,7 +387,7 @@ export default function App() {
       if(pending===0){
         const chosenTarget=winner as {index:number;to:'foundation'|'tableau'}|null;
         if(chosenTarget)executeMove(source,chosenTarget.to,chosenTarget.index);
-        else setMessage('Slip kortet på en bunke');
+        else rejectMove('Slip kortet på en bunke');
       }
     }));
   }
@@ -387,7 +395,7 @@ export default function App() {
     if(autoRunning)return;stopVisualCue();
     const kind = game.stock.length ? 'draw' : 'recycle';
     if (legalMoves(game).some(m => m.kind === kind)){trackQuest('move',`move-${game.seed}-${game.moves+1}`);setGame(applyMove(game,{kind}));}
-    else setMessage('Ingen flere kort at trække');
+    else rejectMove('Ingen flere kort at trække');
   }
   function showHint(){
     if(autoRunning)return;stopVisualCue();
@@ -546,7 +554,10 @@ export default function App() {
           style={[styles.iconAction,action.disabled&&styles.iconActionDisabled]}><Text style={styles.iconActionGlyph}>{action.icon}</Text><Text style={styles.iconActionLabel}>{action.label}</Text></Pressable>)}
       </View>
       </View>
-      {!!message&&<Text numberOfLines={1} style={[styles.boardInfo,landscape&&styles.landscapeInfo]}>{message}</Text>}
+      {!!message&&<Animated.View style={[styles.feedbackMessage,invalidFeedback>0&&['Ulovligt træk','Slip kortet på en bunke','Ingen lovlig plads til dette kort','Ingen flere kort at trække'].includes(message)&&styles.invalidMessage,
+        {transform:[{translateX:invalidMotion.interpolate({inputRange:[0,0.2,0.4,0.6,0.8,1],outputRange:[0,-6,5,-3,2,0]})}]}]}>
+        <Text numberOfLines={1} style={[styles.boardInfo,landscape&&styles.landscapeInfo]}>{message}</Text>
+      </Animated.View>}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.modePicker}>
         {solitaireModes.map((mode,index)=>{const unlocked=modeUnlocked(ledger,index);const selected=index===activeModeIndex(game.drawCount,game.maxPasses);return <Pressable key={mode.id} accessibilityRole="button" accessibilityState={{disabled:!unlocked,selected}} disabled={!unlocked||autoRunning} style={[styles.modeButton,selected&&styles.modeButtonActive,!unlocked&&styles.modeButtonLocked]} onPress={()=>startSolitaire(index)}>
           <Text style={styles.modeText}>{unlocked?mode.title:`🔒 ${mode.title}`}</Text>
@@ -696,6 +707,8 @@ const styles=StyleSheet.create({
   placedPicker:{alignItems:'center',gap:2},placedPickerLabel:{fontSize:12,fontWeight:'800',color:'#285563'},placedChip:{minHeight:34,paddingHorizontal:10,justifyContent:'center',borderRadius:12,backgroundColor:'#fff6dd',borderWidth:2,borderColor:'#cfa15e'},placedChipActive:{backgroundColor:'#bfe9ad',borderColor:'#38885d'},placedChipText:{fontSize:12,fontWeight:'800',color:'#35524d'},
   boardTitle:{fontSize:23,fontWeight:'800',textAlign:'center',color:'#fbeccf',textShadowColor:'#172a18',textShadowRadius:5,textShadowOffset:{width:0,height:2}},
   boardMeta:{color:'#fff1d5',textAlign:'center',fontWeight:'700',marginTop:5},boardInfo:{marginVertical:3,textAlign:'center',color:'#f8e8c5',fontWeight:'700',fontSize:12},
+  feedbackMessage:{paddingHorizontal:9,borderRadius:9},
+  invalidMessage:{backgroundColor:'#704533b8',borderWidth:1,borderColor:'#dbb385'},
   illustratedPanel:{backgroundColor:'#fff1cfef',borderRadius:24,borderWidth:4,borderColor:'#dfad55',shadowColor:'#49351f',shadowRadius:15,shadowOpacity:0.32,elevation:7,padding:5},settingsPanel:{alignItems:'center',width:'100%',maxWidth:380,padding:18,gap:10},sectionHeader:{alignItems:'center',width:'100%',maxWidth:420,padding:14,borderRadius:20,backgroundColor:'#fff1cfef',borderWidth:3,borderColor:'#dfad55'},panelCaption:{color:'#285563',fontSize:14,fontWeight:'800',textAlign:'center'},
   nav:{height:96,flexDirection:'row',backgroundColor:'#fff1d6',alignItems:'center',paddingHorizontal:6,paddingBottom:18,borderTopWidth:4,borderTopColor:'#d5a14c',shadowColor:'#49341f',shadowOpacity:0.22,shadowRadius:5,elevation:9},
   tab:{flex:1,justifyContent:'center',alignItems:'center',gap:1,paddingTop:3},selected:{backgroundColor:'#fce3a6'},
