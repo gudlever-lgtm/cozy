@@ -14,7 +14,7 @@ import {moveGardenDecoration} from '../src/domain/garden/drag';
 import {cozyLayout} from '../src/domain/ui/responsive';
 import {defaultSettings,readSettings,writeSettings} from './src/nativeSettings';
 import type {Season,CozySettings} from './src/nativeSettings';
-import {CardFace,DraggableCard} from './src/DraggableCard';
+import {CardBack,CardFace,DraggableCard} from './src/DraggableCard';
 import {DraggableDecoration} from './src/DraggableDecoration';
 import {autoPlace} from '../src/domain/solitaire/autoPlace';
 import {cardForVisualMove,tableauLandingOffset,visibleTableauIndexes} from '../src/domain/solitaire/visualMoves';
@@ -22,7 +22,9 @@ import {CozyButton} from './src/CozyButton';
 import {MemoryBoard} from './src/MemoryBoard';
 import {newMemoryGame,revealMemory,hideMismatch,memoryWon} from '../src/domain/minigames/memory';
 import {readMemory,writeMemory} from './src/nativeMemory';
-import {quests} from '../src/domain/quests/quests';
+import {addQuestEvent,quests} from '../src/domain/quests/quests';
+import type {QuestEvent,QuestEventKind} from '../src/domain/quests/quests';
+import {readQuestEvents,writeQuestEvents} from './src/nativeQuestEvents';
 import {checkForCozyUpdate} from './src/checkUpdate';
 import {activeModeIndex,modeUnlocked,solitaireModes,winsForMode} from '../src/domain/solitaire/progression';
 import {glowTargets} from '../src/domain/minigames/glow';
@@ -74,6 +76,10 @@ export default function App() {
   const [seasonAnswer,setSeasonAnswer]=useState<number|null>(null);
   const [game,setGame] = useState(() => newGame(20261113));
   const [ledger,setLedger] = useState<Ledger>(()=>emptyLedger());
+  const [questEvents,setQuestEvents]=useState<QuestEvent[]>([]);
+  const [questEventsLoaded,setQuestEventsLoaded]=useState(false);
+  const [questEventsBlocked,setQuestEventsBlocked]=useState(false);
+  const [questCategory,setQuestCategory]=useState<'daily'|'weekly'|'milestone'>('daily');
   const [loaded,setLoaded] = useState(false);
   const [saveBlocked,setSaveBlocked] = useState(false);
   const [gardenLoaded,setGardenLoaded] = useState(false);
@@ -129,7 +135,8 @@ export default function App() {
   const offsetRef = useRef(offset);
   offsetRef.current=offset;
   const {width,height} = useWindowDimensions();
-  const {landscape,gardenWidth,cardWidth,cardHeight,tableauHeight}=cozyLayout(width,height);
+  const {landscape,gardenWidth,cardWidth,cardHeight,tableauHeight}=cozyLayout(width,height,settings.cardSize);
+  const animationFactor={calm:1.5,normal:1,fast:0.6}[settings.animationSpeed];
   const gardenHeight=measuredGardenHeight || Math.max(200,height-124);
   gardenViewportRef.current={width:gardenWidth,height:gardenHeight,zoom};
   useEffect(()=>setOffset(current=>clampGardenOffset(current,zoom,gardenWidth,gardenHeight)),[zoom,gardenWidth,gardenHeight]);
@@ -177,6 +184,19 @@ export default function App() {
     if(!loaded||saveBlocked)return;
     saveGame(nativeSaveStore,game,ledger).catch(()=>setMessage('Kunne ikke gemme spillet på enheden.'));
   },[game,ledger,loaded,saveBlocked]);
+  useEffect(()=>{
+    let mounted=true;
+    readQuestEvents().then(events=>{if(mounted)setQuestEvents(events);})
+      .catch(()=>{if(mounted){setQuestEventsBlocked(true);setMessage('Gemte opgavefremskridt kunne ikke læses og overskrives ikke.');}})
+      .finally(()=>{if(mounted)setQuestEventsLoaded(true);});
+    return ()=>{mounted=false;};
+  },[]);
+  useEffect(()=>{
+    if(questEventsLoaded&&!questEventsBlocked)writeQuestEvents(questEvents).catch(()=>setMessage('Opgavefremskridt kunne ikke gemmes.'));
+  },[questEvents,questEventsLoaded,questEventsBlocked]);
+  function trackQuest(kind:QuestEventKind,id:string){
+    setQuestEvents(previous=>addQuestEvent(previous,{kind,id,at:new Date().toISOString()}));
+  }
 
   useEffect(()=>{
     let mounted=true;
@@ -218,13 +238,16 @@ export default function App() {
   useEffect(()=>{
     if(!loaded||!memoryLoaded||!memoryWon(memory))return;
     setLedger(previous=>record(previous,{id:`memory-win-${memory.round}`,type:'earn',amount:5,reason:'Skovens vendespil'}));
-  },[memory,loaded,memoryLoaded]);
+    if(questEventsLoaded)trackQuest('mini-win',`memory-win-${memory.round}`);
+  },[memory,loaded,memoryLoaded,questEventsLoaded]);
 
   function flipMemory(index:number){
     if(memory.revealed.length===2&&memory.tiles[memory.revealed[0]]!==memory.tiles[memory.revealed[1]])return;
     setMemory(current=>revealMemory(current,index));
   }
-  function claimQuest(id:ReturnType<typeof quests>[number]['id'],reward:number){
+  function claimQuest(id:string,reward:number){
+    const current=quests(ledger,placed.length,questEvents).find(q=>q.id===id);
+    if(!current?.complete||current.claimed||current.reward!==reward)return;
     try{setLedger(previous=>record(previous,{id:`quest-${id}`,type:'earn',amount:reward,reason:'Opgave fuldført'}));}
     catch{setMessage('Belønningen kunne ikke indløses');}
   }
@@ -233,7 +256,9 @@ export default function App() {
     if(!loaded || !isWon(game))return;
     const mode=solitaireModes[activeModeIndex(game.drawCount,game.maxPasses)];
     setLedger(previous=>record(previous,{id:`solitaire-win-${mode.id}-${game.seed}`,type:'earn',amount:25,reason:`${mode.title} gennemført`}));
-  },[game,loaded]);
+    if(questEventsLoaded){trackQuest('solitaire-win',`solitaire-win-${mode.id}-${game.seed}`);
+      if(game.drawCount===3)trackQuest('three-win',`three-win-${game.seed}`);}
+  },[game,loaded,questEventsLoaded]);
   function startSolitaire(index:number,applyPreference=false){
     if(!modeUnlocked(ledger,index)){setMessage('Vind fem spil i den forrige kabaletype først');return;}
     stopVisualCue();const effectiveIndex=applyPreference&&index===0&&settings.drawPreference===3&&modeUnlocked(ledger,1)?1:index;
@@ -245,12 +270,12 @@ export default function App() {
     setGlowTried(previous=>[...previous,index]);
     if(!glowTargets(glowRound).includes(index))return;
     const found=[...glowFound,index];setGlowFound(found);
-    if(found.length===5)setLedger(previous=>record(previous,{id:`mini-glow-${glowRound}`,type:'earn',amount:5,reason:'Lysglimtjagt fuldført'}));
+    if(found.length===5){setLedger(previous=>record(previous,{id:`mini-glow-${glowRound}`,type:'earn',amount:5,reason:'Lysglimtjagt fuldført'}));trackQuest('mini-win',`mini-glow-${glowRound}`);}
   }
   function answerSeason(index:number){
     if(seasonAnswer!==null)return;
     setSeasonAnswer(index);
-    if(index===seasonRound%4)setLedger(previous=>record(previous,{id:`mini-season-${seasonRound}`,type:'earn',amount:5,reason:'Årstidsquiz fuldført'}));
+    if(index===seasonRound%4){setLedger(previous=>record(previous,{id:`mini-season-${seasonRound}`,type:'earn',amount:5,reason:'Årstidsquiz fuldført'}));trackQuest('mini-win',`mini-season-${seasonRound}`);}
   }
 
   function move(to:'tableau' | 'foundation',index:number) {
@@ -287,9 +312,10 @@ export default function App() {
         if(located){
           flightProgress.setValue(0);
           await new Promise<void>(resolve=>setTimeout(resolve,35));
-          await new Promise<void>(resolve=>Animated.timing(flightProgress,{toValue:1,duration:Math.max(250,510-step*7),easing:Easing.inOut(Easing.cubic),useNativeDriver:true}).start(()=>resolve()));
+          await new Promise<void>(resolve=>Animated.timing(flightProgress,{toValue:1,duration:Math.round(Math.max(250,510-step*7)*animationFactor),easing:Easing.inOut(Easing.cubic),useNativeDriver:true}).start(()=>resolve()));
         }
         current=applyMove(current,action);
+        trackQuest('move',`move-${current.seed}-${current.moves}`);
         setGame(current);setFlight(null);
         await new Promise<void>(resolve=>setTimeout(resolve,75));
       }
@@ -299,7 +325,7 @@ export default function App() {
   function autoMove(source:Source){
     if(autoRunning)return;stopVisualCue();
     const action=autoPlace(game,source);
-    if(action){setGame(current=>applyMove(current,action));setChosen(null);setMessage('');}
+    if(action){trackQuest('move',`move-${game.seed}-${game.moves+1}`);setGame(current=>applyMove(current,action));setChosen(null);setMessage('');}
     else setMessage('Ingen lovlig plads til dette kort');
   }
   function executeMove(source:Source,to:'tableau'|'foundation',index:number){
@@ -309,6 +335,7 @@ export default function App() {
       source.kind === 'foundation' ? {kind:'foundation',from:source.from,to:index} :
         {kind:'tableau',from:source.from,at:source.at,to,index};
     if (legalMoves(game).some(m => JSON.stringify(m) === JSON.stringify(action))) {
+      trackQuest('move',`move-${game.seed}-${game.moves+1}`);
       setGame(applyMove(game,action));setMessage('');
     } else setMessage('Ulovligt træk');
     setChosen(null);
@@ -332,7 +359,7 @@ export default function App() {
   function draw() {
     if(autoRunning)return;stopVisualCue();
     const kind = game.stock.length ? 'draw' : 'recycle';
-    if (legalMoves(game).some(m => m.kind === kind)) setGame(applyMove(game,{kind}));
+    if (legalMoves(game).some(m => m.kind === kind)){trackQuest('move',`move-${game.seed}-${game.moves+1}`);setGame(applyMove(game,{kind}));}
     else setMessage('Ingen flere kort at trække');
   }
   function showHint(){
@@ -344,12 +371,12 @@ export default function App() {
       if(!located||token!==effectToken.current)return;
       ringPulse.setValue(0);flightProgress.setValue(0);
       hintPulseAnimation.current=Animated.loop(Animated.sequence([
-        Animated.timing(ringPulse,{toValue:1,duration:430,useNativeDriver:true}),
-        Animated.timing(ringPulse,{toValue:0,duration:430,useNativeDriver:true}),
+        Animated.timing(ringPulse,{toValue:1,duration:Math.round(430*animationFactor),useNativeDriver:true}),
+        Animated.timing(ringPulse,{toValue:0,duration:Math.round(430*animationFactor),useNativeDriver:true}),
       ]),{iterations:3});
       hintGhostAnimation.current=Animated.loop(Animated.sequence([
         Animated.delay(130),
-        Animated.timing(flightProgress,{toValue:1,duration:1100,easing:Easing.inOut(Easing.cubic),useNativeDriver:true}),
+        Animated.timing(flightProgress,{toValue:1,duration:Math.round(1100*animationFactor),easing:Easing.inOut(Easing.cubic),useNativeDriver:true}),
         Animated.timing(flightProgress,{toValue:0,duration:1,useNativeDriver:true}),
       ]),{iterations:2});
       hintPulseAnimation.current.start();
@@ -367,8 +394,8 @@ export default function App() {
     setMessage(`Flyt til ${candidate.to==='foundation'?'grundbunke':'kolonne'} ${candidate.index+1}`);
   }
   function card(value:import('../src/domain/solitaire/klondike').Card,onPress:()=>void,source?:Source,run?:import('../src/domain/solitaire/klondike').Card[]) {
-    return <View ref={view=>{cardViews.current[value.id]=view;}} style={{width:cardWidth,height:cardHeight}}><DraggableCard card={value} width={cardWidth} height={cardHeight} cardStyle={settings.cardStyle} onTap={onPress}
-      onDoubleTap={settings.doubleTap&&source&&value.up?()=>autoMove(source):undefined}
+    return <View ref={view=>{cardViews.current[value.id]=view;}} style={{width:cardWidth,height:cardHeight}}><DraggableCard card={value} width={cardWidth} height={cardHeight} cardStyle={settings.cardStyle} back={settings.cardBack} onTap={onPress}
+      onDoubleTap={settings.autoMove&&settings.doubleTap&&source&&value.up?()=>autoMove(source):undefined}
       floating={dragVisual?.id===value.id}
       onDragChange={source?active=>{
         setDraggingCard(active?value.id:null);
@@ -385,6 +412,11 @@ export default function App() {
       run={run}
       onDrop={source&&value.up?(x,y)=>dropCard(source,x,y):undefined}/></View>;
   }
+  useEffect(()=>{
+    if(!settings.autoHints||screen!=='cards'||autoRunning||draggingCard||isWon(game))return;
+    const timer=setTimeout(()=>showHint(),9000);
+    return ()=>clearTimeout(timer);
+  },[game,screen,settings.autoHints,autoRunning,draggingCard]);
   return <ImageBackground source={screen==='cards'?solitaireTable:gardenIllustrations[actualSeason]} resizeMode="cover" style={[styles.root,landscape&&styles.landscapeRoot]}>
     <StatusBar style="dark"/>
     {screen === 'garden' ? <View style={styles.garden} onLayout={event=>{
@@ -450,7 +482,7 @@ export default function App() {
           <View style={styles.zoneLabels}><Text style={styles.zoneLabel}>TRÆK</Text><Text style={styles.zoneLabel}>VENDT</Text></View>
           <View style={styles.zoneCards}>
         <Pressable ref={view=>{stockView.current=view;}} onPress={draw} disabled={autoRunning} accessibilityLabel="Træk fra bunken" style={[styles.slot,{width:cardWidth,height:cardHeight}]}>
-          {game.stock.length ? settings.cardStyle==='classic'?<View style={[styles.classicBack,{width:cardWidth,height:cardHeight}]}/>:<Image source={premiumCardBack} resizeMode="stretch" style={{width:cardWidth,height:cardHeight}}/> : <><View style={[styles.emptySlot,{width:cardWidth,height:cardHeight}]}/><Text style={styles.emptyMark}>↻</Text></>}</Pressable>
+          {game.stock.length ? <CardBack width={cardWidth} height={cardHeight} cardStyle={settings.cardStyle} back={settings.cardBack}/> : <><View style={[styles.emptySlot,{width:cardWidth,height:cardHeight}]}/><Text style={styles.emptyMark}>↻</Text></>}</Pressable>
         <View ref={view=>{wasteView.current=view;}} style={{width:cardWidth,height:cardHeight}}>{game.waste.length ? card(game.waste.at(-1)!,()=>setChosen({kind:'waste',from:0,at:0}),{kind:'waste',from:0,at:0}) :
           <View style={[styles.slot,{width:cardWidth,height:cardHeight}]}><View style={[styles.emptySlot,{width:cardWidth,height:cardHeight}]}/></View>}</View>
           </View>
@@ -479,7 +511,7 @@ export default function App() {
       <View style={[styles.actions,landscape&&styles.landscapeActions]}>
         <CozyButton label="Fortryd" secondary disabled={autoRunning} onPress={()=>{stopVisualCue();setGame(undo(game));setChosen(null);}}/>
         <CozyButton label="Tip" secondary disabled={autoRunning} onPress={showHint}/>
-        <CozyButton label="Auto-tøm" disabled={!canAutoFinish(game)||autoRunning} onPress={()=>{void playFinish();}}/>
+        <CozyButton label="Auto-tøm" disabled={!settings.autoMove||!canAutoFinish(game)||autoRunning} onPress={()=>{void playFinish();}}/>
         <CozyButton label="Nyt spil" disabled={autoRunning} onPress={()=>startSolitaire(activeModeIndex(game.drawCount,game.maxPasses),true)}/>
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.modePicker}>
@@ -519,14 +551,26 @@ export default function App() {
           <CozyButton label={modeUnlocked(ledger,1)?'Tre kort':'🔒 3 kort'} compact secondary={settings.drawPreference!==3} disabled={!modeUnlocked(ledger,1)} onPress={()=>setSettings(current=>({...current,drawPreference:3}))}/>
         </View>
         <Text style={styles.panelCaption}>Tre kort låses op efter fem klassiske sejre. Indstillingerne ændrer ikke kortene i en igangværende kabale.</Text>
+        <Text style={styles.panelCaption}>Kortstørrelse</Text>
+        <View style={styles.settingRow}>{([{id:'small',label:'Lille'},{id:'normal',label:'Normal'},{id:'large',label:'Stor'}] as const).map(option=><CozyButton key={option.id} compact label={option.label} secondary={settings.cardSize!==option.id} onPress={()=>setSettings(current=>({...current,cardSize:option.id}))}/>)}</View>
+        <Text style={styles.panelCaption}>Kortbagside</Text>
+        <View style={styles.settingRow}>{([{id:'floral',label:'Blomster'},{id:'autumn',label:'Efterår'},{id:'winter',label:'Vinter'}] as const).map(option=><Pressable key={option.id} onPress={()=>setSettings(current=>({...current,cardBack:option.id}))} style={[styles.backChoice,settings.cardBack===option.id&&styles.backChoiceActive]}><CardBack width={46} height={66} back={option.id}/><Text style={styles.modeText}>{option.label}</Text></Pressable>)}</View>
+        <Text style={styles.panelCaption}>Trækhjælp (diskret pulsering og flyvende kort)</Text>
+        <CozyButton wide label={settings.autoHints?'✓ Aktiveret':'Deaktiveret'} secondary={!settings.autoHints} onPress={()=>setSettings(current=>({...current,autoHints:!current.autoHints}))}/>
+        <Text style={styles.panelCaption}>Animationshastighed</Text>
+        <View style={styles.settingRow}>{([{id:'calm',label:'Rolig'},{id:'normal',label:'Normal'},{id:'fast',label:'Hurtig'}] as const).map(option=><CozyButton key={option.id} compact label={option.label} secondary={settings.animationSpeed!==option.id} onPress={()=>setSettings(current=>({...current,animationSpeed:option.id}))}/>)}</View>
+        <Text style={styles.panelCaption}>Automatisk flytning og automatisk tømning</Text>
+        <CozyButton wide label={settings.autoMove?'✓ Tilladt':'Slået fra'} secondary={!settings.autoMove} onPress={()=>setSettings(current=>({...current,autoMove:!current.autoMove}))}/>
         <Text style={styles.info}>Gratis hygge – ingen reklamer og ingen køb.</Text>
         <CozyButton label="Søg efter opdatering" wide secondary onPress={()=>{void checkForCozyUpdate(true);}}/>
         </View>
       </ScrollView></ImageBackground>:<ImageBackground source={gardenIllustrations[actualSeason]} resizeMode="cover" style={{flex:1}}><ScrollView style={styles.board} contentContainerStyle={styles.questList}>
-        <View style={styles.sectionHeader}><Text style={styles.title}>Mine opgaver ✨</Text><Text style={styles.panelCaption}>Små mål med Lysglimt som belønning</Text></View>
-        {quests(ledger,placed.length).map(q=><View key={q.id} style={styles.quest}>
+        <View style={styles.sectionHeader}><Text style={styles.title}>📜 Hyggelige opgaver ✨</Text><Text style={styles.panelCaption}>Løs opgaver i dit eget tempo, og optjen Lysglimt</Text></View>
+        <View style={styles.questTabs}>{([{id:'daily',label:'I dag 🌷'},{id:'weekly',label:'Denne uge 🍃'},{id:'milestone',label:'Milepæle 🏆'}] as const).map(tab=><Pressable key={tab.id} onPress={()=>setQuestCategory(tab.id)} style={[styles.questTab,questCategory===tab.id&&styles.questTabActive]}><Text style={styles.modeText}>{tab.label}</Text></Pressable>)}</View>
+        {quests(ledger,placed.length,questEvents).filter(q=>q.category===questCategory).map(q=><View key={q.id} style={styles.quest}>
           <View style={styles.questInner}><Text style={styles.questTitle}>{q.title}</Text><Text style={styles.info}>{q.description}</Text>
-            <Text style={styles.info}>{q.claimed?'Fuldført og indløst':q.complete?'Klar til at indløse':'I gang'} · +{q.reward} ✨</Text>
+            <View style={styles.questProgress}><View style={[styles.questProgressFill,{width:`${Math.min(100,q.progress/q.target*100)}%`}]}/></View>
+            <Text style={styles.questStatus}>{q.claimed?'✓ Indløst':q.complete?'✨ Klar til belønning':`${Math.min(q.progress,q.target)}/${q.target}`} · +{q.reward} ✨</Text>
             {q.complete&&!q.claimed&&<CozyButton label="Hent belønning" wide onPress={()=>claimQuest(q.id,q.reward)}/>}</View>
         </View>)}
       </ScrollView></ImageBackground>}
@@ -540,7 +584,7 @@ export default function App() {
           transform:[{translateX:flightProgress.interpolate({inputRange:[0,1],outputRange:[0,flight.dx]})},
             {translateY:flightProgress.interpolate({inputRange:[0,1],outputRange:[0,flight.dy]})},
             {scale:flightProgress.interpolate({inputRange:[0,0.5,1],outputRange:[1,1.11,0.95]})}]}}>
-          {flight.faceUp?<CardFace card={flight.card} width={cardWidth} height={cardHeight} cardStyle={settings.cardStyle}/>:settings.cardStyle==='classic'?<View style={[styles.classicBack,{width:cardWidth,height:cardHeight}]}/>:<Image source={premiumCardBack} style={{width:cardWidth,height:cardHeight}}/>}
+          {flight.faceUp?<CardFace card={flight.card} width={cardWidth} height={cardHeight} cardStyle={settings.cardStyle}/>:<CardBack width={cardWidth} height={cardHeight} cardStyle={settings.cardStyle} back={settings.cardBack}/>}
         </Animated.View>
       </>}
       {dragVisual&&<Animated.View style={{position:'absolute',left:dragVisual.x,top:dragVisual.y,
@@ -594,6 +638,8 @@ const styles=StyleSheet.create({
   modeText:{fontWeight:'900',fontSize:11,color:'#31525b',textAlign:'center'},
   modeSmall:{fontWeight:'700',fontSize:9,color:'#6c5b42',textAlign:'center'},
   settingRow:{flexDirection:'row',gap:8,justifyContent:'center'},
+  backChoice:{alignItems:'center',padding:5,borderRadius:12,borderWidth:2,borderColor:'#ddbf83',backgroundColor:'#fff2d3'},
+  backChoiceActive:{borderColor:'#4c9c7e',backgroundColor:'#caeaca'},
   classicBack:{backgroundColor:'#31688b',borderRadius:7,borderWidth:4,borderColor:'#fffaf0'},
   brandIcon:{width:88,height:88,borderRadius:22,borderWidth:3,borderColor:'#f7d987'},
   brandTitle:{fontSize:20,fontWeight:'900',color:'#285563'},
@@ -626,5 +672,11 @@ const styles=StyleSheet.create({
   actions:{flexDirection:'row',gap:7,justifyContent:'center',flexWrap:'wrap'},button:{padding:12,minHeight:44,backgroundColor:'#e9d6aa',borderRadius:9},
   questList:{alignItems:'center',padding:18,gap:14},quest:{width:'100%',maxWidth:420,minHeight:154,alignItems:'center',backgroundColor:'#fff3d6f5',borderRadius:21,borderWidth:4,borderColor:'#e0ab52',shadowColor:'#49351f',shadowRadius:9,shadowOpacity:0.28,elevation:5},questInner:{width:'100%',alignItems:'center',padding:17},
   questTitle:{fontSize:20,fontWeight:'900',color:'#205667'},
+  questTabs:{flexDirection:'row',gap:5,justifyContent:'center',flexWrap:'wrap'},
+  questTab:{backgroundColor:'#fff1cfe8',borderWidth:2,borderColor:'#d8b36d',borderRadius:16,padding:10},
+  questTabActive:{backgroundColor:'#c7edcf',borderColor:'#76b68c'},
+  questProgress:{height:14,width:'100%',maxWidth:320,backgroundColor:'#dcc9a1',borderRadius:9,borderWidth:2,borderColor:'#b99559',overflow:'hidden'},
+  questProgressFill:{height:'100%',backgroundColor:'#7bbd80',borderRadius:8},
+  questStatus:{color:'#5e5639',fontWeight:'800',marginTop:9,textAlign:'center'},
   notice:{position:'absolute',left:12,right:12,bottom:79,minHeight:48,borderRadius:12,backgroundColor:'#fff7e5',borderWidth:1,borderColor:'#c8a16b',paddingHorizontal:10},
 });
