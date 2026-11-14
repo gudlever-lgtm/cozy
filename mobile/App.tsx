@@ -12,8 +12,8 @@ import type {DecorationPlacement} from '../src/domain/garden/layout';
 import {clampGardenOffset} from '../src/domain/garden/viewport';
 import {moveGardenDecoration} from '../src/domain/garden/drag';
 import {cozyLayout} from '../src/domain/ui/responsive';
-import {readSettings,writeSettings} from './src/nativeSettings';
-import type {Season} from './src/nativeSettings';
+import {defaultSettings,readSettings,writeSettings} from './src/nativeSettings';
+import type {Season,CozySettings} from './src/nativeSettings';
 import {CardFace,DraggableCard} from './src/DraggableCard';
 import {DraggableDecoration} from './src/DraggableDecoration';
 import {autoPlace} from '../src/domain/solitaire/autoPlace';
@@ -81,7 +81,8 @@ export default function App() {
   const [memory,setMemory] = useState(()=>newMemoryGame(20261113));
   const [memoryLoaded,setMemoryLoaded] = useState(false);
   const [memorySaveBlocked,setMemorySaveBlocked] = useState(false);
-  const [season,setSeason] = useState<Season>('auto');
+  const [settings,setSettings] = useState<CozySettings>(defaultSettings);
+  const season=settings.season;
   const [settingsLoaded,setSettingsLoaded] = useState(false);
   const [settingsSaveBlocked,setSettingsSaveBlocked] = useState(false);
   const [chosen,setChosen] = useState<Source | null>(null);
@@ -201,14 +202,14 @@ export default function App() {
   },[memory,memoryLoaded,memorySaveBlocked]);
   useEffect(()=>{
     let mounted=true;
-    readSettings().then(value=>{if(mounted)setSeason(value);})
+    readSettings().then(value=>{if(mounted)setSettings(value);})
       .catch(()=>{if(mounted){setSettingsSaveBlocked(true);setMessage('Indstillinger kunne ikke indlæses og overskrives ikke.');}})
       .finally(()=>{if(mounted)setSettingsLoaded(true);});
     return ()=>{mounted=false;};
   },[]);
   useEffect(()=>{
-    if(settingsLoaded&&!settingsSaveBlocked)writeSettings(season).catch(()=>setMessage('Indstillinger kunne ikke gemmes.'));
-  },[season,settingsLoaded,settingsSaveBlocked]);
+    if(settingsLoaded&&!settingsSaveBlocked)writeSettings(settings).catch(()=>setMessage('Indstillinger kunne ikke gemmes.'));
+  },[settings,settingsLoaded,settingsSaveBlocked]);
   useEffect(()=>{
     if(!memoryLoaded||memory.revealed.length!==2||memory.tiles[memory.revealed[0]]===memory.tiles[memory.revealed[1]])return;
     const timer=setTimeout(()=>setMemory(current=>hideMismatch(current)),800);
@@ -233,9 +234,10 @@ export default function App() {
     const mode=solitaireModes[activeModeIndex(game.drawCount,game.maxPasses)];
     setLedger(previous=>record(previous,{id:`solitaire-win-${mode.id}-${game.seed}`,type:'earn',amount:25,reason:`${mode.title} gennemført`}));
   },[game,loaded]);
-  function startSolitaire(index:number){
+  function startSolitaire(index:number,applyPreference=false){
     if(!modeUnlocked(ledger,index)){setMessage('Vind fem spil i den forrige kabaletype først');return;}
-    stopVisualCue();const mode=solitaireModes[index];
+    stopVisualCue();const effectiveIndex=applyPreference&&index===0&&settings.drawPreference===3&&modeUnlocked(ledger,1)?1:index;
+    const mode=solitaireModes[effectiveIndex];
     setGame(newGame(Date.now(),mode.drawCount,mode.maxPasses));setChosen(null);setMessage('');
   }
   function collectGlow(index:number){
@@ -365,8 +367,8 @@ export default function App() {
     setMessage(`Flyt til ${candidate.to==='foundation'?'grundbunke':'kolonne'} ${candidate.index+1}`);
   }
   function card(value:import('../src/domain/solitaire/klondike').Card,onPress:()=>void,source?:Source,run?:import('../src/domain/solitaire/klondike').Card[]) {
-    return <View ref={view=>{cardViews.current[value.id]=view;}} style={{width:cardWidth,height:cardHeight}}><DraggableCard card={value} width={cardWidth} height={cardHeight} onTap={onPress}
-      onDoubleTap={source&&value.up?()=>autoMove(source):undefined}
+    return <View ref={view=>{cardViews.current[value.id]=view;}} style={{width:cardWidth,height:cardHeight}}><DraggableCard card={value} width={cardWidth} height={cardHeight} cardStyle={settings.cardStyle} onTap={onPress}
+      onDoubleTap={settings.doubleTap&&source&&value.up?()=>autoMove(source):undefined}
       floating={dragVisual?.id===value.id}
       onDragChange={source?active=>{
         setDraggingCard(active?value.id:null);
@@ -383,7 +385,7 @@ export default function App() {
       run={run}
       onDrop={source&&value.up?(x,y)=>dropCard(source,x,y):undefined}/></View>;
   }
-  return <ImageBackground source={gardenIllustrations[actualSeason]} resizeMode="cover" style={[styles.root,landscape&&styles.landscapeRoot]}>
+  return <ImageBackground source={screen==='cards'?solitaireTable:gardenIllustrations[actualSeason]} resizeMode="cover" style={[styles.root,landscape&&styles.landscapeRoot]}>
     <StatusBar style="dark"/>
     {screen === 'garden' ? <View style={styles.garden} onLayout={event=>{
       const nextHeight=event.nativeEvent.layout.height;
@@ -448,7 +450,7 @@ export default function App() {
           <View style={styles.zoneLabels}><Text style={styles.zoneLabel}>TRÆK</Text><Text style={styles.zoneLabel}>VENDT</Text></View>
           <View style={styles.zoneCards}>
         <Pressable ref={view=>{stockView.current=view;}} onPress={draw} disabled={autoRunning} accessibilityLabel="Træk fra bunken" style={[styles.slot,{width:cardWidth,height:cardHeight}]}>
-          {game.stock.length ? <Image source={premiumCardBack} resizeMode="stretch" style={{width:cardWidth,height:cardHeight}}/> : <><View style={[styles.emptySlot,{width:cardWidth,height:cardHeight}]}/><Text style={styles.emptyMark}>↻</Text></>}</Pressable>
+          {game.stock.length ? settings.cardStyle==='classic'?<View style={[styles.classicBack,{width:cardWidth,height:cardHeight}]}/>:<Image source={premiumCardBack} resizeMode="stretch" style={{width:cardWidth,height:cardHeight}}/> : <><View style={[styles.emptySlot,{width:cardWidth,height:cardHeight}]}/><Text style={styles.emptyMark}>↻</Text></>}</Pressable>
         <View ref={view=>{wasteView.current=view;}} style={{width:cardWidth,height:cardHeight}}>{game.waste.length ? card(game.waste.at(-1)!,()=>setChosen({kind:'waste',from:0,at:0}),{kind:'waste',from:0,at:0}) :
           <View style={[styles.slot,{width:cardWidth,height:cardHeight}]}><View style={[styles.emptySlot,{width:cardWidth,height:cardHeight}]}/></View>}</View>
           </View>
@@ -478,7 +480,7 @@ export default function App() {
         <CozyButton label="Fortryd" secondary disabled={autoRunning} onPress={()=>{stopVisualCue();setGame(undo(game));setChosen(null);}}/>
         <CozyButton label="Tip" secondary disabled={autoRunning} onPress={showHint}/>
         <CozyButton label="Auto-tøm" disabled={!canAutoFinish(game)||autoRunning} onPress={()=>{void playFinish();}}/>
-        <CozyButton label="Nyt spil" disabled={autoRunning} onPress={()=>startSolitaire(activeModeIndex(game.drawCount,game.maxPasses))}/>
+        <CozyButton label="Nyt spil" disabled={autoRunning} onPress={()=>startSolitaire(activeModeIndex(game.drawCount,game.maxPasses),true)}/>
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.modePicker}>
         {solitaireModes.map((mode,index)=>{const unlocked=modeUnlocked(ledger,index);const selected=index===activeModeIndex(game.drawCount,game.maxPasses);return <Pressable key={mode.id} accessibilityRole="button" accessibilityState={{disabled:!unlocked,selected}} disabled={!unlocked||autoRunning} style={[styles.modeButton,selected&&styles.modeButtonActive,!unlocked&&styles.modeButtonLocked]} onPress={()=>startSolitaire(index)}>
@@ -502,7 +504,21 @@ export default function App() {
         <Text style={styles.title}>Indstillinger</Text><Text style={styles.panelCaption}>Vælg havens årstid 🌷</Text>
         {(['auto','spring','summer','autumn','winter'] as Season[]).map(value=><CozyButton
           key={value} wide secondary={value!==season} label={`${value===season?'✓ ':''}${{auto:'Automatisk',spring:'Forår',summer:'Sommer',autumn:'Efterår',winter:'Vinter'}[value]}`}
-          onPress={()=>setSeason(value)}/>)}
+          onPress={()=>setSettings(current=>({...current,season:value}))}/>)}
+        <Text style={styles.title}>Kabaleindstillinger 🃏</Text>
+        <Text style={styles.panelCaption}>Kortenes udseende (ændres med det samme)</Text>
+        <View style={styles.settingRow}>
+          <CozyButton label="Illustreret" compact secondary={settings.cardStyle!=='illustrated'} onPress={()=>setSettings(current=>({...current,cardStyle:'illustrated'}))}/>
+          <CozyButton label="Klassisk" compact secondary={settings.cardStyle!=='classic'} onPress={()=>setSettings(current=>({...current,cardStyle:'classic'}))}/>
+        </View>
+        <Text style={styles.panelCaption}>Dobbelttryk for automatisk flytning</Text>
+        <CozyButton wide label={settings.doubleTap?'✓ Aktiveret':'Deaktiveret'} secondary={!settings.doubleTap} onPress={()=>setSettings(current=>({...current,doubleTap:!current.doubleTap}))}/>
+        <Text style={styles.panelCaption}>Træk ét eller tre kort i næste nye klassiske spil</Text>
+        <View style={styles.settingRow}>
+          <CozyButton label="Ét kort" compact secondary={settings.drawPreference!==1} onPress={()=>setSettings(current=>({...current,drawPreference:1}))}/>
+          <CozyButton label={modeUnlocked(ledger,1)?'Tre kort':'🔒 3 kort'} compact secondary={settings.drawPreference!==3} disabled={!modeUnlocked(ledger,1)} onPress={()=>setSettings(current=>({...current,drawPreference:3}))}/>
+        </View>
+        <Text style={styles.panelCaption}>Tre kort låses op efter fem klassiske sejre. Indstillingerne ændrer ikke kortene i en igangværende kabale.</Text>
         <Text style={styles.info}>Gratis hygge – ingen reklamer og ingen køb.</Text>
         <CozyButton label="Søg efter opdatering" wide secondary onPress={()=>{void checkForCozyUpdate(true);}}/>
         </View>
@@ -524,15 +540,15 @@ export default function App() {
           transform:[{translateX:flightProgress.interpolate({inputRange:[0,1],outputRange:[0,flight.dx]})},
             {translateY:flightProgress.interpolate({inputRange:[0,1],outputRange:[0,flight.dy]})},
             {scale:flightProgress.interpolate({inputRange:[0,0.5,1],outputRange:[1,1.11,0.95]})}]}}>
-          {flight.faceUp?<CardFace card={flight.card} width={cardWidth} height={cardHeight}/>:<Image source={premiumCardBack} style={{width:cardWidth,height:cardHeight}}/>}
+          {flight.faceUp?<CardFace card={flight.card} width={cardWidth} height={cardHeight} cardStyle={settings.cardStyle}/>:settings.cardStyle==='classic'?<View style={[styles.classicBack,{width:cardWidth,height:cardHeight}]}/>:<Image source={premiumCardBack} style={{width:cardWidth,height:cardHeight}}/>}
         </Animated.View>
       </>}
       {dragVisual&&<Animated.View style={{position:'absolute',left:dragVisual.x,top:dragVisual.y,
         width:cardWidth,height:cardHeight,zIndex:10000,elevation:100,
         transform:dragXY.getTranslateTransform()}}>
-        <CardFace card={dragVisual.card} width={cardWidth} height={cardHeight}/>
+        <CardFace card={dragVisual.card} width={cardWidth} height={cardHeight} cardStyle={settings.cardStyle}/>
         {dragVisual.run.slice(1).map((next,index)=><View key={next.id} style={{position:'absolute',top:(index+1)*27,left:0}}>
-          <CardFace card={next} width={cardWidth} height={cardHeight}/>
+          <CardFace card={next} width={cardWidth} height={cardHeight} cardStyle={settings.cardStyle}/>
         </View>)}
       </Animated.View>}
     </View>
@@ -577,6 +593,8 @@ const styles=StyleSheet.create({
   modeButtonLocked:{opacity:0.58},
   modeText:{fontWeight:'900',fontSize:11,color:'#31525b',textAlign:'center'},
   modeSmall:{fontWeight:'700',fontSize:9,color:'#6c5b42',textAlign:'center'},
+  settingRow:{flexDirection:'row',gap:8,justifyContent:'center'},
+  classicBack:{backgroundColor:'#31688b',borderRadius:7,borderWidth:4,borderColor:'#fffaf0'},
   brandIcon:{width:88,height:88,borderRadius:22,borderWidth:3,borderColor:'#f7d987'},
   brandTitle:{fontSize:20,fontWeight:'900',color:'#285563'},
   hintRing:{position:'absolute',borderRadius:13,borderWidth:4,borderColor:'#ffde66',backgroundColor:'#fff3a028',shadowColor:'#fff7b1',shadowOpacity:0.95,shadowRadius:14,elevation:12},
