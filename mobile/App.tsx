@@ -11,6 +11,7 @@ import {readGarden,writeGarden} from './src/nativeGarden';
 import type {DecorationPlacement} from '../src/domain/garden/layout';
 import {clampGardenOffset} from '../src/domain/garden/viewport';
 import {moveGardenDecoration} from '../src/domain/garden/drag';
+import {gardenChapters,unlockedChapter,specialDecorationUnlocked} from '../src/domain/garden/chapters';
 import {cozyLayout} from '../src/domain/ui/responsive';
 import {defaultSettings,readSettings,writeSettings} from './src/nativeSettings';
 import type {Season,CozySettings} from './src/nativeSettings';
@@ -50,6 +51,8 @@ const decorations = [
   {name:'Bænk',image:require('./assets/illustrations/bench.webp')},
   {name:'Springvand',image:require('./assets/illustrations/fountain.webp')},
   {name:'Blomster',image:require('./assets/illustrations/flower-pots.webp')},
+  {name:'Skovven',image:require('./assets/illustrations/memory-animal-0.webp')},
+  {name:'Vinterven',image:require('./assets/illustrations/memory-animal-1.webp')},
 ] as const;
 const gardenIllustrations={
   spring:require('./assets/illustrations/garden-spring.webp'),
@@ -80,6 +83,8 @@ export default function App() {
   const [questEventsLoaded,setQuestEventsLoaded]=useState(false);
   const [questEventsBlocked,setQuestEventsBlocked]=useState(false);
   const [questCategory,setQuestCategory]=useState<'daily'|'weekly'|'milestone'>('daily');
+  const [dailyCelebration,setDailyCelebration]=useState(false);
+  const celebrationScale=useRef(new Animated.Value(0.3)).current;
   const [loaded,setLoaded] = useState(false);
   const [saveBlocked,setSaveBlocked] = useState(false);
   const [gardenLoaded,setGardenLoaded] = useState(false);
@@ -120,7 +125,8 @@ export default function App() {
   const [measuredGardenHeight,setMeasuredGardenHeight] = useState(0);
   const [offset,setOffset] = useState({x:0,y:0});
   const [placed,setPlaced] = useState<DecorationPlacement[]>([]);
-  const [gardenTool,setGardenTool] = useState<0|1|2|null>(null);
+  const [gardenTool,setGardenTool] = useState<0|1|2|3|4|null>(null);
+  const [gardenChapter,setGardenChapter]=useState<0|1|2>(0);
   const [movingDecoration,setMovingDecoration] = useState<string|null>(null);
   const panOrigin = useRef({x:0,y:0});
   const gardenViewportRef=useRef({width:1,height:1,zoom:1});
@@ -142,6 +148,7 @@ export default function App() {
   useEffect(()=>setOffset(current=>clampGardenOffset(current,zoom,gardenWidth,gardenHeight)),[zoom,gardenWidth,gardenHeight]);
   const month=new Date().getMonth();
   const actualSeason=season==='auto'?(month===11||month<2?'winter':month<5?'spring':month<8?'summer':'autumn'):season;
+  const gardenScene=gardenChapter===1?'spring':gardenChapter===2?'winter':actualSeason;
 
   function placeInGarden(x:number,y:number){
     // SVG art and touch surface share the same scaled coordinate system.
@@ -153,12 +160,15 @@ export default function App() {
       setMessage('Dekoration flyttet og gemt');
     }else if(gardenTool!==null){
       if(placed.length>=64){setMessage('Haven er fuld');return;}
+      if(gardenTool>=3){
+        if(!specialDecorationUnlocked(ledger,gardenTool as 3|4)){setMessage('Hent først milepælsbelønningen under Opgaver');return;}
+        if(placed.some(item=>item.kind===gardenTool)){setMessage('Denne særlige dekoration er allerede placeret');return;}
+      }
       const id=`decor-${Date.now()}-${placed.length}`;
       try{
-        const next=record(ledger,{id:`garden-purchase-${id}`,type:'spend',amount:5,reason:'Havedekoration'});
-        setLedger(next);
-        setPlaced([...placed,{id,kind:gardenTool,x:nx,y:ny}]);
-        setMessage('Dekoration placeret for 5 Lysglimt');
+        if(gardenTool<3)setLedger(record(ledger,{id:`garden-purchase-${id}`,type:'spend',amount:5,reason:'Havedekoration'}));
+        setPlaced([...placed,{id,kind:gardenTool,x:nx,y:ny,chapter:gardenChapter}]);
+        setMessage(gardenTool>=3?'Særlig dekoration placeret ✨':'Dekoration placeret for 5 Lysglimt');
       }catch{setMessage('Du skal bruge 5 Lysglimt for at placere en dekoration');}
       setGardenTool(null);
     }
@@ -248,7 +258,14 @@ export default function App() {
   function claimQuest(id:string,reward:number){
     const current=quests(ledger,placed.length,questEvents).find(q=>q.id===id);
     if(!current?.complete||current.claimed||current.reward!==reward)return;
-    try{setLedger(previous=>record(previous,{id:`quest-${id}`,type:'earn',amount:reward,reason:'Opgave fuldført'}));}
+    try{setLedger(previous=>record(previous,{id:`quest-${id}`,type:'earn',amount:reward,reason:'Opgave fuldført'}));
+      if(id.endsWith('-bonus')){
+        celebrationScale.setValue(0.3);setDailyCelebration(true);
+        Animated.sequence([Animated.spring(celebrationScale,{toValue:1.15,friction:4,useNativeDriver:true}),
+          Animated.timing(celebrationScale,{toValue:1,duration:300,useNativeDriver:true})]).start();
+        setTimeout(()=>setDailyCelebration(false),2300);
+      }
+    }
     catch{setMessage('Belønningen kunne ikke indløses');}
   }
 
@@ -417,7 +434,7 @@ export default function App() {
     const timer=setTimeout(()=>showHint(),9000);
     return ()=>clearTimeout(timer);
   },[game,screen,settings.autoHints,autoRunning,draggingCard]);
-  return <ImageBackground source={screen==='cards'?solitaireTable:gardenIllustrations[actualSeason]} resizeMode="cover" style={[styles.root,landscape&&styles.landscapeRoot]}>
+  return <ImageBackground source={screen==='cards'?solitaireTable:gardenIllustrations[screen==='garden'?gardenScene:actualSeason]} resizeMode="cover" style={[styles.root,landscape&&styles.landscapeRoot]}>
     <StatusBar style="dark"/>
     {screen === 'garden' ? <View style={styles.garden} onLayout={event=>{
       const nextHeight=event.nativeEvent.layout.height;
@@ -426,8 +443,8 @@ export default function App() {
       <View style={{flex:1,overflow:'hidden'}} {...pan.panHandlers}>
         <Pressable onPress={event=>placeInGarden(event.nativeEvent.locationX,event.nativeEvent.locationY)}
           style={{width:gardenWidth,height:gardenHeight,transform:[{translateX:offset.x},{translateY:offset.y},{scale:zoom}]}}>
-          <Image source={gardenIllustrations[actualSeason]} resizeMode="cover" style={{width:gardenWidth,height:gardenHeight}}/>
-          {placed.map(item=>{const art=decorations[item.kind].image;return <View key={item.id}
+          <Image source={gardenIllustrations[gardenScene]} resizeMode="cover" style={{width:gardenWidth,height:gardenHeight}}/>
+          {placed.filter(item=>(item.chapter??0)===gardenChapter).map(item=>{const art=decorations[item.kind].image;return <View key={item.id}
             style={{position:'absolute',left:gardenWidth*item.x-42,top:gardenHeight*item.y-42}}>
             <DraggableDecoration image={art} name={decorations[item.kind].name} zoom={zoom}
               selected={movingDecoration===item.id}
@@ -437,8 +454,9 @@ export default function App() {
         </Pressable>
       </View>
       <View style={[styles.hud,landscape&&styles.landscapeHud]}>
-        <View style={styles.hudText}><Text style={styles.title}>Min have</Text><Text>Lysglimt ✨ {balance(ledger)}</Text><Text style={styles.tabText}>Dekorationer: 5 ✨</Text></View>
+        <View style={styles.hudText}><Text style={styles.title}>{gardenChapters[gardenChapter].title}</Text><Text>Lysglimt ✨ {balance(ledger)}</Text><Text style={styles.tabText}>Dekorationer: {placed.length} · 5 ✨</Text></View>
       </View>
+      <View style={styles.chapterPicker}>{gardenChapters.map(chapter=>{const unlocked=unlockedChapter(ledger,chapter.id);return <Pressable key={chapter.id} disabled={!unlocked} style={[styles.chapterChip,gardenChapter===chapter.id&&styles.chapterChipActive,!unlocked&&styles.chapterChipLocked]} onPress={()=>{setGardenChapter(chapter.id);setGardenTool(null);setMovingDecoration(null);setZoom(1);setOffset({x:0,y:0});}}><Text style={styles.chapterChipText}>{unlocked?chapter.title:`🔒 ${chapter.requiredWins} sejre`}</Text></Pressable>;})}</View>
       <View style={[styles.miniLauncher,landscape&&styles.landscapeMiniLauncher]}>
         <Pressable accessibilityRole="button" accessibilityLabel="Vis minispil" onPress={()=>setMiniMenuOpen(open=>!open)} style={styles.miniLauncherButton}>
           <Image source={tabs[2].icon} style={{width:38,height:38}} resizeMode="contain"/><Text style={styles.miniLauncherText}>Minispil {miniMenuOpen?'⌃':'⌄'}</Text>
@@ -456,7 +474,7 @@ export default function App() {
           <Text style={styles.placedPickerLabel}>Flyt en placeret dekoration:</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{maxWidth:gardenWidth-40}}
             contentContainerStyle={{gap:6,paddingHorizontal:3,paddingVertical:3}}>
-            {placed.map((item,index)=><Pressable key={item.id} accessibilityRole="button"
+            {placed.filter(item=>(item.chapter??0)===gardenChapter).map((item,index)=><Pressable key={item.id} accessibilityRole="button"
               accessibilityLabel={`Vælg ${decorations[item.kind].name} nummer ${index+1} til flytning`}
               onPress={()=>{setMovingDecoration(item.id);setGardenTool(null);setMessage('Tryk på et nyt sted i haven');}}
               style={[styles.placedChip,movingDecoration===item.id&&styles.placedChipActive]}>
@@ -471,9 +489,9 @@ export default function App() {
           <CozyButton label="Nulstil" compact secondary onPress={()=>{setZoom(1);setOffset({x:0,y:0});}}/>
           <CozyButton label="+ Zoom" compact secondary onPress={()=>setZoom(v=>Math.min(2.5,v+0.25))}/>
         </View>
-        <View style={styles.actions}>{decorations.map((d,i)=><Pressable key={d.name}
-          style={[styles.decorButton,gardenTool===i&&styles.selected]} onPress={()=>{setGardenTool(i as 0|1|2);setMovingDecoration(null);}}
-          accessibilityLabel={`Vælg ${d.name}`}><Image source={d.image} resizeMode="contain" style={{width:52,height:52}}/><Text style={styles.tabText}>{d.name}</Text></Pressable>)}</View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.actions}>{decorations.map((d,i)=><Pressable key={d.name}
+          disabled={i>=3&&!specialDecorationUnlocked(ledger,i as 3|4)} style={[styles.decorButton,gardenTool===i&&styles.selected,i>=3&&!specialDecorationUnlocked(ledger,i as 3|4)&&styles.lockedDecoration]} onPress={()=>{setGardenTool(i as 0|1|2|3|4);setMovingDecoration(null);}}
+          accessibilityLabel={`Vælg ${d.name}`}><Image source={d.image} resizeMode="contain" style={{width:52,height:52}}/><Text style={styles.tabText}>{i>=3&&!specialDecorationUnlocked(ledger,i as 3|4)?'🔒 ':''}{d.name}</Text></Pressable>)}</ScrollView>
       </View>
     </View> : screen === 'cards' ? <View style={{flex:1}}><ImageBackground source={solitaireTable} resizeMode="cover" style={StyleSheet.absoluteFill}/><ScrollView key={landscape?'cards-landscape':'cards-portrait'} style={styles.board} contentContainerStyle={[styles.boardContent,landscape&&styles.landscapeBoardContent]}>
       <Text style={[styles.boardTitle,landscape&&styles.landscapeBoardTitle]}>{solitaireModes[activeModeIndex(game.drawCount,game.maxPasses)].title}</Text><Text style={styles.boardMeta}>Flytninger: {game.moves} · Lysglimt ✨ {balance(ledger)}</Text>
@@ -574,6 +592,9 @@ export default function App() {
             {q.complete&&!q.claimed&&<CozyButton label="Hent belønning" wide onPress={()=>claimQuest(q.id,q.reward)}/>}</View>
         </View>)}
       </ScrollView></ImageBackground>}
+    {dailyCelebration&&<View pointerEvents="none" style={styles.bonusOverlay}>
+      <Animated.View style={{transform:[{scale:celebrationScale}],alignItems:'center'}}><Text style={styles.bonusStar}>⭐ ✨ ⭐</Text><Text style={styles.bonusCaption}>Dagens opgaver fuldført!</Text><Text style={styles.bonusCaption}>+20 Lysglimt ✨</Text></Animated.View>
+    </View>}
     <View ref={view=>{effectSurface.current=view;}} pointerEvents="none" style={StyleSheet.absoluteFill}>
       {flight&&<>
         {flight.mode==='hint'&&<Animated.View style={[styles.hintRing,{left:flight.from.x-4,top:flight.from.y-4,width:cardWidth+8,height:cardHeight+8,
@@ -619,6 +640,12 @@ const styles=StyleSheet.create({
   landscapeNav:{width:92,height:'100%',flexDirection:'column',paddingBottom:0,paddingHorizontal:3,borderTopWidth:0,borderLeftWidth:4,borderLeftColor:'#d5a14c'},
   landscapeTab:{width:'100%',flex:1,paddingTop:0,gap:0},
   landscapeMiniLauncher:{top:12,right:110},
+  chapterPicker:{position:'absolute',top:116,left:10,gap:4,zIndex:12,maxWidth:168},
+  chapterChip:{backgroundColor:'#fff0d6ec',borderColor:'#dbb975',borderWidth:2,borderRadius:10,paddingHorizontal:9,paddingVertical:5},
+  chapterChipActive:{backgroundColor:'#cde9bd',borderColor:'#71a479'},
+  chapterChipLocked:{opacity:0.72},
+  chapterChipText:{color:'#315a5b',fontSize:11,fontWeight:'900'},
+  lockedDecoration:{opacity:0.45},
   miniLauncher:{position:'absolute',top:118,right:16,zIndex:20,alignItems:'flex-end'},
   miniLauncherButton:{flexDirection:'row',alignItems:'center',gap:5,backgroundColor:'#fff1cff5',borderColor:'#ddad57',borderWidth:3,borderRadius:18,padding:5,elevation:9},
   miniLauncherText:{color:'#285563',fontSize:13,fontWeight:'900'},
@@ -678,5 +705,8 @@ const styles=StyleSheet.create({
   questProgress:{height:14,width:'100%',maxWidth:320,backgroundColor:'#dcc9a1',borderRadius:9,borderWidth:2,borderColor:'#b99559',overflow:'hidden'},
   questProgressFill:{height:'100%',backgroundColor:'#7bbd80',borderRadius:8},
   questStatus:{color:'#5e5639',fontWeight:'800',marginTop:9,textAlign:'center'},
+  bonusOverlay:{position:'absolute',top:'28%',left:18,right:18,alignItems:'center',justifyContent:'center',backgroundColor:'#fff0c6f5',borderRadius:24,borderWidth:4,borderColor:'#f3c95b',padding:20,zIndex:200,elevation:30},
+  bonusStar:{fontSize:35,textAlign:'center'},
+  bonusCaption:{fontSize:20,fontWeight:'900',color:'#806025',textAlign:'center'},
   notice:{position:'absolute',left:12,right:12,bottom:79,minHeight:48,borderRadius:12,backgroundColor:'#fff7e5',borderWidth:1,borderColor:'#c8a16b',paddingHorizontal:10},
 });
