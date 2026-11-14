@@ -1,7 +1,7 @@
-export type DecorationPlacement = {id:string; kind:0|1|2; x:number; y:number};
+export type DecorationPlacement = {id:string; kind:0|1|2|3|4; x:number; y:number; chapter?:0|1|2};
 export const MAX_DECORATIONS = 64;
 const valid = (p:DecorationPlacement) => typeof p.id==='string' && p.id.length>0 &&
-  [0,1,2].includes(p.kind) && Number.isFinite(p.x) && Number.isFinite(p.y) &&
+  [0,1,2,3,4].includes(p.kind) && (p.chapter===undefined||[0,1,2].includes(p.chapter)) && Number.isFinite(p.x) && Number.isFinite(p.y) &&
   p.x>=0 && p.x<=1 && p.y>=0 && p.y<=1;
 
 export function decodeGarden(serialized:string):DecorationPlacement[] {
