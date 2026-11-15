@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {hiddenObjects,hiddenTargetIds} from '../../src/domain/minigames/hiddenObjects.ts';
+import {hiddenObjects,hiddenObjectPosition,hiddenTargetIds,movingObjectStart} from '../../src/domain/minigames/hiddenObjects.ts';
 
 test('five distinct hidden objects are selected for each picture',()=>{
   for(const round of [0,1,123,20261115]){
@@ -9,6 +9,7 @@ test('five distinct hidden objects are selected for each picture',()=>{
     assert.equal(new Set(ids).size,5);
     assert.deepEqual(ids,hiddenTargetIds(round));
     assert.ok(ids.every(id=>id>=0&&id<hiddenObjects.length));
+    assert.ok(ids.filter(id=>id>=movingObjectStart).length>=2);
   }
   assert.notDeepEqual(hiddenTargetIds(1),hiddenTargetIds(2));
 });
@@ -17,4 +18,10 @@ test('all hidden object positions fit within the picture',()=>{
   assert.ok(hiddenObjects.length>=10);
   assert.equal(new Set(hiddenObjects.map(object=>object.name)).size,hiddenObjects.length);
   assert.ok(hiddenObjects.every(object=>object.x>=0&&object.x<=88&&object.y>=0&&object.y<=88));
+  for(let id=0;id<hiddenObjects.length;id++){
+    const places=Array.from({length:4},(_,round)=>hiddenObjectPosition(id,round));
+    assert.ok(places.every(({x,y})=>x>=0&&x<=88&&y>=0&&y<=88));
+    if(id>=movingObjectStart)assert.ok(new Set(places.map(p=>`${p.x},${p.y}`)).size>=3);
+    else assert.equal(new Set(places.map(p=>`${p.x},${p.y}`)).size,1);
+  }
 });
