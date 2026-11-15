@@ -26,15 +26,18 @@ export function CardFace({card,width,height,cardStyle='illustrated'}:{card:Card;
   </View>;
 }
 
-type Props={card:Card;width:number;height:number;cardStyle?:CardStyle;back?:CardBackStyle;onTap:()=>void;onDoubleTap?:()=>void;onDrop?:(x:number,y:number)=>void;onDragChange?:(active:boolean)=>void;onDragMove?:(dx:number,dy:number)=>void;floating?:boolean;run?:Card[]};
+type Props={card:Card;width:number;height:number;cardStyle?:CardStyle;back?:CardBackStyle;onTap:()=>void;onDoubleTap?:()=>void;onLongHold?:()=>void;onDrop?:(x:number,y:number)=>void;onDragChange?:(active:boolean)=>void;onDragMove?:(dx:number,dy:number)=>void;floating?:boolean;run?:Card[]};
 
-export function DraggableCard({card,width,height,cardStyle='illustrated',back='floral',onTap,onDoubleTap,onDrop,onDragChange,onDragMove,floating=false,run=[]}:Props){
+export function DraggableCard({card,width,height,cardStyle='illustrated',back='floral',onTap,onDoubleTap,onLongHold,onDrop,onDragChange,onDragMove,floating=false,run=[]}:Props){
   const [shift,setShift]=useState({x:0,y:0});
-  const callbacks=useRef({onTap,onDoubleTap,onDrop,onDragChange,onDragMove});
-  callbacks.current={onTap,onDoubleTap,onDrop,onDragChange,onDragMove};
+  const callbacks=useRef({onTap,onDoubleTap,onLongHold,onDrop,onDragChange,onDragMove});
+  callbacks.current={onTap,onDoubleTap,onLongHold,onDrop,onDragChange,onDragMove};
   const lastTap=useRef(0);
   const tapTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
   const dragging=useRef(false);
+  const longHoldTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
+  const longHeld=useRef(false);
+  function clearLongHold(){if(longHoldTimer.current){clearTimeout(longHoldTimer.current);longHoldTimer.current=null;}}
   const enabled=card.up;
   const previousUp=useRef(card.up);
   const revealScale=useRef(new Animated.Value(1)).current;
@@ -51,18 +54,33 @@ export function DraggableCard({card,width,height,cardStyle='illustrated',back='f
     animation.start();
     return ()=>animation.stop();
   },[card.up,revealScale,revealGlow]);
-  React.useEffect(()=>()=>{if(tapTimer.current)clearTimeout(tapTimer.current);},[]);
+  React.useEffect(()=>()=>{if(tapTimer.current)clearTimeout(tapTimer.current);clearLongHold();},[]);
   const gesture=useMemo(()=>PanResponder.create({
     onStartShouldSetPanResponder:()=>true,
     onMoveShouldSetPanResponder:(_,g)=>Math.abs(g.dx)>5||Math.abs(g.dy)>5,
-    onPanResponderMove:(_,g)=>{if(enabled&&callbacks.current.onDrop){
+    onPanResponderGrant:()=>{
+      longHeld.current=false;
+      clearLongHold();
+      if(callbacks.current.onLongHold)longHoldTimer.current=setTimeout(()=>{
+        longHoldTimer.current=null;
+        longHeld.current=true;
+        callbacks.current.onLongHold?.();
+      },1100);
+    },
+    onPanResponderMove:(_,g)=>{
+      if(Math.abs(g.dx)>5||Math.abs(g.dy)>5)clearLongHold();
+      if(enabled&&callbacks.current.onDrop){
+      if(longHeld.current)return;
       if(!dragging.current){dragging.current=true;callbacks.current.onDragChange?.(true);}
       callbacks.current.onDragMove?.(g.dx,g.dy);
       setShift({x:g.dx,y:g.dy});
-    }},
+      }
+    },
     onPanResponderRelease:(_,g)=>{
+      clearLongHold();
       setShift({x:0,y:0});
       if(dragging.current){dragging.current=false;callbacks.current.onDragChange?.(false);}
+      if(longHeld.current){longHeld.current=false;return;}
       if(Math.abs(g.dx)<9&&Math.abs(g.dy)<9){
         const now=Date.now();
         if(now-lastTap.current<320&&callbacks.current.onDoubleTap){
@@ -75,7 +93,7 @@ export function DraggableCard({card,width,height,cardStyle='illustrated',back='f
         }
       }else if(enabled)callbacks.current.onDrop?.(g.moveX,g.moveY);
     },
-    onPanResponderTerminate:()=>{setShift({x:0,y:0});dragging.current=false;callbacks.current.onDragChange?.(false);},
+    onPanResponderTerminate:()=>{clearLongHold();longHeld.current=false;setShift({x:0,y:0});dragging.current=false;callbacks.current.onDragChange?.(false);},
   }),[enabled]);
   return <View {...gesture.panHandlers} accessible accessibilityRole="button"
     accessibilityLabel={enabled?`${ranks[card.rank]??card.rank} ${suit[card.suit]}`:'Skjult kort'}
