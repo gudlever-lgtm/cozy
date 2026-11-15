@@ -28,7 +28,8 @@ import type {QuestEvent,QuestEventKind} from '../src/domain/quests/quests';
 import {readQuestEvents,writeQuestEvents} from './src/nativeQuestEvents';
 import {checkForCozyUpdate} from './src/checkUpdate';
 import {activeModeIndex,modeUnlocked,solitaireModes,winsForMode} from '../src/domain/solitaire/progression';
-import {glowTargets} from '../src/domain/minigames/glow';
+import {glowTargets,glowTileCount} from '../src/domain/minigames/glow';
+import {seasonQuestion} from '../src/domain/minigames/seasons';
 
 type Screen = 'garden' | 'cards' | 'mini' | 'quests' | 'settings';
 type Source = {kind:'waste' | 'tableau' | 'foundation'; from:number; at:number};
@@ -73,10 +74,12 @@ export default function App() {
   const [miniMenuOpen,setMiniMenuOpen]=useState(false);
   const [miniKind,setMiniKind]=useState<'memory'|'glow'|'season'>('memory');
   const [glowRound,setGlowRound]=useState(0);
+  const [glowLevel,setGlowLevel]=useState(1);
   const [glowFound,setGlowFound]=useState<number[]>([]);
   const [glowTried,setGlowTried]=useState<number[]>([]);
   const [seasonRound,setSeasonRound]=useState(0);
   const [seasonAnswer,setSeasonAnswer]=useState<number|null>(null);
+  const [seasonStreak,setSeasonStreak]=useState(0);
   const [game,setGame] = useState(() => newGame(20261113));
   const [ledger,setLedger] = useState<Ledger>(()=>emptyLedger());
   const [questEvents,setQuestEvents]=useState<QuestEvent[]>([]);
@@ -303,14 +306,18 @@ export default function App() {
   function collectGlow(index:number){
     if(glowTried.includes(index))return;
     setGlowTried(previous=>[...previous,index]);
-    if(!glowTargets(glowRound).includes(index))return;
+    if(!glowTargets(glowRound,glowLevel).includes(index))return;
     const found=[...glowFound,index];setGlowFound(found);
     if(found.length===5){setLedger(previous=>record(previous,{id:`mini-glow-${glowRound}`,type:'earn',amount:5,reason:'Lysglimtjagt fuldført'}));trackQuest('mini-win',`mini-glow-${glowRound}`);}
   }
   function answerSeason(index:number){
     if(seasonAnswer!==null)return;
     setSeasonAnswer(index);
-    if(index===seasonRound%4){setLedger(previous=>record(previous,{id:`mini-season-${seasonRound}`,type:'earn',amount:5,reason:'Årstidsquiz fuldført'}));trackQuest('mini-win',`mini-season-${seasonRound}`);}
+    if(index===seasonQuestion(seasonRound).correct){
+      const next=seasonStreak+1;
+      setSeasonStreak(next);
+      if(next===3){setLedger(previous=>record(previous,{id:`mini-season-${seasonRound}`,type:'earn',amount:5,reason:'Tre korrekte årstidssvar'}));trackQuest('mini-win',`mini-season-${seasonRound}`);}
+    }else setSeasonStreak(0);
   }
 
   function move(to:'tableau' | 'foundation',index:number) {
@@ -586,8 +593,8 @@ export default function App() {
         <View style={[styles.illustratedPanel,landscape&&{maxWidth:540,width:'100%'}]}>
           <View style={styles.miniTabs}>{[{id:'memory',label:'Vendespil'},{id:'glow',label:'Lysglimtjagt'},{id:'season',label:'Årstidsquiz'}].map(item=><Pressable key={item.id} onPress={()=>setMiniKind(item.id as typeof miniKind)} style={[styles.miniTab,miniKind===item.id&&styles.miniTabActive]}><Text style={styles.modeText}>{item.label}</Text></Pressable>)}</View>
           {miniKind==='memory'?<MemoryBoard game={memory} onFlip={flipMemory} landscape={landscape} onNew={()=>setMemory(current=>newMemoryGame(Math.max(Date.now(),current.round+1),nextMemoryLevel(current)))}/>:
-          miniKind==='glow'?<View style={styles.miniGameContent}><Text style={styles.title}>✨ Lysglimtjagt</Text><Text style={styles.panelCaption}>Find alle fem skjulte Lysglimt</Text><View style={styles.glowGrid}>{Array.from({length:12},(_,index)=><Pressable key={index} accessibilityRole="button" onPress={()=>collectGlow(index)} style={styles.glowTile}><Text style={styles.glowSymbol}>{glowFound.includes(index)?'✨':glowTried.includes(index)?'🍃':'🌿'}</Text></Pressable>)}</View><Text style={styles.panelCaption}>{glowFound.length}/5 fundet {glowFound.length>=5?'· +5 Lysglimt!':''}</Text><CozyButton wide label="Ny jagt" onPress={()=>{setGlowRound(Math.max(Date.now(),glowRound+1));setGlowFound([]);setGlowTried([]);}}/></View>:
-          <View style={styles.miniGameContent}><Text style={styles.title}>🍂 Årstidsquiz</Text><Text style={styles.panelCaption}>{['Hvornår blomstrer tulipaner?','Hvornår er det varmest?','Hvornår falder bladene?','Hvornår kommer sneen?'][seasonRound%4]}</Text>{['Forår 🌷','Sommer ☀️','Efterår 🍁','Vinter ❄️'].map((option,index)=><CozyButton key={option} wide secondary={seasonAnswer!==index} disabled={seasonAnswer!==null} label={option} onPress={()=>answerSeason(index)}/>)}{seasonAnswer!==null&&<Text style={styles.panelCaption}>{seasonAnswer===seasonRound%4?'Rigtigt! +5 Lysglimt ✨':'Prøv næste spørgsmål 🌿'}</Text>}<CozyButton wide label="Næste spørgsmål" onPress={()=>{setSeasonRound(Math.max(seasonRound+1,Math.floor(Date.now()/1000)));setSeasonAnswer(null);}}/></View>}
+          miniKind==='glow'?<View style={styles.miniGameContent}><Text style={styles.title}>✨ Lysglimtjagt</Text><Text style={styles.panelCaption}>Niveau {glowLevel} af 4 · Find fem Lysglimt blandt {glowTileCount(glowLevel)} felter</Text><View style={[styles.glowGrid,{width:Math.min(300,glowTileCount(glowLevel)>=20?300:252)}]}>{Array.from({length:glowTileCount(glowLevel)},(_,index)=><Pressable key={index} accessibilityRole="button" onPress={()=>collectGlow(index)} style={styles.glowTile}><Text style={styles.glowSymbol}>{glowFound.includes(index)?'✨':glowTried.includes(index)?'🍃':'🌿'}</Text></Pressable>)}</View><Text style={styles.panelCaption}>{glowFound.length}/5 fundet {glowFound.length>=5?'· +5 Lysglimt!':''}</Text><CozyButton wide label={glowFound.length===5&&glowLevel<4?'Næste niveau':'Ny jagt'} onPress={()=>{if(glowFound.length===5)setGlowLevel(previous=>Math.min(4,previous+1));setGlowRound(Math.max(Date.now(),glowRound+1));setGlowFound([]);setGlowTried([]);}}/></View>:
+          <View style={styles.miniGameContent}><Text style={styles.title}>🍂 Årstidsquiz</Text><Text style={styles.panelCaption}>Svar rigtigt tre gange i træk · {Math.min(3,seasonStreak)}/3</Text><Text style={styles.panelCaption}>{seasonQuestion(seasonRound).question}</Text>{seasonQuestion(seasonRound).answers.map((option,index)=><CozyButton key={option} wide secondary={seasonAnswer!==index} disabled={seasonAnswer!==null} label={option} onPress={()=>answerSeason(index)}/>)}{seasonAnswer!==null&&<Text style={styles.panelCaption}>{seasonAnswer===seasonQuestion(seasonRound).correct?(seasonStreak>=3?'Tre rigtige! +5 Lysglimt ✨':'Rigtigt! Fortsæt din stime 🌿'):'Ikke helt — din stime starter forfra 🌿'}</Text>}<CozyButton wide label="Næste spørgsmål" disabled={seasonAnswer===null} onPress={()=>{setSeasonRound(previous=>previous+1);setSeasonAnswer(null);if(seasonStreak>=3)setSeasonStreak(0);}}/></View>}
         </View>
       </ScrollView></ImageBackground> :
       screen==='settings'?<ImageBackground source={gardenIllustrations[actualSeason]} resizeMode="cover" style={{flex:1}}><ScrollView style={styles.board} contentContainerStyle={styles.questList}>
