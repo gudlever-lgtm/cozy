@@ -28,7 +28,7 @@ import type {QuestEvent,QuestEventKind} from '../src/domain/quests/quests';
 import {readQuestEvents,writeQuestEvents} from './src/nativeQuestEvents';
 import {checkForCozyUpdate} from './src/checkUpdate';
 import {activeModeIndex,cardBackUnlocked,modeUnlocked,solitaireModes,totalSolitaireWins} from '../src/domain/solitaire/progression';
-import {glowTargets,glowTileCount} from '../src/domain/minigames/glow';
+import {glowTargets,glowTileCount,glowPositions} from '../src/domain/minigames/glow';
 import {seasonQuestion} from '../src/domain/minigames/seasons';
 import {hiddenObjects,hiddenTargetIds} from '../src/domain/minigames/hiddenObjects';
 import {HiddenRoomArt} from './src/HiddenRoomArt';
@@ -82,6 +82,7 @@ export default function App() {
   const [seasonRound,setSeasonRound]=useState(0);
   const [seasonAnswer,setSeasonAnswer]=useState<number|null>(null);
   const [seasonStreak,setSeasonStreak]=useState(0);
+  const seasonPending=useRef(false);
   const [hiddenRound,setHiddenRound]=useState(0);
   const [hiddenFound,setHiddenFound]=useState<number[]>([]);
   const [hiddenZoom,setHiddenZoom]=useState(1);
@@ -336,13 +337,21 @@ export default function App() {
     if(found.length===5){setLedger(previous=>record(previous,{id:`mini-glow-${glowRound}`,type:'earn',amount:5,reason:'Lysglimtjagt fuldført'}));trackQuest('mini-win',`mini-glow-${glowRound}`);}
   }
   function answerSeason(index:number){
-    if(seasonAnswer!==null)return;
+    if(seasonPending.current||seasonAnswer!==null)return;
+    seasonPending.current=true;
     setSeasonAnswer(index);
+    let completed=false;
     if(index===seasonQuestion(seasonRound).correct){
       const next=seasonStreak+1;
       setSeasonStreak(next);
-      if(next===3){setLedger(previous=>record(previous,{id:`mini-season-${seasonRound}`,type:'earn',amount:5,reason:'Tre korrekte årstidssvar'}));trackQuest('mini-win',`mini-season-${seasonRound}`);}
+      if(next===3){completed=true;setLedger(previous=>record(previous,{id:`mini-season-${seasonRound}`,type:'earn',amount:5,reason:'Tre korrekte årstidssvar'}));trackQuest('mini-win',`mini-season-${seasonRound}`);}
     }else setSeasonStreak(0);
+    setTimeout(()=>{
+      setSeasonRound(previous=>previous+1);
+      setSeasonAnswer(null);
+      if(completed)setSeasonStreak(0);
+      seasonPending.current=false;
+    },1100);
   }
   function findHiddenObject(index:number){
     const targets=hiddenTargetIds(hiddenRound);
@@ -629,18 +638,16 @@ export default function App() {
           <View style={styles.miniTabs}>{[{id:'memory',label:'Vendespil'},{id:'glow',label:'Lysglimtjagt'},{id:'season',label:'Årstidsquiz'},{id:'hidden',label:'Find 5 ting'}].map(item=><Pressable key={item.id} onPress={()=>setMiniKind(item.id as typeof miniKind)} style={[styles.miniTab,miniKind===item.id&&styles.miniTabActive]}><Text style={styles.modeText}>{item.label}</Text></Pressable>)}</View>
           {miniKind==='memory'?<MemoryBoard game={memory} onFlip={flipMemory} landscape={landscape} onNew={()=>setMemory(current=>newMemoryGame(Math.max(Date.now(),current.round+1),nextMemoryLevel(current)))}/>:
           miniKind==='glow'?<View style={styles.miniGameContent}><Text style={styles.title}>✨ Lysglimtjagt</Text><Text style={styles.panelCaption}>Niveau {glowLevel} af 4 · Kig grundigt efter fem Lysglimt i skoven</Text><ImageBackground source={gardenIllustrations[actualSeason]} resizeMode="cover" imageStyle={{borderRadius:18}} style={styles.glowForest}>
-            {Array.from({length:glowTileCount(glowLevel)},(_,index)=>{
-              const x=index%6;
-              const y=Math.floor(index/6);
+            {glowPositions(glowRound,glowLevel).map((position,index)=>{
               const found=glowFound.includes(index);
               const tried=glowTried.includes(index);
-              const scenery=['🌿','🍄','🌸','🍃','🌼','🪵','🌱','🍂','🦋','🌳'];
-              return <Pressable key={index} accessibilityRole="button" accessibilityLabel={found?'Lysglimt fundet':'Undersøg skoven'} onPress={()=>collectGlow(index)} style={[styles.glowForestSpot,{left:`${8+x*15}%`,top:`${9+y*21}%`}] }>
-                <Text style={{fontSize:found?32:24,opacity:tried&&!found?0.4:1}}>{found?'✨':tried?'🍂':scenery[(index*3+glowRound)%scenery.length]}</Text>
+              const scenery=['🌿','🍄','🌸','🍃','🌼','🪵','🌱','🍂','🦋','🌳','🌾','🍀'];
+              return <Pressable key={index} accessibilityRole="button" accessibilityLabel={found?'Lysglimt fundet':'Undersøg skoven'} onPress={()=>collectGlow(index)} style={[styles.glowForestSpot,{left:`${position.x}%`,top:`${position.y}%`}] }>
+                <Text style={{fontSize:found?32:position.size,opacity:tried&&!found?0.3:found?1:0.83}}>{found?'✨':tried?'🍂':scenery[(index*7+glowRound)%scenery.length]}</Text>
               </Pressable>;
             })}
           </ImageBackground><Text style={styles.panelCaption}>{glowFound.length}/5 fundet {glowFound.length===5?'· +5 Lysglimt!':''}</Text><CozyButton wide label={glowFound.length===5&&glowLevel<4?'Næste niveau':'Ny jagt'} onPress={()=>{if(glowFound.length===5)setGlowLevel(previous=>Math.min(4,previous+1));setGlowRound(Math.max(Date.now(),glowRound+1));setGlowFound([]);setGlowTried([]);}}/></View>:
-          miniKind==='season'?<View style={styles.miniGameContent}><Text style={styles.title}>🍂 Årstidsquiz</Text><Text style={styles.panelCaption}>Svar rigtigt tre gange i træk · {Math.min(3,seasonStreak)}/3</Text><Text style={styles.panelCaption}>{seasonQuestion(seasonRound).question}</Text>{seasonQuestion(seasonRound).answers.map((option,index)=><CozyButton key={option} wide secondary={seasonAnswer!==index} disabled={seasonAnswer!==null} label={option} onPress={()=>answerSeason(index)}/>)}{seasonAnswer!==null&&<Text style={styles.panelCaption}>{seasonAnswer===seasonQuestion(seasonRound).correct?(seasonStreak>=3?'Tre rigtige! +5 Lysglimt ✨':'Rigtigt! Fortsæt din stime 🌿'):'Ikke helt — din stime starter forfra 🌿'}</Text>}<CozyButton wide label="Næste spørgsmål" disabled={seasonAnswer===null} onPress={()=>{setSeasonRound(previous=>previous+1);setSeasonAnswer(null);if(seasonStreak>=3)setSeasonStreak(0);}}/></View>:
+          miniKind==='season'?<View style={styles.miniGameContent}><Text style={styles.title}>🍂 Årstidsquiz</Text><Text style={styles.panelCaption}>Svar rigtigt tre gange i træk · {Math.min(3,seasonStreak)}/3</Text><Text style={styles.panelCaption}>{seasonQuestion(seasonRound).question}</Text>{seasonQuestion(seasonRound).answers.map((option,index)=><CozyButton key={option} wide secondary={seasonAnswer!==index} disabled={seasonAnswer!==null} label={option} onPress={()=>answerSeason(index)}/>)}{seasonAnswer!==null&&<Text style={styles.panelCaption}>{seasonAnswer===seasonQuestion(seasonRound).correct?(seasonStreak>=3?'Tre rigtige! +5 Lysglimt ✨':'Rigtigt! Fortsæt din stime 🌿'):'Ikke helt — din stime starter forfra 🌿'}</Text>}</View>:
           <View style={styles.miniGameContent}><Text style={styles.title}>🔎 Find fem ting</Text><Text style={styles.panelCaption}>Undersøg det hyggelige motiv. Find de fem genstande på listen:</Text>
             <View style={styles.hiddenChecklist}>{hiddenTargetIds(hiddenRound).map(id=><Text key={id} style={[styles.hiddenListItem,hiddenFound.includes(id)&&styles.hiddenListFound]}>{hiddenFound.includes(id)?'✓ ':'○ '}{hiddenObjects[id].name}</Text>)}</View>
             <View style={styles.hiddenZoomControls}><CozyButton compact label="−" onPress={()=>changeHiddenZoom(hiddenZoom-0.5)}/><Text style={styles.panelCaption}>{Math.round(hiddenZoom*100)} % · {hiddenZoom>1?'Træk for at flytte':'Zoom ind for at undersøge'}</Text><CozyButton compact label="+" onPress={()=>changeHiddenZoom(hiddenZoom+0.5)}/></View>
@@ -772,7 +779,7 @@ const styles=StyleSheet.create({
   glowTile:{width:56,height:56,borderRadius:13,borderWidth:2,borderColor:'#d8ac63',backgroundColor:'#f9e5b8',alignItems:'center',justifyContent:'center'},
   glowSymbol:{fontSize:30},
   glowForest:{width:310,maxWidth:'100%',height:340,borderRadius:18,overflow:'hidden',borderWidth:3,borderColor:'#a18451',backgroundColor:'#9fca94'},
-  glowForestSpot:{position:'absolute',width:43,height:43,alignItems:'center',justifyContent:'center',borderRadius:22,backgroundColor:'#edf5d115'},
+  glowForestSpot:{position:'absolute',width:43,height:43,alignItems:'center',justifyContent:'center'},
   hiddenChecklist:{width:'100%',flexDirection:'row',flexWrap:'wrap',gap:7,justifyContent:'center'},
   hiddenListItem:{fontSize:12,fontWeight:'800',color:'#513f31',backgroundColor:'#fff5d8',padding:6,borderRadius:12},
   hiddenListFound:{color:'#247a4b',textDecorationLine:'line-through',backgroundColor:'#d1f1d4'},
