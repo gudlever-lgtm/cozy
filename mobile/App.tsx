@@ -30,7 +30,8 @@ import {checkForCozyUpdate} from './src/checkUpdate';
 import {activeModeIndex,cardBackUnlocked,modeUnlocked,solitaireModes,totalSolitaireWins} from '../src/domain/solitaire/progression';
 import {glowTargets,glowTileCount,glowPositions} from '../src/domain/minigames/glow';
 import {seasonQuestion} from '../src/domain/minigames/seasons';
-import {hiddenObjects,hiddenTargetIds} from '../src/domain/minigames/hiddenObjects';
+import {hiddenObjects,hiddenObjectPosition,hiddenTargetIds,movingObjectStart} from '../src/domain/minigames/hiddenObjects';
+import {HiddenProp} from './src/HiddenProp';
 
 type Screen = 'garden' | 'cards' | 'mini' | 'quests' | 'settings';
 type Source = {kind:'waste' | 'tableau' | 'foundation'; from:number; at:number};
@@ -655,9 +656,13 @@ export default function App() {
             <View style={[styles.hiddenScene,{width:hiddenSceneWidth,height:hiddenSceneHeight}]} {...hiddenPan.panHandlers}>
               <View style={[styles.hiddenCanvas,{width:hiddenSceneWidth,height:hiddenSceneHeight,transform:[{translateX:hiddenOffset.x},{translateY:hiddenOffset.y},{scale:hiddenZoom}]}]}>
               <Image source={require('./assets/illustrations/hidden-cozy-room.webp')} resizeMode="stretch" style={{width:'100%',height:'100%'}}/>
-              {hiddenObjects.map((object,index)=><Pressable key={object.name} accessibilityRole="button" accessibilityLabel={hiddenFound.includes(index)?`${object.name} fundet`:'Undersøg detalje'} onPress={()=>findHiddenObject(index)} style={[styles.hiddenSpot,{left:`${object.x}%`,top:`${object.y}%`}]}>
-                {hiddenFound.includes(index)&&<Text style={styles.hiddenCheck}>✓</Text>}
-              </Pressable>)}
+              {hiddenObjects.map((object,index)=>{
+                const position=hiddenObjectPosition(index,hiddenRound);
+                return <Pressable key={object.name} accessibilityRole="button" accessibilityLabel={hiddenFound.includes(index)?`${object.name} fundet`:'Undersøg detalje'} onPress={()=>findHiddenObject(index)} style={[styles.hiddenSpot,{left:`${position.x}%`,top:`${position.y}%`}] }>
+                  {index>=movingObjectStart&&<HiddenProp kind={index-movingObjectStart}/>}
+                  {hiddenFound.includes(index)&&<Text style={styles.hiddenCheck}>✓</Text>}
+                </Pressable>;
+              })}
               </View>
             </View>
             <Text style={styles.panelCaption}>{hiddenFound.length}/5 fundet {hiddenFound.length===5?'· Du vandt 5 Lysglimt! ✨':''}</Text>
