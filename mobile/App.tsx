@@ -632,7 +632,7 @@ export default function App() {
       <Text style={[styles.boardTitle,landscape&&styles.landscapeBoardTitle]}>{solitaireModes[activeModeIndex(game.drawCount,game.maxPasses)].title}</Text><Text style={styles.boardMeta}>Flytninger: {game.moves} · Lysglimt ✨ {balance(ledger)}</Text>
       <View style={[styles.piles,{minHeight:tableauHeight,flexGrow:landscape?0:1},landscape&&styles.landscapePiles]}>{game.tableau.map((pile,index)=><Pressable ref={view=>{tableauTargets.current[index]=view;}} key={index} onPress={()=>move('tableau',index)}
         accessibilityLabel={`Kolonne ${index+1}`} style={{width:cardWidth,minHeight:tableauHeight,zIndex:draggingCard&&pile.some(c=>c.id===draggingCard)?100:0}}>
-        {visibleTableauIndexes(pile,expandedColumn===index).map((at,visibleIndex)=>{const value=pile[at];return <View key={value.id} style={{marginTop:visibleIndex?-cardHeight+27:0,zIndex:draggingCard===value.id?999:visibleIndex,elevation:draggingCard===value.id?15:0}}>
+        {visibleTableauIndexes(pile,expandedColumn===index).map((at,visibleIndex)=>{const value=pile[at];return <View key={value.id} style={{marginTop:visibleIndex?-cardHeight+(expandedColumn===index?40:27):0,zIndex:draggingCard===value.id?999:visibleIndex,elevation:draggingCard===value.id?15:0}}>
           {card(value,()=>chosen?move('tableau',index):value.up&&setChosen({kind:'tableau',from:index,at}),{kind:'tableau',from:index,at},pile.slice(at),()=>setExpandedColumn(previous=>previous===index?null:index))}
           {!value.up&&pile.filter(c=>!c.up).length>1&&<View pointerEvents="none" style={styles.columnCount}><Text style={styles.columnCountText}>{pile.filter(c=>!c.up).length}</Text></View>}
         </View>;})}
