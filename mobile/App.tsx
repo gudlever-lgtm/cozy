@@ -31,7 +31,6 @@ import {activeModeIndex,cardBackUnlocked,modeUnlocked,solitaireModes,totalSolita
 import {glowTargets,glowTileCount,glowPositions} from '../src/domain/minigames/glow';
 import {seasonQuestion} from '../src/domain/minigames/seasons';
 import {hiddenObjects,hiddenTargetIds} from '../src/domain/minigames/hiddenObjects';
-import {HiddenRoomArt} from './src/HiddenRoomArt';
 
 type Screen = 'garden' | 'cards' | 'mini' | 'quests' | 'settings';
 type Source = {kind:'waste' | 'tableau' | 'foundation'; from:number; at:number};
@@ -180,6 +179,8 @@ export default function App() {
   offsetRef.current=offset;
   const {width,height} = useWindowDimensions();
   const {landscape,gardenWidth,cardWidth,cardHeight,tableauHeight}=cozyLayout(width,height,settings.cardSize);
+  const hiddenSceneWidth=Math.min(330,Math.max(250,width-(landscape?130:46)));
+  const hiddenSceneHeight=Math.round(hiddenSceneWidth*470/330);
   // Six full-size bottom cards plus the action buttons fit side-by-side on wider phones.
   const wideLandscapeDock=landscape&&width>=840;
   const animationFactor={calm:1.5,normal:1,fast:0.6}[settings.animationSpeed];
@@ -633,9 +634,9 @@ export default function App() {
         </Pressable>;})}
       </ScrollView>
     </View>{autoRunning&&<View pointerEvents="auto" style={StyleSheet.absoluteFill}/>}</View> : screen==='mini' ? <ImageBackground source={gardenIllustrations[actualSeason]} resizeMode="cover" style={{flex:1}}>
-      <ScrollView style={styles.board} contentContainerStyle={{padding:landscape?8:14,paddingTop:landscape?8:35,alignItems:'center'}}>
-        <View style={[styles.illustratedPanel,landscape&&{maxWidth:540,width:'100%'}]}>
-          <View style={styles.miniTabs}>{[{id:'memory',label:'Vendespil'},{id:'glow',label:'Lysglimtjagt'},{id:'season',label:'Årstidsquiz'},{id:'hidden',label:'Find 5 ting'}].map(item=><Pressable key={item.id} onPress={()=>setMiniKind(item.id as typeof miniKind)} style={[styles.miniTab,miniKind===item.id&&styles.miniTabActive]}><Text style={styles.modeText}>{item.label}</Text></Pressable>)}</View>
+      <ScrollView style={styles.board} contentContainerStyle={{paddingHorizontal:landscape?8:10,paddingBottom:24,paddingTop:landscape?12:62,alignItems:'center'}}>
+        <View style={[styles.illustratedPanel,{width:'100%',maxWidth:landscape?540:390}]}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.miniTabs}>{[{id:'memory',label:'Vendespil'},{id:'glow',label:'Lysglimtjagt'},{id:'season',label:'Årstidsquiz'},{id:'hidden',label:'Find 5 ting'}].map(item=><Pressable key={item.id} onPress={()=>setMiniKind(item.id as typeof miniKind)} style={[styles.miniTab,miniKind===item.id&&styles.miniTabActive]}><Text style={styles.modeText}>{item.label}</Text></Pressable>)}</ScrollView>
           {miniKind==='memory'?<MemoryBoard game={memory} onFlip={flipMemory} landscape={landscape} onNew={()=>setMemory(current=>newMemoryGame(Math.max(Date.now(),current.round+1),nextMemoryLevel(current)))}/>:
           miniKind==='glow'?<View style={styles.miniGameContent}><Text style={styles.title}>✨ Lysglimtjagt</Text><Text style={styles.panelCaption}>Niveau {glowLevel} af 4 · Kig grundigt efter fem Lysglimt i skoven</Text><ImageBackground source={gardenIllustrations[actualSeason]} resizeMode="cover" imageStyle={{borderRadius:18}} style={styles.glowForest}>
             {glowPositions(glowRound,glowLevel).map((position,index)=>{
@@ -648,12 +649,12 @@ export default function App() {
             })}
           </ImageBackground><Text style={styles.panelCaption}>{glowFound.length}/5 fundet {glowFound.length===5?'· +5 Lysglimt!':''}</Text><CozyButton wide label={glowFound.length===5&&glowLevel<4?'Næste niveau':'Ny jagt'} onPress={()=>{if(glowFound.length===5)setGlowLevel(previous=>Math.min(4,previous+1));setGlowRound(Math.max(Date.now(),glowRound+1));setGlowFound([]);setGlowTried([]);}}/></View>:
           miniKind==='season'?<View style={styles.miniGameContent}><Text style={styles.title}>🍂 Årstidsquiz</Text><Text style={styles.panelCaption}>Svar rigtigt tre gange i træk · {Math.min(3,seasonStreak)}/3</Text><Text style={styles.panelCaption}>{seasonQuestion(seasonRound).question}</Text>{seasonQuestion(seasonRound).answers.map((option,index)=><CozyButton key={option} wide secondary={seasonAnswer!==index} disabled={seasonAnswer!==null} label={option} onPress={()=>answerSeason(index)}/>)}{seasonAnswer!==null&&<Text style={styles.panelCaption}>{seasonAnswer===seasonQuestion(seasonRound).correct?(seasonStreak>=3?'Tre rigtige! +5 Lysglimt ✨':'Rigtigt! Fortsæt din stime 🌿'):'Ikke helt — din stime starter forfra 🌿'}</Text>}</View>:
-          <View style={styles.miniGameContent}><Text style={styles.title}>🔎 Find fem ting</Text><Text style={styles.panelCaption}>Undersøg det hyggelige motiv. Find de fem genstande på listen:</Text>
+          <View style={[styles.miniGameContent,{paddingHorizontal:5,gap:8}]}><Text style={[styles.title,{fontSize:22}]}>🔎 Find fem ting</Text><Text style={styles.panelCaption}>Find disse fem ting i rummet:</Text>
             <View style={styles.hiddenChecklist}>{hiddenTargetIds(hiddenRound).map(id=><Text key={id} style={[styles.hiddenListItem,hiddenFound.includes(id)&&styles.hiddenListFound]}>{hiddenFound.includes(id)?'✓ ':'○ '}{hiddenObjects[id].name}</Text>)}</View>
-            <View style={styles.hiddenZoomControls}><CozyButton compact label="−" onPress={()=>changeHiddenZoom(hiddenZoom-0.5)}/><Text style={styles.panelCaption}>{Math.round(hiddenZoom*100)} % · {hiddenZoom>1?'Træk for at flytte':'Zoom ind for at undersøge'}</Text><CozyButton compact label="+" onPress={()=>changeHiddenZoom(hiddenZoom+0.5)}/></View>
-            <View style={styles.hiddenScene} {...hiddenPan.panHandlers}>
-              <View style={[styles.hiddenCanvas,{transform:[{translateX:hiddenOffset.x},{translateY:hiddenOffset.y},{scale:hiddenZoom}]}]}>
-              <HiddenRoomArt/>
+            <View style={styles.hiddenZoomControls}><Pressable accessibilityRole="button" accessibilityLabel="Zoom ud" style={styles.hiddenZoomButton} onPress={()=>changeHiddenZoom(hiddenZoom-0.5)}><Text style={styles.hiddenZoomGlyph}>−</Text></Pressable><Text style={[styles.panelCaption,{fontSize:12,flexShrink:1}]}>{Math.round(hiddenZoom*100)} % · {hiddenZoom>1?'Træk billedet':'Zoom for at se detaljer'}</Text><Pressable accessibilityRole="button" accessibilityLabel="Zoom ind" style={styles.hiddenZoomButton} onPress={()=>changeHiddenZoom(hiddenZoom+0.5)}><Text style={styles.hiddenZoomGlyph}>+</Text></Pressable></View>
+            <View style={[styles.hiddenScene,{width:hiddenSceneWidth,height:hiddenSceneHeight}]} {...hiddenPan.panHandlers}>
+              <View style={[styles.hiddenCanvas,{width:hiddenSceneWidth,height:hiddenSceneHeight,transform:[{translateX:hiddenOffset.x},{translateY:hiddenOffset.y},{scale:hiddenZoom}]}]}>
+              <Image source={require('./assets/illustrations/hidden-cozy-room.webp')} resizeMode="stretch" style={{width:'100%',height:'100%'}}/>
               {hiddenObjects.map((object,index)=><Pressable key={object.name} accessibilityRole="button" accessibilityLabel={`Undersøg ${object.name}`} onPress={()=>findHiddenObject(index)} style={[styles.hiddenSpot,{left:`${object.x}%`,top:`${object.y}%`}]}>
                 <Text style={[styles.hiddenSymbol,hiddenFound.includes(index)&&styles.hiddenSymbolFound]}>{object.symbol}</Text>
                 {hiddenFound.includes(index)&&<Text style={styles.hiddenCheck}>✓</Text>}
@@ -771,8 +772,8 @@ const styles=StyleSheet.create({
   miniLauncherText:{color:'#285563',fontSize:13,fontWeight:'900'},
   miniLauncherList:{marginTop:5,backgroundColor:'#fff1cff9',borderColor:'#ddad57',borderWidth:3,borderRadius:16,padding:5,gap:4,elevation:10},
   miniLauncherItem:{paddingVertical:8,paddingHorizontal:12,backgroundColor:'#ffebbe',borderRadius:12},
-  miniTabs:{flexDirection:'row',gap:5,justifyContent:'center',flexWrap:'wrap',padding:6},
-  miniTab:{backgroundColor:'#ffe8b6',borderColor:'#d7ab60',borderWidth:2,padding:7,borderRadius:14},
+  miniTabs:{flexDirection:'row',gap:6,paddingVertical:7,paddingHorizontal:6,alignItems:'center'},
+  miniTab:{backgroundColor:'#ffe8b6',borderColor:'#d7ab60',borderWidth:1.5,paddingHorizontal:10,paddingVertical:7,borderRadius:14,minHeight:36,justifyContent:'center'},
   miniTabActive:{backgroundColor:'#bde6ce',borderColor:'#4d997f'},
   miniGameContent:{alignItems:'center',gap:12,padding:12},
   glowGrid:{flexDirection:'row',flexWrap:'wrap',width:252,justifyContent:'center',gap:6},
@@ -780,14 +781,16 @@ const styles=StyleSheet.create({
   glowSymbol:{fontSize:30},
   glowForest:{width:310,maxWidth:'100%',height:340,borderRadius:18,overflow:'hidden',borderWidth:3,borderColor:'#a18451',backgroundColor:'#9fca94'},
   glowForestSpot:{position:'absolute',width:43,height:43,alignItems:'center',justifyContent:'center'},
-  hiddenChecklist:{width:'100%',flexDirection:'row',flexWrap:'wrap',gap:7,justifyContent:'center'},
-  hiddenListItem:{fontSize:12,fontWeight:'800',color:'#513f31',backgroundColor:'#fff5d8',padding:6,borderRadius:12},
+  hiddenChecklist:{width:'100%',flexDirection:'row',flexWrap:'wrap',gap:5,justifyContent:'center'},
+  hiddenListItem:{fontSize:11,fontWeight:'800',color:'#513f31',backgroundColor:'#fff5d8',paddingHorizontal:8,paddingVertical:5,borderRadius:12},
   hiddenListFound:{color:'#247a4b',textDecorationLine:'line-through',backgroundColor:'#d1f1d4'},
-  hiddenScene:{width:330,maxWidth:'100%',height:470,borderRadius:18,overflow:'hidden',borderWidth:3,borderColor:'#b78c55',backgroundColor:'#c9e2b8'},
+  hiddenScene:{maxWidth:'100%',borderRadius:18,overflow:'hidden',borderWidth:3,borderColor:'#b78c55',backgroundColor:'#c9e2b8'},
   hiddenCanvas:{width:330,height:470},
-  hiddenZoomControls:{flexDirection:'row',justifyContent:'center',alignItems:'center',gap:9},
+  hiddenZoomControls:{width:'100%',flexDirection:'row',justifyContent:'space-between',alignItems:'center',gap:8},
+  hiddenZoomButton:{width:42,height:38,borderRadius:12,backgroundColor:'#bfe8d0',borderColor:'#568b78',borderWidth:2,alignItems:'center',justifyContent:'center'},
+  hiddenZoomGlyph:{color:'#275c50',fontSize:25,fontWeight:'900',lineHeight:29},
   hiddenSpot:{position:'absolute',width:38,height:38,alignItems:'center',justifyContent:'center'},
-  hiddenSymbol:{fontSize:21,textShadowColor:'#342b22a0',textShadowRadius:3},
+  hiddenSymbol:{fontSize:16,textShadowColor:'#342b22a0',textShadowRadius:3},
   hiddenSymbolFound:{opacity:0.65},
   hiddenCheck:{position:'absolute',right:0,bottom:0,color:'#27713e',fontWeight:'900',fontSize:15,backgroundColor:'#eaffde',borderRadius:12},
   modePicker:{gap:5,paddingVertical:2,paddingHorizontal:3},
