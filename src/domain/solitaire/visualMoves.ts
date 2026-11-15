@@ -1,15 +1,15 @@
 import type {Card,Move,State} from './klondike';
 
-/** A long column shows its first two and last two cards, without changing the game. */
+/** Above three cards, show only the first and last to save vertical space. */
 export function visibleTableauIndexes(length:number):number[]{
   if(!Number.isSafeInteger(length)||length<0)return [];
-  if(length<=5)return Array.from({length},(_,index)=>index);
-  return [0,1,length-2,length-1];
+  if(length<=3)return Array.from({length},(_,index)=>index);
+  return [0,length-1];
 }
 
 /** Position at which the next visible card will land. */
 export function tableauLandingSlots(length:number):number {
-  return length<5?length:3;
+  return length<3?length:1;
 }
 
 /** Resolves the exact moving card without changing the solitaire state. */
