@@ -30,6 +30,7 @@ import {checkForCozyUpdate} from './src/checkUpdate';
 import {activeModeIndex,cardBackUnlocked,modeUnlocked,solitaireModes,totalSolitaireWins} from '../src/domain/solitaire/progression';
 import {glowTargets,glowTileCount} from '../src/domain/minigames/glow';
 import {seasonQuestion} from '../src/domain/minigames/seasons';
+import {hiddenObjects,hiddenTargetIds} from '../src/domain/minigames/hiddenObjects';
 
 type Screen = 'garden' | 'cards' | 'mini' | 'quests' | 'settings';
 type Source = {kind:'waste' | 'tableau' | 'foundation'; from:number; at:number};
@@ -72,7 +73,7 @@ export default function App() {
   },[]);
   const [screen,setScreen] = useState<Screen>('garden');
   const [miniMenuOpen,setMiniMenuOpen]=useState(false);
-  const [miniKind,setMiniKind]=useState<'memory'|'glow'|'season'>('memory');
+  const [miniKind,setMiniKind]=useState<'memory'|'glow'|'season'|'hidden'>('memory');
   const [glowRound,setGlowRound]=useState(0);
   const [glowLevel,setGlowLevel]=useState(1);
   const [glowFound,setGlowFound]=useState<number[]>([]);
@@ -80,6 +81,8 @@ export default function App() {
   const [seasonRound,setSeasonRound]=useState(0);
   const [seasonAnswer,setSeasonAnswer]=useState<number|null>(null);
   const [seasonStreak,setSeasonStreak]=useState(0);
+  const [hiddenRound,setHiddenRound]=useState(0);
+  const [hiddenFound,setHiddenFound]=useState<number[]>([]);
   const [game,setGame] = useState(() => newGame(20261113,3));
   const [ledger,setLedger] = useState<Ledger>(()=>emptyLedger());
   const [questEvents,setQuestEvents]=useState<QuestEvent[]>([]);
@@ -319,6 +322,15 @@ export default function App() {
       if(next===3){setLedger(previous=>record(previous,{id:`mini-season-${seasonRound}`,type:'earn',amount:5,reason:'Tre korrekte årstidssvar'}));trackQuest('mini-win',`mini-season-${seasonRound}`);}
     }else setSeasonStreak(0);
   }
+  function findHiddenObject(index:number){
+    const targets=hiddenTargetIds(hiddenRound);
+    if(!targets.includes(index)||hiddenFound.includes(index))return;
+    const next=[...hiddenFound,index];setHiddenFound(next);
+    if(next.length===5){
+      setLedger(previous=>record(previous,{id:`mini-hidden-${hiddenRound}`,type:'earn',amount:5,reason:'Fem skjulte ting fundet'}));
+      trackQuest('mini-win',`mini-hidden-${hiddenRound}`);
+    }
+  }
 
   function move(to:'tableau' | 'foundation',index:number) {
     if(chosen)executeMove(chosen,to,index);
@@ -507,6 +519,7 @@ export default function App() {
           {kind:'memory',title:'🌸 Skovens vendespil'},
           {kind:'glow',title:'✨ Lysglimtjagt'},
           {kind:'season',title:'🍂 Årstidsquiz'},
+          {kind:'hidden',title:'🔎 Find fem ting'},
         ].map(item=><Pressable key={item.kind} style={styles.miniLauncherItem} onPress={()=>{setMiniKind(item.kind as typeof miniKind);setScreen('mini');setMiniMenuOpen(false);}}>
           <Text style={styles.miniLauncherText}>{item.title}</Text>
         </Pressable>)}</View>}
@@ -591,7 +604,7 @@ export default function App() {
     </View>{autoRunning&&<View pointerEvents="auto" style={StyleSheet.absoluteFill}/>}</View> : screen==='mini' ? <ImageBackground source={gardenIllustrations[actualSeason]} resizeMode="cover" style={{flex:1}}>
       <ScrollView style={styles.board} contentContainerStyle={{padding:landscape?8:14,paddingTop:landscape?8:35,alignItems:'center'}}>
         <View style={[styles.illustratedPanel,landscape&&{maxWidth:540,width:'100%'}]}>
-          <View style={styles.miniTabs}>{[{id:'memory',label:'Vendespil'},{id:'glow',label:'Lysglimtjagt'},{id:'season',label:'Årstidsquiz'}].map(item=><Pressable key={item.id} onPress={()=>setMiniKind(item.id as typeof miniKind)} style={[styles.miniTab,miniKind===item.id&&styles.miniTabActive]}><Text style={styles.modeText}>{item.label}</Text></Pressable>)}</View>
+          <View style={styles.miniTabs}>{[{id:'memory',label:'Vendespil'},{id:'glow',label:'Lysglimtjagt'},{id:'season',label:'Årstidsquiz'},{id:'hidden',label:'Find 5 ting'}].map(item=><Pressable key={item.id} onPress={()=>setMiniKind(item.id as typeof miniKind)} style={[styles.miniTab,miniKind===item.id&&styles.miniTabActive]}><Text style={styles.modeText}>{item.label}</Text></Pressable>)}</View>
           {miniKind==='memory'?<MemoryBoard game={memory} onFlip={flipMemory} landscape={landscape} onNew={()=>setMemory(current=>newMemoryGame(Math.max(Date.now(),current.round+1),nextMemoryLevel(current)))}/>:
           miniKind==='glow'?<View style={styles.miniGameContent}><Text style={styles.title}>✨ Lysglimtjagt</Text><Text style={styles.panelCaption}>Niveau {glowLevel} af 4 · Kig grundigt efter fem Lysglimt i skoven</Text><ImageBackground source={gardenIllustrations[actualSeason]} resizeMode="cover" imageStyle={{borderRadius:18}} style={styles.glowForest}>
             {Array.from({length:glowTileCount(glowLevel)},(_,index)=>{
@@ -605,7 +618,18 @@ export default function App() {
               </Pressable>;
             })}
           </ImageBackground><Text style={styles.panelCaption}>{glowFound.length}/5 fundet {glowFound.length===5?'· +5 Lysglimt!':''}</Text><CozyButton wide label={glowFound.length===5&&glowLevel<4?'Næste niveau':'Ny jagt'} onPress={()=>{if(glowFound.length===5)setGlowLevel(previous=>Math.min(4,previous+1));setGlowRound(Math.max(Date.now(),glowRound+1));setGlowFound([]);setGlowTried([]);}}/></View>:
-          <View style={styles.miniGameContent}><Text style={styles.title}>🍂 Årstidsquiz</Text><Text style={styles.panelCaption}>Svar rigtigt tre gange i træk · {Math.min(3,seasonStreak)}/3</Text><Text style={styles.panelCaption}>{seasonQuestion(seasonRound).question}</Text>{seasonQuestion(seasonRound).answers.map((option,index)=><CozyButton key={option} wide secondary={seasonAnswer!==index} disabled={seasonAnswer!==null} label={option} onPress={()=>answerSeason(index)}/>)}{seasonAnswer!==null&&<Text style={styles.panelCaption}>{seasonAnswer===seasonQuestion(seasonRound).correct?(seasonStreak>=3?'Tre rigtige! +5 Lysglimt ✨':'Rigtigt! Fortsæt din stime 🌿'):'Ikke helt — din stime starter forfra 🌿'}</Text>}<CozyButton wide label="Næste spørgsmål" disabled={seasonAnswer===null} onPress={()=>{setSeasonRound(previous=>previous+1);setSeasonAnswer(null);if(seasonStreak>=3)setSeasonStreak(0);}}/></View>}
+          miniKind==='season'?<View style={styles.miniGameContent}><Text style={styles.title}>🍂 Årstidsquiz</Text><Text style={styles.panelCaption}>Svar rigtigt tre gange i træk · {Math.min(3,seasonStreak)}/3</Text><Text style={styles.panelCaption}>{seasonQuestion(seasonRound).question}</Text>{seasonQuestion(seasonRound).answers.map((option,index)=><CozyButton key={option} wide secondary={seasonAnswer!==index} disabled={seasonAnswer!==null} label={option} onPress={()=>answerSeason(index)}/>)}{seasonAnswer!==null&&<Text style={styles.panelCaption}>{seasonAnswer===seasonQuestion(seasonRound).correct?(seasonStreak>=3?'Tre rigtige! +5 Lysglimt ✨':'Rigtigt! Fortsæt din stime 🌿'):'Ikke helt — din stime starter forfra 🌿'}</Text>}<CozyButton wide label="Næste spørgsmål" disabled={seasonAnswer===null} onPress={()=>{setSeasonRound(previous=>previous+1);setSeasonAnswer(null);if(seasonStreak>=3)setSeasonStreak(0);}}/></View>:
+          <View style={styles.miniGameContent}><Text style={styles.title}>🔎 Find fem ting</Text><Text style={styles.panelCaption}>Undersøg det hyggelige motiv. Find de fem genstande på listen:</Text>
+            <View style={styles.hiddenChecklist}>{hiddenTargetIds(hiddenRound).map(id=><Text key={id} style={[styles.hiddenListItem,hiddenFound.includes(id)&&styles.hiddenListFound]}>{hiddenFound.includes(id)?'✓ ':'○ '}{hiddenObjects[id].name}</Text>)}</View>
+            <ImageBackground source={gardenIllustrations[actualSeason]} resizeMode="cover" imageStyle={{borderRadius:18}} style={styles.hiddenScene}>
+              {hiddenObjects.map((object,index)=><Pressable key={object.name} accessibilityRole="button" accessibilityLabel={`Undersøg ${object.name}`} onPress={()=>findHiddenObject(index)} style={[styles.hiddenSpot,{left:`${object.x}%`,top:`${object.y}%`}]}>
+                <Text style={[styles.hiddenSymbol,hiddenFound.includes(index)&&styles.hiddenSymbolFound]}>{object.symbol}</Text>
+                {hiddenFound.includes(index)&&<Text style={styles.hiddenCheck}>✓</Text>}
+              </Pressable>)}
+            </ImageBackground>
+            <Text style={styles.panelCaption}>{hiddenFound.length}/5 fundet {hiddenFound.length===5?'· Du vandt 5 Lysglimt! ✨':''}</Text>
+            <CozyButton wide label={hiddenFound.length===5?'Næste jagt':'Ny jagt'} onPress={()=>{setHiddenRound(previous=>Math.max(Date.now(),previous+1));setHiddenFound([]);}}/>
+          </View>}
         </View>
       </ScrollView></ImageBackground> :
       screen==='settings'?<ImageBackground source={gardenIllustrations[actualSeason]} resizeMode="cover" style={{flex:1}}><ScrollView style={styles.board} contentContainerStyle={styles.questList}>
@@ -723,6 +747,14 @@ const styles=StyleSheet.create({
   glowSymbol:{fontSize:30},
   glowForest:{width:310,maxWidth:'100%',height:340,borderRadius:18,overflow:'hidden',borderWidth:3,borderColor:'#a18451',backgroundColor:'#9fca94'},
   glowForestSpot:{position:'absolute',width:43,height:43,alignItems:'center',justifyContent:'center',borderRadius:22,backgroundColor:'#edf5d115'},
+  hiddenChecklist:{width:'100%',flexDirection:'row',flexWrap:'wrap',gap:7,justifyContent:'center'},
+  hiddenListItem:{fontSize:12,fontWeight:'800',color:'#513f31',backgroundColor:'#fff5d8',padding:6,borderRadius:12},
+  hiddenListFound:{color:'#247a4b',textDecorationLine:'line-through',backgroundColor:'#d1f1d4'},
+  hiddenScene:{width:330,maxWidth:'100%',height:470,borderRadius:18,overflow:'hidden',borderWidth:3,borderColor:'#b78c55',backgroundColor:'#c9e2b8'},
+  hiddenSpot:{position:'absolute',width:38,height:38,alignItems:'center',justifyContent:'center'},
+  hiddenSymbol:{fontSize:21,textShadowColor:'#342b22a0',textShadowRadius:3},
+  hiddenSymbolFound:{opacity:0.65},
+  hiddenCheck:{position:'absolute',right:0,bottom:0,color:'#27713e',fontWeight:'900',fontSize:15,backgroundColor:'#eaffde',borderRadius:12},
   modePicker:{gap:5,paddingVertical:2,paddingHorizontal:3},
   modeButton:{borderColor:'#d7ae68',borderWidth:1.5,borderRadius:10,backgroundColor:'#fff0cb',paddingHorizontal:8,paddingVertical:3,minWidth:113},
   modeButtonActive:{borderColor:'#74bba3',backgroundColor:'#c5eacb'},
