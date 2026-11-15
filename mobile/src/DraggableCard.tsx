@@ -79,9 +79,10 @@ export function DraggableCard({card,width,height,cardStyle='illustrated',back='f
     onPanResponderRelease:(_,g)=>{
       clearLongHold();
       setShift({x:0,y:0});
-      if(dragging.current){dragging.current=false;callbacks.current.onDragChange?.(false);}
+      const wasDragging=dragging.current;
+      if(wasDragging){dragging.current=false;callbacks.current.onDragChange?.(false);}
       if(longHeld.current){longHeld.current=false;return;}
-      if(Math.abs(g.dx)<9&&Math.abs(g.dy)<9){
+      if(!wasDragging&&Math.abs(g.dx)<9&&Math.abs(g.dy)<9){
         const now=Date.now();
         if(now-lastTap.current<320&&callbacks.current.onDoubleTap){
           if(tapTimer.current)clearTimeout(tapTimer.current);
