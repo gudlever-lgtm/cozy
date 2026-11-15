@@ -655,8 +655,7 @@ export default function App() {
             <View style={[styles.hiddenScene,{width:hiddenSceneWidth,height:hiddenSceneHeight}]} {...hiddenPan.panHandlers}>
               <View style={[styles.hiddenCanvas,{width:hiddenSceneWidth,height:hiddenSceneHeight,transform:[{translateX:hiddenOffset.x},{translateY:hiddenOffset.y},{scale:hiddenZoom}]}]}>
               <Image source={require('./assets/illustrations/hidden-cozy-room.webp')} resizeMode="stretch" style={{width:'100%',height:'100%'}}/>
-              {hiddenObjects.map((object,index)=><Pressable key={object.name} accessibilityRole="button" accessibilityLabel={`Undersøg ${object.name}`} onPress={()=>findHiddenObject(index)} style={[styles.hiddenSpot,{left:`${object.x}%`,top:`${object.y}%`}]}>
-                <Text style={[styles.hiddenSymbol,hiddenFound.includes(index)&&styles.hiddenSymbolFound]}>{object.symbol}</Text>
+              {hiddenObjects.map((object,index)=><Pressable key={object.name} accessibilityRole="button" accessibilityLabel={hiddenFound.includes(index)?`${object.name} fundet`:'Undersøg detalje'} onPress={()=>findHiddenObject(index)} style={[styles.hiddenSpot,{left:`${object.x}%`,top:`${object.y}%`}]}>
                 {hiddenFound.includes(index)&&<Text style={styles.hiddenCheck}>✓</Text>}
               </Pressable>)}
               </View>
