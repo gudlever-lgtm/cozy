@@ -1,17 +1,17 @@
 /** Target coordinates are percentages of the illustrated scene. */
 export const hiddenObjects=[
-  {name:'Sommerfugl',symbol:'🦋',x:14,y:13},
-  {name:'Nøgle',symbol:'🗝️',x:72,y:18},
-  {name:'Svamp',symbol:'🍄',x:31,y:66},
-  {name:'Snegl',symbol:'🐌',x:59,y:85},
-  {name:'Stjerne',symbol:'⭐',x:83,y:40},
-  {name:'Jordbær',symbol:'🍓',x:22,y:46},
-  {name:'Fjer',symbol:'🪶',x:48,y:29},
-  {name:'Brev',symbol:'✉️',x:70,y:62},
-  {name:'Klokke',symbol:'🔔',x:43,y:8},
-  {name:'Hjerte',symbol:'💛',x:10,y:79},
-  {name:'Mariehøne',symbol:'🐞',x:87,y:75},
-  {name:'Bær',symbol:'🫐',x:44,y:51},
+  {name:'Træhest',x:50,y:15},
+  {name:'Saks',x:29,y:61},
+  {name:'Kat i sofaen',x:11,y:43},
+  {name:'Kat på gulvet',x:5,y:69},
+  {name:'Kobberkedel',x:85,y:36},
+  {name:'Garnkurven',x:29,y:52},
+  {name:'Lyserød blomstervase',x:19,y:24},
+  {name:'Hængelampe',x:50,y:2},
+  {name:'Stjernetæppe',x:63,y:4},
+  {name:'Lanterne',x:13,y:30},
+  {name:'Stofkurv',x:81,y:78},
+  {name:'Grøn blomstervase',x:73,y:54},
 ] as const;
 
 export function hiddenTargetIds(round:number):number[]{
