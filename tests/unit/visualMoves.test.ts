@@ -12,6 +12,8 @@ test('only long face-up runs are compacted; the back stack remains visible',()=>
   assert.deepEqual(visibleTableauIndexes([back,back,back,face]),[2,3]);
   assert.deepEqual(visibleTableauIndexes([back,back,face,face,face]),[1,2,3,4]);
   assert.deepEqual(visibleTableauIndexes([back,back,face,face,face,face,face]),[1,2,6]);
+  assert.deepEqual(visibleTableauIndexes([back,back,face,face,face,face,face],true),[1,2,3,4,5,6]);
+  assert.deepEqual(visibleTableauIndexes([face,face,face,face],true),[0,1,2,3]);
   assert.deepEqual(visibleTableauIndexes([back,back]),[1]);
 });
 
