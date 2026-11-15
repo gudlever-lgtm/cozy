@@ -6,7 +6,7 @@ export type CardBackStyle='floral'|'autumn'|'winter';
 export type AnimationSpeed='calm'|'normal'|'fast';
 export type CozySettings={season:Season;cardStyle:CardStyle;doubleTap:boolean;drawPreference:1|3;
   cardSize:CardSize;cardBack:CardBackStyle;autoHints:boolean;animationSpeed:AnimationSpeed;autoMove:boolean};
-export const defaultSettings:CozySettings={season:'auto',cardStyle:'illustrated',doubleTap:true,drawPreference:1,
+export const defaultSettings:CozySettings={season:'auto',cardStyle:'illustrated',doubleTap:true,drawPreference:3,
   cardSize:'normal',cardBack:'floral',autoHints:false,animationSpeed:'normal',autoMove:true};
 const valid=['auto','spring','summer','autumn','winter'];
 const active=()=>new File(Paths.document,'cozy-v3-settings.json');
