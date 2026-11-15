@@ -21,7 +21,7 @@ import {autoPlace} from '../src/domain/solitaire/autoPlace';
 import {cardForVisualMove,tableauLandingOffset,visibleTableauIndexes} from '../src/domain/solitaire/visualMoves';
 import {CozyButton} from './src/CozyButton';
 import {MemoryBoard} from './src/MemoryBoard';
-import {newMemoryGame,revealMemory,hideMismatch,memoryWon} from '../src/domain/minigames/memory';
+import {newMemoryGame,revealMemory,hideMismatch,memoryWon,nextMemoryLevel} from '../src/domain/minigames/memory';
 import {readMemory,writeMemory} from './src/nativeMemory';
 import {addQuestEvent,quests} from '../src/domain/quests/quests';
 import type {QuestEvent,QuestEventKind} from '../src/domain/quests/quests';
@@ -585,7 +585,7 @@ export default function App() {
       <ScrollView style={styles.board} contentContainerStyle={{padding:landscape?8:14,paddingTop:landscape?8:35,alignItems:'center'}}>
         <View style={[styles.illustratedPanel,landscape&&{maxWidth:540,width:'100%'}]}>
           <View style={styles.miniTabs}>{[{id:'memory',label:'Vendespil'},{id:'glow',label:'Lysglimtjagt'},{id:'season',label:'Årstidsquiz'}].map(item=><Pressable key={item.id} onPress={()=>setMiniKind(item.id as typeof miniKind)} style={[styles.miniTab,miniKind===item.id&&styles.miniTabActive]}><Text style={styles.modeText}>{item.label}</Text></Pressable>)}</View>
-          {miniKind==='memory'?<MemoryBoard game={memory} onFlip={flipMemory} landscape={landscape} onNew={()=>setMemory(newMemoryGame(Math.max(Date.now(),memory.round+1)))}/>:
+          {miniKind==='memory'?<MemoryBoard game={memory} onFlip={flipMemory} landscape={landscape} onNew={()=>setMemory(current=>newMemoryGame(Math.max(Date.now(),current.round+1),nextMemoryLevel(current)))}/>:
           miniKind==='glow'?<View style={styles.miniGameContent}><Text style={styles.title}>✨ Lysglimtjagt</Text><Text style={styles.panelCaption}>Find alle fem skjulte Lysglimt</Text><View style={styles.glowGrid}>{Array.from({length:12},(_,index)=><Pressable key={index} accessibilityRole="button" onPress={()=>collectGlow(index)} style={styles.glowTile}><Text style={styles.glowSymbol}>{glowFound.includes(index)?'✨':glowTried.includes(index)?'🍃':'🌿'}</Text></Pressable>)}</View><Text style={styles.panelCaption}>{glowFound.length}/5 fundet {glowFound.length>=5?'· +5 Lysglimt!':''}</Text><CozyButton wide label="Ny jagt" onPress={()=>{setGlowRound(Math.max(Date.now(),glowRound+1));setGlowFound([]);setGlowTried([]);}}/></View>:
           <View style={styles.miniGameContent}><Text style={styles.title}>🍂 Årstidsquiz</Text><Text style={styles.panelCaption}>{['Hvornår blomstrer tulipaner?','Hvornår er det varmest?','Hvornår falder bladene?','Hvornår kommer sneen?'][seasonRound%4]}</Text>{['Forår 🌷','Sommer ☀️','Efterår 🍁','Vinter ❄️'].map((option,index)=><CozyButton key={option} wide secondary={seasonAnswer!==index} disabled={seasonAnswer!==null} label={option} onPress={()=>answerSeason(index)}/>)}{seasonAnswer!==null&&<Text style={styles.panelCaption}>{seasonAnswer===seasonRound%4?'Rigtigt! +5 Lysglimt ✨':'Prøv næste spørgsmål 🌿'}</Text>}<CozyButton wide label="Næste spørgsmål" onPress={()=>{setSeasonRound(Math.max(seasonRound+1,Math.floor(Date.now()/1000)));setSeasonAnswer(null);}}/></View>}
         </View>
