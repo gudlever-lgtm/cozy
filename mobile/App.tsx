@@ -27,7 +27,7 @@ import {addQuestEvent,quests} from '../src/domain/quests/quests';
 import type {QuestEvent,QuestEventKind} from '../src/domain/quests/quests';
 import {readQuestEvents,writeQuestEvents} from './src/nativeQuestEvents';
 import {checkForCozyUpdate} from './src/checkUpdate';
-import {activeModeIndex,modeUnlocked,solitaireModes,winsForMode} from '../src/domain/solitaire/progression';
+import {activeModeIndex,cardBackUnlocked,modeUnlocked,solitaireModes,totalSolitaireWins} from '../src/domain/solitaire/progression';
 import {glowTargets,glowTileCount} from '../src/domain/minigames/glow';
 import {seasonQuestion} from '../src/domain/minigames/seasons';
 
@@ -80,7 +80,7 @@ export default function App() {
   const [seasonRound,setSeasonRound]=useState(0);
   const [seasonAnswer,setSeasonAnswer]=useState<number|null>(null);
   const [seasonStreak,setSeasonStreak]=useState(0);
-  const [game,setGame] = useState(() => newGame(20261113));
+  const [game,setGame] = useState(() => newGame(20261113,3));
   const [ledger,setLedger] = useState<Ledger>(()=>emptyLedger());
   const [questEvents,setQuestEvents]=useState<QuestEvent[]>([]);
   const [questEventsLoaded,setQuestEventsLoaded]=useState(false);
@@ -298,10 +298,10 @@ export default function App() {
       if(game.drawCount===3)trackQuest('three-win',`three-win-${game.seed}`);}
   },[game,loaded,questEventsLoaded]);
   function startSolitaire(index:number,applyPreference=false){
-    if(!modeUnlocked(ledger,index)){setMessage('Vind fem spil i den forrige kabaletype først');return;}
-    stopVisualCue();const effectiveIndex=applyPreference&&index===0&&settings.drawPreference===3&&modeUnlocked(ledger,1)?1:index;
+    if(!modeUnlocked(ledger,index)){setMessage('Gennemfør fem kabaler for at låse Udfordring op');return;}
+    stopVisualCue();const effectiveIndex=applyPreference&&index<2?(settings.drawPreference===3?1:0):index;
     const mode=solitaireModes[effectiveIndex];
-    setGame(newGame(Date.now(),mode.drawCount,mode.maxPasses));setChosen(null);setMessage('');
+    setGame(newGame(Date.now(),index===2?settings.drawPreference:mode.drawCount,mode.maxPasses));setChosen(null);setMessage('');
   }
   function collectGlow(index:number){
     if(glowTried.includes(index))return;
@@ -585,7 +585,7 @@ export default function App() {
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.modePicker}>
         {solitaireModes.map((mode,index)=>{const unlocked=modeUnlocked(ledger,index);const selected=index===activeModeIndex(game.drawCount,game.maxPasses);return <Pressable key={mode.id} accessibilityRole="button" accessibilityState={{disabled:!unlocked,selected}} disabled={!unlocked||autoRunning} style={[styles.modeButton,selected&&styles.modeButtonActive,!unlocked&&styles.modeButtonLocked]} onPress={()=>startSolitaire(index)}>
           <Text style={styles.modeText}>{unlocked?mode.title:`🔒 ${mode.title}`}</Text>
-          <Text style={styles.modeSmall}>{unlocked?mode.description:`${winsForMode(ledger,solitaireModes[index-1].id)}/5 sejre`}</Text>
+          <Text style={styles.modeSmall}>{unlocked?mode.description:`${totalSolitaireWins(ledger)}/5 sejre`}</Text>
         </Pressable>;})}
       </ScrollView>
     </View>{autoRunning&&<View pointerEvents="auto" style={StyleSheet.absoluteFill}/>}</View> : screen==='mini' ? <ImageBackground source={gardenIllustrations[actualSeason]} resizeMode="cover" style={{flex:1}}>
@@ -593,7 +593,18 @@ export default function App() {
         <View style={[styles.illustratedPanel,landscape&&{maxWidth:540,width:'100%'}]}>
           <View style={styles.miniTabs}>{[{id:'memory',label:'Vendespil'},{id:'glow',label:'Lysglimtjagt'},{id:'season',label:'Årstidsquiz'}].map(item=><Pressable key={item.id} onPress={()=>setMiniKind(item.id as typeof miniKind)} style={[styles.miniTab,miniKind===item.id&&styles.miniTabActive]}><Text style={styles.modeText}>{item.label}</Text></Pressable>)}</View>
           {miniKind==='memory'?<MemoryBoard game={memory} onFlip={flipMemory} landscape={landscape} onNew={()=>setMemory(current=>newMemoryGame(Math.max(Date.now(),current.round+1),nextMemoryLevel(current)))}/>:
-          miniKind==='glow'?<View style={styles.miniGameContent}><Text style={styles.title}>✨ Lysglimtjagt</Text><Text style={styles.panelCaption}>Niveau {glowLevel} af 4 · Find fem Lysglimt blandt {glowTileCount(glowLevel)} felter</Text><View style={[styles.glowGrid,{width:Math.min(300,glowTileCount(glowLevel)>=20?300:252)}]}>{Array.from({length:glowTileCount(glowLevel)},(_,index)=><Pressable key={index} accessibilityRole="button" onPress={()=>collectGlow(index)} style={styles.glowTile}><Text style={styles.glowSymbol}>{glowFound.includes(index)?'✨':glowTried.includes(index)?'🍃':'🌿'}</Text></Pressable>)}</View><Text style={styles.panelCaption}>{glowFound.length}/5 fundet {glowFound.length>=5?'· +5 Lysglimt!':''}</Text><CozyButton wide label={glowFound.length===5&&glowLevel<4?'Næste niveau':'Ny jagt'} onPress={()=>{if(glowFound.length===5)setGlowLevel(previous=>Math.min(4,previous+1));setGlowRound(Math.max(Date.now(),glowRound+1));setGlowFound([]);setGlowTried([]);}}/></View>:
+          miniKind==='glow'?<View style={styles.miniGameContent}><Text style={styles.title}>✨ Lysglimtjagt</Text><Text style={styles.panelCaption}>Niveau {glowLevel} af 4 · Kig grundigt efter fem Lysglimt i skoven</Text><ImageBackground source={gardenIllustrations[actualSeason]} resizeMode="cover" imageStyle={{borderRadius:18}} style={styles.glowForest}>
+            {Array.from({length:glowTileCount(glowLevel)},(_,index)=>{
+              const x=index%6;
+              const y=Math.floor(index/6);
+              const found=glowFound.includes(index);
+              const tried=glowTried.includes(index);
+              const scenery=['🌿','🍄','🌸','🍃','🌼','🪵','🌱','🍂','🦋','🌳'];
+              return <Pressable key={index} accessibilityRole="button" accessibilityLabel={found?'Lysglimt fundet':'Undersøg skoven'} onPress={()=>collectGlow(index)} style={[styles.glowForestSpot,{left:`${8+x*15}%`,top:`${9+y*21}%`}] }>
+                <Text style={{fontSize:found?32:24,opacity:tried&&!found?0.4:1}}>{found?'✨':tried?'🍂':scenery[(index*3+glowRound)%scenery.length]}</Text>
+              </Pressable>;
+            })}
+          </ImageBackground><Text style={styles.panelCaption}>{glowFound.length}/5 fundet {glowFound.length===5?'· +5 Lysglimt!':''}</Text><CozyButton wide label={glowFound.length===5&&glowLevel<4?'Næste niveau':'Ny jagt'} onPress={()=>{if(glowFound.length===5)setGlowLevel(previous=>Math.min(4,previous+1));setGlowRound(Math.max(Date.now(),glowRound+1));setGlowFound([]);setGlowTried([]);}}/></View>:
           <View style={styles.miniGameContent}><Text style={styles.title}>🍂 Årstidsquiz</Text><Text style={styles.panelCaption}>Svar rigtigt tre gange i træk · {Math.min(3,seasonStreak)}/3</Text><Text style={styles.panelCaption}>{seasonQuestion(seasonRound).question}</Text>{seasonQuestion(seasonRound).answers.map((option,index)=><CozyButton key={option} wide secondary={seasonAnswer!==index} disabled={seasonAnswer!==null} label={option} onPress={()=>answerSeason(index)}/>)}{seasonAnswer!==null&&<Text style={styles.panelCaption}>{seasonAnswer===seasonQuestion(seasonRound).correct?(seasonStreak>=3?'Tre rigtige! +5 Lysglimt ✨':'Rigtigt! Fortsæt din stime 🌿'):'Ikke helt — din stime starter forfra 🌿'}</Text>}<CozyButton wide label="Næste spørgsmål" disabled={seasonAnswer===null} onPress={()=>{setSeasonRound(previous=>previous+1);setSeasonAnswer(null);if(seasonStreak>=3)setSeasonStreak(0);}}/></View>}
         </View>
       </ScrollView></ImageBackground> :
@@ -613,16 +624,17 @@ export default function App() {
         </View>
         <Text style={styles.panelCaption}>Dobbelttryk for automatisk flytning</Text>
         <CozyButton wide label={settings.doubleTap?'✓ Aktiveret':'Deaktiveret'} secondary={!settings.doubleTap} onPress={()=>setSettings(current=>({...current,doubleTap:!current.doubleTap}))}/>
-        <Text style={styles.panelCaption}>Træk ét eller tre kort i næste nye klassiske spil</Text>
+        <Text style={styles.panelCaption}>Træk ét eller tre kort i næste nye spil (standard: tre)</Text>
         <View style={styles.settingRow}>
           <CozyButton label="Ét kort" compact secondary={settings.drawPreference!==1} onPress={()=>setSettings(current=>({...current,drawPreference:1}))}/>
-          <CozyButton label={modeUnlocked(ledger,1)?'Tre kort':'🔒 3 kort'} compact secondary={settings.drawPreference!==3} disabled={!modeUnlocked(ledger,1)} onPress={()=>setSettings(current=>({...current,drawPreference:3}))}/>
+          <CozyButton label="Tre kort" compact secondary={settings.drawPreference!==3} onPress={()=>setSettings(current=>({...current,drawPreference:3}))}/>
         </View>
-        <Text style={styles.panelCaption}>Tre kort låses op efter fem klassiske sejre. Indstillingerne ændrer ikke kortene i en igangværende kabale.</Text>
+        <Text style={styles.panelCaption}>Begge trækmåder er altid tilgængelige. Valget bruges i næste nye spil. Fem sejre låser Udfordring op.</Text>
         <Text style={styles.panelCaption}>Kortstørrelse</Text>
         <View style={styles.settingRow}>{([{id:'small',label:'Lille'},{id:'normal',label:'Normal'},{id:'large',label:'Stor'}] as const).map(option=><CozyButton key={option.id} compact label={option.label} secondary={settings.cardSize!==option.id} onPress={()=>setSettings(current=>({...current,cardSize:option.id}))}/>)}</View>
         <Text style={styles.panelCaption}>Kortbagside</Text>
-        <View style={styles.settingRow}>{([{id:'floral',label:'Blomster'},{id:'autumn',label:'Efterår'},{id:'winter',label:'Vinter'}] as const).map(option=><Pressable key={option.id} onPress={()=>setSettings(current=>({...current,cardBack:option.id}))} style={[styles.backChoice,settings.cardBack===option.id&&styles.backChoiceActive]}><CardBack width={46} height={66} back={option.id}/><Text style={styles.modeText}>{option.label}</Text></Pressable>)}</View>
+        <View style={styles.settingRow}>{([{id:'floral',label:'Blomster'},{id:'autumn',label:'Efterår'},{id:'winter',label:'Vinter'}] as const).map(option=>{const unlocked=cardBackUnlocked(ledger,option.id);return <Pressable key={option.id} disabled={!unlocked} onPress={()=>setSettings(current=>({...current,cardBack:option.id}))} style={[styles.backChoice,settings.cardBack===option.id&&styles.backChoiceActive,!unlocked&&{opacity:0.48}]}><CardBack width={46} height={66} back={option.id}/><Text style={styles.modeText}>{unlocked?option.label:`🔒 ${option.label}`}</Text></Pressable>;})}</View>
+        <Text style={styles.panelCaption}>Vind 2 kabaler for Efterår og 5 for Vinter · {totalSolitaireWins(ledger)} sejre</Text>
         <Text style={styles.panelCaption}>Trækhjælp (diskret pulsering og flyvende kort)</Text>
         <CozyButton wide label={settings.autoHints?'✓ Aktiveret':'Deaktiveret'} secondary={!settings.autoHints} onPress={()=>setSettings(current=>({...current,autoHints:!current.autoHints}))}/>
         <Text style={styles.panelCaption}>Animationshastighed</Text>
@@ -709,6 +721,8 @@ const styles=StyleSheet.create({
   glowGrid:{flexDirection:'row',flexWrap:'wrap',width:252,justifyContent:'center',gap:6},
   glowTile:{width:56,height:56,borderRadius:13,borderWidth:2,borderColor:'#d8ac63',backgroundColor:'#f9e5b8',alignItems:'center',justifyContent:'center'},
   glowSymbol:{fontSize:30},
+  glowForest:{width:310,maxWidth:'100%',height:340,borderRadius:18,overflow:'hidden',borderWidth:3,borderColor:'#a18451',backgroundColor:'#9fca94'},
+  glowForestSpot:{position:'absolute',width:43,height:43,alignItems:'center',justifyContent:'center',borderRadius:22,backgroundColor:'#edf5d115'},
   modePicker:{gap:5,paddingVertical:2,paddingHorizontal:3},
   modeButton:{borderColor:'#d7ae68',borderWidth:1.5,borderRadius:10,backgroundColor:'#fff0cb',paddingHorizontal:8,paddingVertical:3,minWidth:113},
   modeButtonActive:{borderColor:'#74bba3',backgroundColor:'#c5eacb'},
