@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {hiddenObjects,hiddenObjectPosition,hiddenTargetIds,movingObjectStart} from '../../src/domain/minigames/hiddenObjects.ts';
+import {hiddenObjects,hiddenRoomCount,hiddenRoomObjects,hiddenRoomTitle,hiddenObjectPosition,hiddenTargetIds,movingObjectStart} from '../../src/domain/minigames/hiddenObjects.ts';
 
 test('five distinct hidden objects are selected for each picture',()=>{
   for(const round of [0,1,123,20261115]){
@@ -12,6 +12,30 @@ test('five distinct hidden objects are selected for each picture',()=>{
     assert.ok(ids.filter(id=>id>=movingObjectStart).length>=2);
   }
   assert.notDeepEqual(hiddenTargetIds(1),hiddenTargetIds(2));
+});
+
+test('each unlocked room has five distinct discoverable targets and its own objects',()=>{
+  assert.equal(hiddenRoomCount,3);
+  assert.equal(new Set(Array.from({length:hiddenRoomCount},(_,i)=>hiddenRoomTitle(i+1))).size,3);
+  for(let room=1;room<=hiddenRoomCount;room++){
+    const objects=hiddenRoomObjects(room);
+    assert.equal(objects.length,17);
+    assert.equal(new Set(objects.map(item=>item.name)).size,objects.length);
+    for(const round of [0,1,17,20261115]){
+      const ids=hiddenTargetIds(round,room);
+      assert.equal(ids.length,5);
+      assert.equal(new Set(ids).size,5);
+      assert.ok(ids.filter(id=>id>=movingObjectStart).length>=(room===3?3:2));
+      ids.forEach(id=>{
+        const {x,y}=hiddenObjectPosition(id,round,room);
+        assert.ok(x>=0&&x<=88&&y>=0&&y<=88);
+      });
+    }
+    for(let id=movingObjectStart;id<objects.length;id++){
+      const positions=Array.from({length:4},(_,round)=>hiddenObjectPosition(id,round,room));
+      assert.ok(new Set(positions.map(p=>`${p.x},${p.y}`)).size>=3);
+    }
+  }
 });
 
 test('all hidden object positions fit within the picture',()=>{
