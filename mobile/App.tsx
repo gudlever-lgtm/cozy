@@ -169,6 +169,8 @@ export default function App() {
   const [settingsLoaded,setSettingsLoaded] = useState(false);
   const [settingsSaveBlocked,setSettingsSaveBlocked] = useState(false);
   const [chosen,setChosen] = useState<Source | null>(null);
+  const [expandedColumn,setExpandedColumn] = useState<number|null>(null);
+  useEffect(()=>setExpandedColumn(null),[game]);
   const [draggingCard,setDraggingCard] = useState<string|null>(null);
   const [dragVisual,setDragVisual]=useState<DragVisual|null>(null);
   const dragXY=useRef(new Animated.ValueXY()).current;
@@ -541,8 +543,9 @@ export default function App() {
     else setChosen({kind:'tableau',from:candidate.from,at:candidate.at});
     setMessage(`Flyt til ${candidate.to==='foundation'?'grundbunke':'kolonne'} ${candidate.index+1}`);
   }
-  function card(value:import('../src/domain/solitaire/klondike').Card,onPress:()=>void,source?:Source,run?:import('../src/domain/solitaire/klondike').Card[]) {
+  function card(value:import('../src/domain/solitaire/klondike').Card,onPress:()=>void,source?:Source,run?:import('../src/domain/solitaire/klondike').Card[],onLongHold?:()=>void) {
     return <View ref={view=>{cardViews.current[value.id]=view;}} style={{width:cardWidth,height:cardHeight}}><DraggableCard card={value} width={cardWidth} height={cardHeight} cardStyle={settings.cardStyle} back={settings.cardBack} onTap={onPress}
+      onLongHold={onLongHold}
       onDoubleTap={settings.autoMove&&settings.doubleTap&&source&&value.up?()=>autoMove(source):undefined}
       floating={dragVisual?.id===value.id}
       onDragChange={source?active=>{
@@ -629,8 +632,8 @@ export default function App() {
       <Text style={[styles.boardTitle,landscape&&styles.landscapeBoardTitle]}>{solitaireModes[activeModeIndex(game.drawCount,game.maxPasses)].title}</Text><Text style={styles.boardMeta}>Flytninger: {game.moves} · Lysglimt ✨ {balance(ledger)}</Text>
       <View style={[styles.piles,{minHeight:tableauHeight,flexGrow:landscape?0:1},landscape&&styles.landscapePiles]}>{game.tableau.map((pile,index)=><Pressable ref={view=>{tableauTargets.current[index]=view;}} key={index} onPress={()=>move('tableau',index)}
         accessibilityLabel={`Kolonne ${index+1}`} style={{width:cardWidth,minHeight:tableauHeight,zIndex:draggingCard&&pile.some(c=>c.id===draggingCard)?100:0}}>
-        {visibleTableauIndexes(pile).map((at,visibleIndex)=>{const value=pile[at];return <View key={value.id} style={{marginTop:visibleIndex?-cardHeight+27:0,zIndex:draggingCard===value.id?999:visibleIndex,elevation:draggingCard===value.id?15:0}}>
-          {card(value,()=>chosen?move('tableau',index):value.up&&setChosen({kind:'tableau',from:index,at}),{kind:'tableau',from:index,at},pile.slice(at))}
+        {visibleTableauIndexes(pile,expandedColumn===index).map((at,visibleIndex)=>{const value=pile[at];return <View key={value.id} style={{marginTop:visibleIndex?-cardHeight+27:0,zIndex:draggingCard===value.id?999:visibleIndex,elevation:draggingCard===value.id?15:0}}>
+          {card(value,()=>chosen?move('tableau',index):value.up&&setChosen({kind:'tableau',from:index,at}),{kind:'tableau',from:index,at},pile.slice(at),()=>setExpandedColumn(previous=>previous===index?null:index))}
           {!value.up&&pile.filter(c=>!c.up).length>1&&<View pointerEvents="none" style={styles.columnCount}><Text style={styles.columnCountText}>{pile.filter(c=>!c.up).length}</Text></View>}
         </View>;})}
         {!pile.length&&<View style={[styles.slot,{height:cardHeight}]}><View style={[styles.emptySlot,{width:cardWidth,height:cardHeight}]}/></View>}
