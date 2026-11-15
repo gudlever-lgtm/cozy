@@ -1,19 +1,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {emptyLedger,record} from '../../src/domain/rewards/ledger.ts';
-import {activeModeIndex,modeUnlocked,solitaireModes,winsForMode} from '../../src/domain/solitaire/progression.ts';
+import {activeModeIndex,cardBackUnlocked,modeUnlocked,solitaireModes,totalSolitaireWins,winsForMode} from '../../src/domain/solitaire/progression.ts';
 import {glowTargets} from '../../src/domain/minigames/glow.ts';
 
-test('five actual wins unlock next solitaire type, separately by type',()=>{
+test('both draw modes are always available; five wins unlock challenge',()=>{
   let ledger=emptyLedger();
   assert.equal(modeUnlocked(ledger,0),true);
-  assert.equal(modeUnlocked(ledger,1),false);
-  for(let i=0;i<5;i++)ledger=record(ledger,{id:`solitaire-win-classic-${i}`,type:'earn',amount:25,reason:'Klondike'});
   assert.equal(modeUnlocked(ledger,1),true);
   assert.equal(modeUnlocked(ledger,2),false);
-  for(let i=0;i<5;i++)ledger=record(ledger,{id:`solitaire-win-three-${i}`,type:'earn',amount:25,reason:'Tre kort'});
-  assert.equal(winsForMode(ledger,'three'),5);
+  for(let i=0;i<5;i++)ledger=record(ledger,{id:`solitaire-win-${i%2?'three':'classic'}-${i}`,type:'earn',amount:25,reason:'Klondike'});
+  assert.equal(winsForMode(ledger,'three'),2);
+  assert.equal(totalSolitaireWins(ledger),5);
   assert.equal(modeUnlocked(ledger,2),true);
+  assert.equal(cardBackUnlocked(ledger,'winter'),true);
 });
 
 test('legacy wins count and purchases do not count',()=>{
@@ -21,7 +21,11 @@ test('legacy wins count and purchases do not count',()=>{
   ledger=record(ledger,{id:'klondike-win-123',type:'earn',amount:25,reason:'Klondike'});
   ledger=record(ledger,{id:'garden-purchase-1',type:'spend',amount:5,reason:'Blomst'});
   assert.equal(winsForMode(ledger,'classic'),1);
-  assert.equal(modeUnlocked(ledger,1),false);
+  assert.equal(modeUnlocked(ledger,1),true);
+  assert.equal(cardBackUnlocked(ledger,'floral'),true);
+  assert.equal(cardBackUnlocked(ledger,'autumn'),false);
+  ledger=record(ledger,{id:'klondike-win-456',type:'earn',amount:25,reason:'Klondike'});
+  assert.equal(cardBackUnlocked(ledger,'autumn'),true);
 });
 
 test('solitaire variants use existing legal engine options',()=>{
