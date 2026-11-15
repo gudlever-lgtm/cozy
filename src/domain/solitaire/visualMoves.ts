@@ -1,13 +1,13 @@
 import type {Card,Move,State} from './klondike';
 
 /** Keep a single face-down back and compact only the face-up run. */
-export function visibleTableauIndexes(pile:ReadonlyArray<Pick<Card,'up'>>):number[]{
+export function visibleTableauIndexes(pile:ReadonlyArray<Pick<Card,'up'>>,expanded=false):number[]{
   if(!pile.length)return [];
   const firstUp=pile.findIndex(card=>card.up);
   if(firstUp<0)return [pile.length-1];
   const back=firstUp>0?[firstUp-1]:[];
   const faceUpCount=pile.length-firstUp;
-  if(faceUpCount<=3)return [...back,...Array.from({length:faceUpCount},(_,index)=>firstUp+index)];
+  if(faceUpCount<=3||expanded)return [...back,...Array.from({length:faceUpCount},(_,index)=>firstUp+index)];
   return [...back,firstUp,pile.length-1];
 }
 
