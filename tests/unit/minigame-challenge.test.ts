@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {glowTargets,glowTileCount} from '../../src/domain/minigames/glow.ts';
+import {glowTargets,glowTileCount,glowPositions} from '../../src/domain/minigames/glow.ts';
 import {seasonQuestion,seasonQuestions} from '../../src/domain/minigames/seasons.ts';
 
 test('Lysglimt hunts grow through four levels with five unique targets',()=>{
@@ -11,6 +11,14 @@ test('Lysglimt hunts grow through four levels with five unique targets',()=>{
     assert.equal(new Set(targets).size,5);
     assert.ok(targets.every(index=>index>=0&&index<glowTileCount(level)));
     assert.deepEqual(targets,glowTargets(12345,level));
+    for(const round of [0,1,12345,20261115]){
+      const positions=glowPositions(round,level);
+      assert.equal(positions.length,glowTileCount(level));
+      assert.deepEqual(positions,glowPositions(round,level));
+      assert.ok(positions.every(({x,y})=>x>=3&&x<=85&&y>=3&&y<=86));
+      for(let i=0;i<positions.length;i++)for(let j=i+1;j<positions.length;j++)
+        assert.ok(Math.hypot((positions[i].x-positions[j].x)*3.1,(positions[i].y-positions[j].y)*3.4)>=39.9);
+    }
   }
 });
 
