@@ -49,3 +49,15 @@ test('all hidden object positions fit within the picture',()=>{
     else assert.equal(new Set(places.map(p=>`${p.x},${p.y}`)).size,1);
   }
 });
+
+test('small movable finds do not overlap one another in any room',()=>{
+  for(let room=1;room<=hiddenRoomCount;room++){
+    for(let round=0;round<40;round++){
+      const positions=Array.from({length:5},(_,index)=>hiddenObjectPosition(movingObjectStart+index,round,room));
+      for(let i=0;i<positions.length;i++)for(let j=i+1;j<positions.length;j++){
+        const delta=Math.hypot((positions[i].x-positions[j].x)*1.1,(positions[i].y-positions[j].y)*0.8);
+        assert.ok(delta>=7,`Overlapping hidden props in room ${room}, round ${round}`);
+      }
+    }
+  }
+});
