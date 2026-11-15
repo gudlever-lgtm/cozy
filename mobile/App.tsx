@@ -31,6 +31,7 @@ import {activeModeIndex,cardBackUnlocked,modeUnlocked,solitaireModes,totalSolita
 import {glowTargets,glowTileCount} from '../src/domain/minigames/glow';
 import {seasonQuestion} from '../src/domain/minigames/seasons';
 import {hiddenObjects,hiddenTargetIds} from '../src/domain/minigames/hiddenObjects';
+import {HiddenRoomArt} from './src/HiddenRoomArt';
 
 type Screen = 'garden' | 'cards' | 'mini' | 'quests' | 'settings';
 type Source = {kind:'waste' | 'tableau' | 'foundation'; from:number; at:number};
@@ -83,6 +84,27 @@ export default function App() {
   const [seasonStreak,setSeasonStreak]=useState(0);
   const [hiddenRound,setHiddenRound]=useState(0);
   const [hiddenFound,setHiddenFound]=useState<number[]>([]);
+  const [hiddenZoom,setHiddenZoom]=useState(1);
+  const [hiddenOffset,setHiddenOffset]=useState({x:0,y:0});
+  const hiddenZoomRef=useRef(1);
+  const hiddenOffsetRef=useRef({x:0,y:0});
+  const hiddenDragOrigin=useRef({x:0,y:0});
+  const hiddenPan=useRef(PanResponder.create({
+    onStartShouldSetPanResponder:()=>false,
+    onMoveShouldSetPanResponder:(_,gesture)=>hiddenZoomRef.current>1&&(Math.abs(gesture.dx)>7||Math.abs(gesture.dy)>7),
+    onPanResponderGrant:()=>{hiddenDragOrigin.current=hiddenOffsetRef.current;},
+    onPanResponderMove:(_,gesture)=>{
+      const limitX=165*(hiddenZoomRef.current-1);
+      const limitY=235*(hiddenZoomRef.current-1);
+      const next={x:Math.max(-limitX,Math.min(limitX,hiddenDragOrigin.current.x+gesture.dx)),y:Math.max(-limitY,Math.min(limitY,hiddenDragOrigin.current.y+gesture.dy))};
+      hiddenOffsetRef.current=next;setHiddenOffset(next);
+    },
+  })).current;
+  function changeHiddenZoom(next:number){
+    const zoom=Math.max(1,Math.min(3,next));hiddenZoomRef.current=zoom;setHiddenZoom(zoom);
+    const offset={x:Math.max(-165*(zoom-1),Math.min(165*(zoom-1),hiddenOffsetRef.current.x)),y:Math.max(-235*(zoom-1),Math.min(235*(zoom-1),hiddenOffsetRef.current.y))};
+    hiddenOffsetRef.current=offset;setHiddenOffset(offset);
+  }
   const [game,setGame] = useState(() => newGame(20261113,3));
   const [ledger,setLedger] = useState<Ledger>(()=>emptyLedger());
   const [questEvents,setQuestEvents]=useState<QuestEvent[]>([]);
@@ -621,14 +643,18 @@ export default function App() {
           miniKind==='season'?<View style={styles.miniGameContent}><Text style={styles.title}>🍂 Årstidsquiz</Text><Text style={styles.panelCaption}>Svar rigtigt tre gange i træk · {Math.min(3,seasonStreak)}/3</Text><Text style={styles.panelCaption}>{seasonQuestion(seasonRound).question}</Text>{seasonQuestion(seasonRound).answers.map((option,index)=><CozyButton key={option} wide secondary={seasonAnswer!==index} disabled={seasonAnswer!==null} label={option} onPress={()=>answerSeason(index)}/>)}{seasonAnswer!==null&&<Text style={styles.panelCaption}>{seasonAnswer===seasonQuestion(seasonRound).correct?(seasonStreak>=3?'Tre rigtige! +5 Lysglimt ✨':'Rigtigt! Fortsæt din stime 🌿'):'Ikke helt — din stime starter forfra 🌿'}</Text>}<CozyButton wide label="Næste spørgsmål" disabled={seasonAnswer===null} onPress={()=>{setSeasonRound(previous=>previous+1);setSeasonAnswer(null);if(seasonStreak>=3)setSeasonStreak(0);}}/></View>:
           <View style={styles.miniGameContent}><Text style={styles.title}>🔎 Find fem ting</Text><Text style={styles.panelCaption}>Undersøg det hyggelige motiv. Find de fem genstande på listen:</Text>
             <View style={styles.hiddenChecklist}>{hiddenTargetIds(hiddenRound).map(id=><Text key={id} style={[styles.hiddenListItem,hiddenFound.includes(id)&&styles.hiddenListFound]}>{hiddenFound.includes(id)?'✓ ':'○ '}{hiddenObjects[id].name}</Text>)}</View>
-            <ImageBackground source={gardenIllustrations[actualSeason]} resizeMode="cover" imageStyle={{borderRadius:18}} style={styles.hiddenScene}>
+            <View style={styles.hiddenZoomControls}><CozyButton compact label="−" onPress={()=>changeHiddenZoom(hiddenZoom-0.5)}/><Text style={styles.panelCaption}>{Math.round(hiddenZoom*100)} % · {hiddenZoom>1?'Træk for at flytte':'Zoom ind for at undersøge'}</Text><CozyButton compact label="+" onPress={()=>changeHiddenZoom(hiddenZoom+0.5)}/></View>
+            <View style={styles.hiddenScene} {...hiddenPan.panHandlers}>
+              <View style={[styles.hiddenCanvas,{transform:[{translateX:hiddenOffset.x},{translateY:hiddenOffset.y},{scale:hiddenZoom}]}]}>
+              <HiddenRoomArt/>
               {hiddenObjects.map((object,index)=><Pressable key={object.name} accessibilityRole="button" accessibilityLabel={`Undersøg ${object.name}`} onPress={()=>findHiddenObject(index)} style={[styles.hiddenSpot,{left:`${object.x}%`,top:`${object.y}%`}]}>
                 <Text style={[styles.hiddenSymbol,hiddenFound.includes(index)&&styles.hiddenSymbolFound]}>{object.symbol}</Text>
                 {hiddenFound.includes(index)&&<Text style={styles.hiddenCheck}>✓</Text>}
               </Pressable>)}
-            </ImageBackground>
+              </View>
+            </View>
             <Text style={styles.panelCaption}>{hiddenFound.length}/5 fundet {hiddenFound.length===5?'· Du vandt 5 Lysglimt! ✨':''}</Text>
-            <CozyButton wide label={hiddenFound.length===5?'Næste jagt':'Ny jagt'} onPress={()=>{setHiddenRound(previous=>Math.max(Date.now(),previous+1));setHiddenFound([]);}}/>
+            <CozyButton wide label={hiddenFound.length===5?'Næste jagt':'Ny jagt'} onPress={()=>{setHiddenRound(previous=>Math.max(Date.now(),previous+1));setHiddenFound([]);changeHiddenZoom(1);}}/>
           </View>}
         </View>
       </ScrollView></ImageBackground> :
@@ -751,6 +777,8 @@ const styles=StyleSheet.create({
   hiddenListItem:{fontSize:12,fontWeight:'800',color:'#513f31',backgroundColor:'#fff5d8',padding:6,borderRadius:12},
   hiddenListFound:{color:'#247a4b',textDecorationLine:'line-through',backgroundColor:'#d1f1d4'},
   hiddenScene:{width:330,maxWidth:'100%',height:470,borderRadius:18,overflow:'hidden',borderWidth:3,borderColor:'#b78c55',backgroundColor:'#c9e2b8'},
+  hiddenCanvas:{width:330,height:470},
+  hiddenZoomControls:{flexDirection:'row',justifyContent:'center',alignItems:'center',gap:9},
   hiddenSpot:{position:'absolute',width:38,height:38,alignItems:'center',justifyContent:'center'},
   hiddenSymbol:{fontSize:21,textShadowColor:'#342b22a0',textShadowRadius:3},
   hiddenSymbolFound:{opacity:0.65},
