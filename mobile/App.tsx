@@ -631,7 +631,7 @@ export default function App() {
         accessibilityLabel={`Kolonne ${index+1}`} style={{width:cardWidth,minHeight:tableauHeight,zIndex:draggingCard&&pile.some(c=>c.id===draggingCard)?100:0}}>
         {visibleTableauIndexes(pile.length).map((at,visibleIndex)=>{const value=pile[at];return <View key={value.id} style={{marginTop:visibleIndex?-cardHeight+27:0,zIndex:draggingCard===value.id?999:visibleIndex,elevation:draggingCard===value.id?15:0}}>
           {card(value,()=>chosen?move('tableau',index):value.up&&setChosen({kind:'tableau',from:index,at}),{kind:'tableau',from:index,at},pile.slice(at))}
-          {pile.length>5&&visibleIndex===0&&<View pointerEvents="none" style={styles.columnCount}><Text style={styles.columnCountText}>{pile.length}</Text></View>}
+          {pile.length>3&&visibleIndex===0&&<View pointerEvents="none" style={styles.columnCount}><Text style={styles.columnCountText}>{pile.length}</Text></View>}
         </View>;})}
         {!pile.length&&<View style={[styles.slot,{height:cardHeight}]}><View style={[styles.emptySlot,{width:cardWidth,height:cardHeight}]}/></View>}
       </Pressable>)}</View>
